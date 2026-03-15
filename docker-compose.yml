@@ -1,0 +1,26 @@
+services:
+  backend:
+    build: ./backend
+    container_name: employee-db-backend
+    ports:
+      - "5018:5018"
+    volumes:
+      - ./backend/uploads:/usr/src/app/uploads
+      - ./backend/database.sqlite:/usr/src/app/database.sqlite
+    environment:
+      - PORT=5018
+      - NODE_ENV=production
+    restart: always
+
+  frontend:
+    build: ./frontend
+    container_name: employee-db-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  uploads:
+  db_data:
