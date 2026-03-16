@@ -115,6 +115,43 @@ db.serialize(() => {
   db.run(`INSERT OR IGNORE INTO users (username, password) VALUES ('Admin@cookscape.com', '${hashedPassword}')`);
 
   console.log('Database initialized');
+
+  // Evolution: Add missing columns if they don't exist
+  const addColumn = (colName, colType) => {
+    db.run(`ALTER TABLE employees ADD COLUMN ${colName} ${colType}`, (err) => {
+      if (err) {
+        if (!err.message.includes('duplicate column name')) {
+          console.error(`Error adding column ${colName}:`, err.message);
+        }
+      } else {
+        console.log(`Added column: ${colName}`);
+      }
+    });
+  };
+
+  // List of columns that might be missing in older databases
+  const potentialMissingColumns = {
+    'signature_name': 'TEXT',
+    'background_verification': 'TEXT',
+    'marital_status': 'TEXT',
+    'personal_email': 'TEXT',
+    'bank_passbook_path': 'TEXT',
+    'pan_card_path': 'TEXT',
+    'aadhaar_card_path': 'TEXT',
+    'educational_certificate_path': 'TEXT',
+    'check_sim': 'INTEGER DEFAULT 0',
+    'check_laptop': 'INTEGER DEFAULT 0',
+    'check_crm': 'INTEGER DEFAULT 0',
+    'check_peopledesk': 'INTEGER DEFAULT 0',
+    'check_projects': 'INTEGER DEFAULT 0',
+    'check_id_card': 'INTEGER DEFAULT 0',
+    'check_official_mail': 'INTEGER DEFAULT 0',
+    'check_offer_letter': 'INTEGER DEFAULT 0'
+  };
+
+  Object.entries(potentialMissingColumns).forEach(([name, type]) => {
+    addColumn(name, type);
+  });
 });
 
 module.exports = db;
