@@ -11,15 +11,26 @@ if (!fs.existsSync(dataDir)) {
 let dbPath = path.join(dataDir, 'database.sqlite');
 const rootDbPath = path.join(__dirname, 'database.sqlite');
 
-// Recovery Logic: If DB exists in root but not in data folder, move it to data folder
-if (fs.existsSync(rootDbPath) && !fs.existsSync(dbPath)) {
-  console.log('RECOVERY: Moving database from root to data directory for persistence');
-  try {
-    fs.copyFileSync(rootDbPath, dbPath);
-    // Optional: fs.unlinkSync(rootDbPath); // Keep it as backup for now
-    console.log('RECOVERY: Migration successful.');
-  } catch (err) {
-    console.error('RECOVERY FAILED:', err.message);
+// Recovery Logic: Move database from root to data folder if it contains data
+const rootDbExists = fs.existsSync(rootDbPath);
+const dataDbExists = fs.existsSync(dbPath);
+
+if (rootDbExists) {
+  const rootSize = fs.statSync(rootDbPath).size;
+  const dataSize = dataDbExists ? fs.statSync(dbPath).size : 0;
+
+  // Migrate if data DB doesn't exist OR if root DB is significantly larger (indicates more data)
+  if (!dataDbExists || (rootSize > dataSize + 1024)) {
+    console.log(`RECOVERY: Migrating database (Root: ${rootSize} bytes, Data: ${dataSize} bytes)`);
+    try {
+      if (dataDbExists) {
+        fs.copyFileSync(dbPath, dbPath + '.bak'); // Backup existing
+      }
+      fs.copyFileSync(rootDbPath, dbPath);
+      console.log('RECOVERY: Migration successful. VPS data should be restored.');
+    } catch (err) {
+      console.error('RECOVERY FAILED:', err.message);
+    }
   }
 }
 
