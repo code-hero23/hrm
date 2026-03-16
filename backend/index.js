@@ -143,8 +143,10 @@ app.post('/api/employees', upload, async (req, res) => {
       account_holder_name, account_number, bank_name, ifsc_code, branch,
       documents_submitted, education_qualification, year_of_passing, institute, previous_employment,
       office_sim, office_sim_date, laptop_system, laptop_system_date, official_email_crm, official_email_crm_date,
-      bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, signature_name
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      asset_crm, asset_peopledesk, asset_projects, asset_id_card, asset_official_mail, asset_offer_letter,
+      check_sim, check_laptop, check_crm, check_peopledesk, check_projects, check_id_card, check_official_mail, check_offer_letter,
+      bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, signature_name, background_verification
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `;
 
   const params = [
@@ -157,7 +159,9 @@ app.post('/api/employees', upload, async (req, res) => {
     data.account_holder_name, data.account_number, data.bank_name, data.ifsc_code, data.branch,
     data.documents_submitted, data.education_qualification, data.year_of_passing, data.institute, data.previous_employment,
     data.office_sim, data.office_sim_date, data.laptop_system, data.laptop_system_date, data.official_email_crm, data.official_email_crm_date,
-    bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name
+    data.asset_crm, data.asset_peopledesk, data.asset_projects, data.asset_id_card, data.asset_official_mail, data.asset_offer_letter,
+    data.check_sim || 0, data.check_laptop || 0, data.check_crm || 0, data.check_peopledesk || 0, data.check_projects || 0, data.check_id_card || 0, data.check_official_mail || 0, data.check_offer_letter || 0,
+    bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name, data.background_verification
   ];
 
   db.run(query, params, function(err) {
@@ -188,7 +192,10 @@ app.post('/api/employees/bulk', (req, res) => {
         "father_husband_number", "mother_wife_number", "alternate_number", "account_holder_name", 
         "account_number", "bank_name", "ifsc_code", "branch", "documents_submitted", "education_qualification", 
         "year_of_passing", "institute", "previous_employment", "office_sim", "office_sim_date", 
-        "laptop_system", "laptop_system_date", "official_email_crm", "official_email_crm_date", "signature_name"
+        "laptop_system", "laptop_system_date", "official_email_crm", "official_email_crm_date", 
+        "asset_crm", "asset_peopledesk", "asset_projects", "asset_id_card", "asset_official_mail", "asset_offer_letter",
+        "check_sim", "check_laptop", "check_crm", "check_peopledesk", "check_projects", "check_id_card", "check_official_mail", "check_offer_letter",
+        "signature_name", "background_verification"
       ];
 
       const keys = Object.keys(emp).filter(k => validKeys.includes(k));
@@ -235,7 +242,9 @@ app.put('/api/employees/:id', upload, (req, res) => {
       documents_submitted=?, education_qualification=?, year_of_passing=?, institute=?,
       previous_employment=?, office_sim=?, office_sim_date=?, laptop_system=?, 
       laptop_system_date=?, official_email_crm=?, official_email_crm_date=?,
-      bank_passbook_path=?, pan_card_path=?, aadhaar_card_path=?, educational_certificate_path=?, signature_name=?
+      asset_crm=?, asset_peopledesk=?, asset_projects=?, asset_id_card=?, asset_official_mail=?, asset_offer_letter=?,
+      check_sim=?, check_laptop=?, check_crm=?, check_peopledesk=?, check_projects=?, check_id_card=?, check_official_mail=?, check_offer_letter=?,
+      bank_passbook_path=?, pan_card_path=?, aadhaar_card_path=?, educational_certificate_path=?, signature_name=?, background_verification=?
     WHERE id = ?
   `;
 
@@ -250,7 +259,9 @@ app.put('/api/employees/:id', upload, (req, res) => {
     data.documents_submitted, data.education_qualification, data.year_of_passing, data.institute,
     data.previous_employment, data.office_sim, data.office_sim_date, data.laptop_system, 
     data.laptop_system_date, data.official_email_crm, data.official_email_crm_date,
-    bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name,
+    data.asset_crm, data.asset_peopledesk, data.asset_projects, data.asset_id_card, data.asset_official_mail, data.asset_offer_letter,
+    data.check_sim || 0, data.check_laptop || 0, data.check_crm || 0, data.check_peopledesk || 0, data.check_projects || 0, data.check_id_card || 0, data.check_official_mail || 0, data.check_offer_letter || 0,
+    bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name, data.background_verification,
     req.params.id
   ];
 

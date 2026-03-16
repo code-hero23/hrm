@@ -75,6 +75,20 @@ db.serialize(() => {
       laptop_system_date TEXT,
       official_email_crm TEXT,
       official_email_crm_date TEXT,
+      asset_crm TEXT,
+      asset_peopledesk TEXT,
+      asset_projects TEXT,
+      asset_id_card TEXT,
+      asset_official_mail TEXT,
+      asset_offer_letter TEXT,
+      check_sim INTEGER DEFAULT 0,
+      check_laptop INTEGER DEFAULT 0,
+      check_crm INTEGER DEFAULT 0,
+      check_peopledesk INTEGER DEFAULT 0,
+      check_projects INTEGER DEFAULT 0,
+      check_id_card INTEGER DEFAULT 0,
+      check_official_mail INTEGER DEFAULT 0,
+      check_offer_letter INTEGER DEFAULT 0,
       
       -- Supporting Documents
       bank_passbook_path TEXT,
@@ -82,6 +96,7 @@ db.serialize(() => {
       aadhaar_card_path TEXT,
       educational_certificate_path TEXT,
       signature_name TEXT,
+      background_verification TEXT, -- JSON string for verification details
 
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )

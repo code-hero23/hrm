@@ -230,12 +230,65 @@ const EmployeeDetails = () => {
           <div className="form-group"><label>Bank & Branch</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.bank_name ? `${employee.bank_name} - ${employee.branch}` : '—'}</p></div>
         </div>
 
-        <div className="section-title">Office Assets & Systems</div>
+        <div className="section-title">Office Assets & Systems (Optional)</div>
         <div className="form-grid">
-          <div className="form-group"><label>Office SIM</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.office_sim || '—'} {employee.office_sim_date && `(Allocated: ${employee.office_sim_date})`}</p></div>
-          <div className="form-group"><label>Laptop/System</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.laptop_system || '—'} {employee.laptop_system_date && `(Allocated: ${employee.laptop_system_date})`}</p></div>
-          <div className="form-group"><label>Official Email/CRM</label><p style={{fontSize: '1rem', fontWeight: 500, textTransform:'none'}}>{employee.official_email_crm || '—'} {employee.official_email_crm_date && `(Allocated: ${employee.official_email_crm_date})`}</p></div>
+          <div className="form-group"><label>{employee.check_sim === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Office SIM (Optional)</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.office_sim || '—'} {employee.office_sim_date && `(Allocated: ${employee.office_sim_date})`}</p></div>
+          <div className="form-group"><label>{employee.check_laptop === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Laptop/System (Optional)</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.laptop_system || '—'} {employee.laptop_system_date && `(Allocated: ${employee.laptop_system_date})`}</p></div>
+          <div className="form-group"><label>{employee.check_official_mail === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Official Mail ID</label><p style={{fontSize: '1rem', fontWeight: 500, textTransform:'none'}}>{employee.asset_official_mail || '—'}</p></div>
+          <div className="form-group"><label>{employee.check_crm === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}CRM (Asset)</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.asset_crm || '—'}</p></div>
+          <div className="form-group"><label>{employee.check_peopledesk === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Peopledesk</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.asset_peopledesk || '—'}</p></div>
+          <div className="form-group"><label>{employee.check_projects === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Projects</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.asset_projects || '—'}</p></div>
+          <div className="form-group"><label>{employee.check_id_card === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}ID Card</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.asset_id_card || '—'}</p></div>
+          <div className="form-group"><label>{employee.check_offer_letter === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Offer Letter</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.asset_offer_letter || '—'}</p></div>
         </div>
+
+        <div className="section-title">Background Verification Details</div>
+        {employee.background_verification ? (() => {
+          try {
+            const bgc = JSON.parse(employee.background_verification);
+            return (
+              <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+                <p style={{fontSize:'0.9rem', color:'#60a5fa', marginBottom:'1rem', fontWeight:700}}>TYPE: {bgc.type || 'N/A'}</p>
+                
+                {bgc.type === 'FRESHER' && bgc.educational && (
+                  <div style={{marginBottom:'1rem'}}>
+                    <h5 style={{fontSize:'0.75rem', color:'var(--text-dim)', textTransform:'uppercase', marginBottom:'0.5rem'}}>Educational Verification</h5>
+                    <p style={{fontSize:'0.875rem'}}><strong>College:</strong> {bgc.educational.college}</p>
+                    <p style={{fontSize:'0.875rem'}}><strong>HOD/Lecturer:</strong> {bgc.educational.hod} ({bgc.educational.mobile})</p>
+                    <p style={{fontSize:'0.875rem'}}><strong>Email:</strong> {bgc.educational.email}</p>
+                  </div>
+                )}
+
+                {bgc.type === 'EXPERIENCED' && bgc.company && (
+                  <div style={{marginBottom:'1rem'}}>
+                    <h5 style={{fontSize:'0.75rem', color:'var(--text-dim)', textTransform:'uppercase', marginBottom:'0.5rem'}}>Previous Company Verification</h5>
+                    {bgc.company.manager_name && (
+                      <p style={{fontSize:'0.875rem'}}><strong>Manager:</strong> {bgc.company.manager_name} ({bgc.company.manager_contact}) • {bgc.company.manager_email}</p>
+                    )}
+                    {bgc.company.hr_name && (
+                      <p style={{fontSize:'0.875rem'}}><strong>HR:</strong> {bgc.company.hr_name} ({bgc.company.hr_contact}) • {bgc.company.hr_email}</p>
+                    )}
+                  </div>
+                )}
+
+                <div className="form-grid" style={{marginTop:'1.5rem'}}>
+                  <div>
+                    <h5 style={{fontSize:'0.75rem', color:'var(--text-dim)', textTransform:'uppercase', marginBottom:'0.5rem'}}>House Verification ({bgc.address?.house_type})</h5>
+                    {bgc.address?.house_type === 'OWN' && <p style={{fontSize:'0.875rem'}}><strong>Neighbour:</strong> {bgc.address.neighbour_name} ({bgc.address.neighbour_contact})</p>}
+                    {bgc.address?.house_type === 'RENT' && <p style={{fontSize:'0.875rem'}}><strong>Owner:</strong> {bgc.address.owner_name} ({bgc.address.owner_contact})</p>}
+                    {bgc.address?.house_type === 'PG' && <p style={{fontSize:'0.875rem'}}><strong>PG Manager:</strong> {bgc.address.pg_manager} ({bgc.address.pg_contact})</p>}
+                    <p style={{fontSize:'0.875rem', marginTop:'0.5rem'}}><strong>Current Address Verified:</strong> {bgc.address?.current_address}</p>
+                  </div>
+                  <div>
+                    <h5 style={{fontSize:'0.75rem', color:'var(--text-dim)', textTransform:'uppercase', marginBottom:'0.5rem'}}>Personal References</h5>
+                    <p style={{fontSize:'0.875rem'}}><strong>Friend:</strong> {bgc.friend?.name} ({bgc.friend?.contact})</p>
+                    <p style={{fontSize:'0.875rem'}}><strong>Relative:</strong> {bgc.relative?.name} ({bgc.relative?.contact})</p>
+                  </div>
+                </div>
+              </div>
+            );
+          } catch(e) { return <p>Error parsing verification data</p>; }
+        })() : <p style={{padding:'1rem', color:'var(--text-dim)'}}>No background verification data available.</p>}
 
         <div className="section-title">Supporting Documents</div>
         <div className="form-grid">
@@ -328,10 +381,13 @@ const EmployeeDetails = () => {
           </div>
 
           <div style={{ marginBottom: '6mm' }}>
-            <h3 style={{ borderBottom: '1px solid #ccc', paddingBottom: '1mm', fontSize: '12pt' }}>V. OFFICE ASSETS & SYSTEMS</h3>
-            <p><strong>Office SIM:</strong> {employee.office_sim || 'N/A'} ({employee.office_sim_date || '—'})</p>
-            <p><strong>Laptop/System:</strong> {employee.laptop_system || 'N/A'} ({employee.laptop_system_date || '—'})</p>
+            <p><strong>{employee.check_sim === 1 ? '✓ ' : '☐ '}Office SIM:</strong> {employee.office_sim || 'N/A'} ({employee.office_sim_date || '—'})</p>
+            <p><strong>{employee.check_laptop === 1 ? '✓ ' : '☐ '}Laptop/System:</strong> {employee.laptop_system || 'N/A'} ({employee.laptop_system_date || '—'})</p>
             <p><strong>Official Email/CRM:</strong> {employee.official_email_crm || 'N/A'} ({employee.official_email_crm_date || '—'})</p>
+            <p><strong>{employee.check_official_mail === 1 ? '✓ ' : '☐ '}Official Mail ID:</strong> {employee.asset_official_mail || 'N/A'}</p>
+            <p><strong>{employee.check_crm === 1 ? '✓ ' : '☐ '}CRM (Asset):</strong> {employee.asset_crm || 'N/A'} &nbsp;&nbsp; <strong>{employee.check_peopledesk === 1 ? '✓ ' : '☐ '}Peopledesk:</strong> {employee.asset_peopledesk || 'N/A'}</p>
+            <p><strong>{employee.check_projects === 1 ? '✓ ' : '☐ '}Projects:</strong> {employee.asset_projects || 'N/A'} &nbsp;&nbsp; <strong>{employee.check_id_card === 1 ? '✓ ' : '☐ '}ID Card:</strong> {employee.asset_id_card || 'N/A'}</p>
+            <p><strong>{employee.check_offer_letter === 1 ? '✓ ' : '☐ '}Offer Letter:</strong> {employee.asset_offer_letter || 'N/A'}</p>
           </div>
 
           <div style={{ marginBottom: '6mm' }}>
@@ -378,8 +434,41 @@ const EmployeeDetails = () => {
             </table>
           </div>
 
+          <div style={{ marginBottom: '6mm' }}>
+            <h3 style={{ borderBottom: '1px solid #ccc', paddingBottom: '1mm', fontSize: '12pt' }}>VIII. BACKGROUND VERIFICATION</h3>
+            {(() => {
+              try {
+                const bgc = JSON.parse(employee.background_verification || '{}');
+                if (!bgc.type) return <p>No background verification details provided.</p>;
+                return (
+                  <div style={{ fontSize: '9pt' }}>
+                    <p><strong>Verification Type:</strong> {bgc.type}</p>
+                    {bgc.type === 'FRESHER' && bgc.educational && (
+                      <p><strong>Educational Reference:</strong> {bgc.educational.college} (HOD: {bgc.educational.hod}, {bgc.educational.mobile}, {bgc.educational.email})</p>
+                    )}
+                    {bgc.type === 'EXPERIENCED' && bgc.company && (
+                      <div>
+                        {bgc.company.manager_name && <p><strong>Reporting Manager:</strong> {bgc.company.manager_name} ({bgc.company.manager_contact}, {bgc.company.manager_email})</p>}
+                        {bgc.company.hr_name && <p><strong>HR:</strong> {bgc.company.hr_name} ({bgc.company.hr_contact}, {bgc.company.hr_email})</p>}
+                      </div>
+                    )}
+                    <p><strong>House Type:</strong> {bgc.address?.house_type}</p>
+                    {bgc.address?.neighbour_name && <p><strong>Neighbour:</strong> {bgc.address.neighbour_name} ({bgc.address.neighbour_contact})</p>}
+                    {bgc.address?.owner_name && <p><strong>Owner:</strong> {bgc.address.owner_name} ({bgc.address.owner_contact})</p>}
+                    {bgc.address?.pg_manager && <p><strong>PG Manager:</strong> {bgc.address.pg_manager} ({bgc.address.pg_contact})</p>}
+                    <p><strong>Verified Address:</strong> {bgc.address?.current_address}</p>
+                    <p><strong>Personal References:</strong> Friend: {bgc.friend?.name} ({bgc.friend?.contact}, {bgc.friend?.email}) | Relative: {bgc.relative?.name} ({bgc.relative?.contact})</p>
+                    <p style={{ fontSize: '8pt', fontStyle: 'italic', marginTop: '1mm', color: '#555' }}>"Authorized company to contact references for verification purposes."</p>
+                  </div>
+                );
+              } catch (e) { return <p>Data processing error.</p>; }
+            })()}
+          </div>
+
           <div style={{ marginTop: '10mm', borderTop: '1px solid black', paddingTop: '5mm' }}>
-             <p style={{ fontSize: '9pt', fontStyle: 'italic' }}>I hereby declare that all the information provided above is true and correct to the best of my knowledge.</p>
+             <p style={{ fontSize: '7.5pt', fontStyle: 'italic', textAlign:'justify', color:'#444', lineHeight:'1.2' }}>
+               I hereby declare that I have read and accepted the Consent Form, POSH Policy, Whistleblower Policy, and the full Employee Terms & Conditions of Orbix Designs Pvt Ltd. I confirm that all information provided is true and correct.
+             </p>
              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10mm' }}>
                 <div style={{ textAlign: 'center' }}>
                   <p style={{ margin: 0, borderBottom: '1px solid black' }}>{employee.signature_name || employee.full_name}</p>
