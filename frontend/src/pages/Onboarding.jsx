@@ -11,12 +11,12 @@ const Onboarding = ({ isPublic }) => {
   const [step, setStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState({
-    status: 'Onboard',
-    file_no: '', full_name: '', father_mother_name: '', dob: '', gender: '', contact_number: '', blood_group: '', 
+    status: 'Trainee', // Changed default status to Trainee
+    file_no: '', full_name: '', father_mother_name: '', dob: '', gender: '', contact_number: '', blood_group: '',
     personal_email: '', marital_status: '', present_address: '', permanent_address: '',
-    employee_id: '', department: '', designation: '', date_of_joining: '', work_location: '', reporting_manager: '',
+    employee_id: '', department: '', designation: '', date_of_joining: '', work_location: 'PORUR', reporting_manager: '', // Set default work_location to PORUR
     pan_number: '', aadhaar_number: '', other_id: '',
-    emergency_contact_name: '', emergency_contact_relationship: '', emergency_contact_number: '', 
+    emergency_contact_name: '', emergency_contact_relationship: '', emergency_contact_number: '',
     father_husband_number: '', mother_wife_number: '', alternate_number: '',
     account_holder_name: '', account_number: '', bank_name: '', ifsc_code: '', branch: '',
     education_qualification: '', year_of_passing: '', institute: '',
@@ -150,6 +150,9 @@ const Onboarding = ({ isPublic }) => {
           <div className="form-group" style={{marginTop:'1.5rem'}}><label>PERMANENT ADDRESS</label><textarea name="permanent_address" value={formData.permanent_address} onChange={handleChange} required></textarea></div>
           <div className="form-group" style={{marginTop:'1.5rem'}}>
             <label>PHOTO (PASSPORT SIZE)</label>
+            <p style={{background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '1rem', borderRadius: '12px', fontSize: '0.85rem', marginBottom: '1.5rem', border: '1px solid rgba(59, 130, 246, 0.2)'}}>
+              <strong>PRO TIP:</strong> Please upload a <strong>neat and clear</strong> professional passport-size photo. This will be used for your official ID card.
+            </p>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <label className="btn" style={{ background: '#f1f5f9', border: '1px dashed #cbd5e1' }}>
                 <Upload size={18} style={{ marginRight: '0.5rem' }} /> Choose Image
@@ -164,16 +167,7 @@ const Onboarding = ({ isPublic }) => {
         <div>
           <h3 className="section-title">2. EMPLOYMENT DETAILS</h3>
           <div className="form-grid">
-            <div className="form-group"><label>EMPLOYEE STATUS</label>
-              <select name="status" value={formData.status} onChange={handleChange}>
-                <option value="Trainee">TRAINEE</option>
-                <option value="Onboard">ONBOARD</option>
-                <option value="Current Employee">CURRENT EMPLOYEE</option>
-                <option value="Bix Employee">BIX EMPLOYEE</option>
-                <option value="Bench">BENCH (NOTICE PERIOD)</option>
-                <option value="Resigned">RESIGNED</option>
-              </select>
-            </div>
+            {/* Removed status selector as default is 'Trainee' */}
             <div className="form-group"><label>DEPARTMENT</label><input name="department" value={formData.department} onChange={handleChange} required /></div>
             <div className="form-group"><label>DESIGNATION</label><input name="designation" value={formData.designation} onChange={handleChange} required /></div>
             <div className="form-group"><label>DATE OF JOINING</label><input type="date" name="date_of_joining" value={formData.date_of_joining} onChange={handleChange} required /></div>
@@ -251,7 +245,6 @@ const Onboarding = ({ isPublic }) => {
             <div key={idx} style={{marginBottom:'1.5rem', padding:'1.5rem', background:'rgba(255,255,255,0.02)', borderRadius:'12px', border:'1px solid var(--glass-border)'}}>
               <div className="form-grid">
                 <div className="form-group"><label>COMPANY</label><input value={job.company} onChange={(e) => updateEmployment(idx, 'company', e.target.value)} /></div>
-                <div className="form-group"><label>CRM</label><input value={job.crm} onChange={(e) => updateEmployment(idx, 'crm', e.target.value)} /></div>
                 <div className="form-group"><label>DESIGNATION</label><input value={job.designation} onChange={(e) => updateEmployment(idx, 'designation', e.target.value)} /></div>
                 <div className="form-group"><label>PERIOD</label><input value={job.period} onChange={(e) => updateEmployment(idx, 'period', e.target.value)} /></div>
               </div>
@@ -260,6 +253,9 @@ const Onboarding = ({ isPublic }) => {
           <button type="button" onClick={addEmployment} className="btn btn-secondary" style={{width:'100%', border:'1px dashed var(--glass-border)'}}>+ Add Employment History</button>
           
           <h3 className="section-title" style={{marginTop:'3rem'}}>7. SUPPORTING DOCUMENTS (UPLOAD)</h3>
+          <p style={{background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '1rem', borderRadius: '12px', fontSize: '0.85rem', marginBottom: '1.5rem', border: '1px solid rgba(59, 130, 246, 0.2)'}}>
+            <strong>NOTE:</strong> Please ensure all uploaded documents are <strong>neat and clear</strong> (PDFs or Images).
+          </p>
           <div className="form-grid">
             <div className="form-group">
               <label>BANK PASSBOOK</label>
@@ -391,15 +387,21 @@ const Onboarding = ({ isPublic }) => {
       case 7: return (
         <div className="legal-consent-step">
           <h3 className="section-title">9. DECLARATION & CONSENT</h3>
-          <div className="scroll-terms" style={{height:'400px', overflowY:'scroll', padding:'1.5rem', background:'rgba(255,255,255,0.02)', borderRadius:'12px', border:'1px solid var(--glass-border)', fontSize:'0.75rem', color:'var(--text-dim)', textAlign:'justify', marginBottom:'2rem'}}>
+          <div className="scroll-terms" style={{height:'350px', overflowY:'scroll', padding:'1.5rem', background:'rgba(255,255,255,0.02)', borderRadius:'12px', border:'1px solid var(--glass-border)', fontSize:'0.75rem', color:'var(--text-dim)', textAlign:'justify', marginBottom:'2rem'}}>
             <h4 style={{color:'white', marginBottom:'1rem'}}>CONSENT FORM</h4>
             <p>I, <strong>{formData.full_name || '________________________________'}</strong>, residing at <strong>{formData.present_address || '________________________________'}</strong>, hereby give my free, voluntary, specific, informed, and unconditional consent to ORBIX DESIGNS PRIVATE LIMITED for the purposes stated below.</p>
-            <p style={{marginTop:'0.5rem'}}>This consent is provided in connection with (tick as applicable):</p>
-            <p>☐ Employment ☐ Use & Verification of Documents / Records ☐ Training / Orientation/ Internship ☐ Other: _____________________</p>
-            <p>☐ Client / Vendor / Consultant Relationship</p>
-            <p>☐ Data Collection, Storage & Processing</p>
             
-            <h5 style={{color:'white', marginTop:'1rem'}}>SCOPE OF CONSENT</h5>
+            <p style={{marginTop:'1.5rem', fontWeight:'bold', color:'white'}}>This consent is provided in connection with (tick as applicable):</p>
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.5rem', margin:'1rem 0'}}>
+              <label style={{display:'flex', alignItems:'center', gap:'0.5rem'}}><input type="checkbox" required /> Employment</label>
+              <label style={{display:'flex', alignItems:'center', gap:'0.5rem'}}><input type="checkbox" required /> Use & Verification of Documents / Records</label>
+              <label style={{display:'flex', alignItems:'center', gap:'0.5rem'}}><input type="checkbox" required /> Training / Orientation / Internship</label>
+              <label style={{display:'flex', alignItems:'center', gap:'0.5rem'}}><input type="checkbox" required /> Data Collection, Storage & Processing</label>
+              <label style={{display:'flex', alignItems:'center', gap:'0.5rem'}}><input type="checkbox" /> Client / Vendor / Consultant Relationship</label>
+              <label style={{display:'flex', alignItems:'center', gap:'0.5rem'}}><input type="checkbox" /> Other: _____________________</label>
+            </div>
+
+            <p style={{marginTop:'1.5rem', fontWeight:'bold', color:'white'}}>SCOPE OF CONSENT</p>
             <ol style={{paddingLeft:'1.2rem'}}>
               <li>Collection, storage, processing, and use of personal and professional information for lawful business purposes.</li>
               <li>Maintenance of records (physical/digital) as per policy and law.</li>

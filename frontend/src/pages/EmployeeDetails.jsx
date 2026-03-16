@@ -410,7 +410,6 @@ const EmployeeDetails = () => {
               <thead>
                 <tr style={{ background: '#f5f5f5' }}>
                   <th style={{ border: '1px solid #ddd', padding: '1mm' }}>Company</th>
-                  <th style={{ border: '1px solid #ddd', padding: '1mm' }}>CRM</th>
                   <th style={{ border: '1px solid #ddd', padding: '1mm' }}>Designation</th>
                   <th style={{ border: '1px solid #ddd', padding: '1mm' }}>Period</th>
                 </tr>
@@ -419,11 +418,10 @@ const EmployeeDetails = () => {
                 {(() => {
                   try {
                     const exp = JSON.parse(employee.previous_employment || '[]');
-                    if (!exp.length) return <tr><td colSpan="4" style={{ border: '1px solid #ddd', padding: '1mm', textAlign: 'center' }}>No previous employment recorded.</td></tr>;
+                    if (!exp.length) return <tr><td colSpan="3" style={{ border: '1px solid #ddd', padding: '1mm', textAlign: 'center' }}>No previous employment recorded.</td></tr>;
                     return exp.map((job, idx) => (
                       <tr key={idx}>
                         <td style={{ border: '1px solid #ddd', padding: '1mm' }}>{job.company}</td>
-                        <td style={{ border: '1px solid #ddd', padding: '1mm' }}>{job.crm}</td>
                         <td style={{ border: '1px solid #ddd', padding: '1mm' }}>{job.designation}</td>
                         <td style={{ border: '1px solid #ddd', padding: '1mm' }}>{job.period}</td>
                       </tr>

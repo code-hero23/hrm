@@ -155,11 +155,18 @@ const EditEmployee = () => {
           <div className="form-group" style={{marginTop:'1.5rem'}}>
             <label>PHOTO (PASSPORT SIZE)</label>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <label className="btn" style={{ background: '#f1f5f9', border: '1px dashed #cbd5e1' }}>
-                <Upload size={18} style={{ marginRight: '0.5rem' }} /> {photo ? 'Change Image' : 'Choose New Image'}
-                <input type="file" hidden onChange={handlePhotoChange} accept="image/*" />
-              </label>
-              {photoPreview && <img src={photoPreview} style={{ width: '80px', height: '100px', objectFit: 'cover', borderRadius: '4px' }} alt="" />}
+              <div style={{ width: '120px', height: '140px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
+                  {photoPreview ? <img src={photoPreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : (formData.photo_path ? <img src={`${API_BASE_URL}${formData.photo_path}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : <div style={{width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', color:'#444'}}><UserCircle size={48} /></div>)}
+                </div>
+                <div style={{flex:1}}>
+                  <p style={{background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '0.75rem', borderRadius: '8px', fontSize: '0.75rem', marginBottom: '1rem', border: '1px solid rgba(59, 130, 246, 0.2)'}}>
+                    <strong>Reminder:</strong> Please upload a <strong>neat and clear</strong> professional photo.
+                  </p>
+                  <label className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <Upload size={16} /> Change Photo
+                    <input type="file" hidden onChange={handlePhotoChange} accept="image/*" />
+                  </label>
+                </div>
             </div>
           </div>
         </div>
@@ -420,7 +427,6 @@ const EditEmployee = () => {
             <div key={idx} style={{marginBottom:'1.5rem', padding:'1.5rem', background:'rgba(255,255,255,0.02)', borderRadius:'12px', border:'1px solid var(--glass-border)'}}>
               <div className="form-grid">
                 <div className="form-group"><label>COMPANY</label><input value={job.company} onChange={(e) => updateEmployment(idx, 'company', e.target.value)} /></div>
-                <div className="form-group"><label>CRM</label><input value={job.crm} onChange={(e) => updateEmployment(idx, 'crm', e.target.value)} /></div>
                 <div className="form-group"><label>DESIGNATION</label><input value={job.designation} onChange={(e) => updateEmployment(idx, 'designation', e.target.value)} /></div>
                 <div className="form-group"><label>PERIOD</label><input value={job.period} onChange={(e) => updateEmployment(idx, 'period', e.target.value)} /></div>
               </div>
@@ -429,6 +435,9 @@ const EditEmployee = () => {
           <button type="button" onClick={addEmployment} className="btn btn-secondary" style={{width:'100%', border:'1px dashed var(--glass-border)'}}>+ Add Employment History</button>
           
           <h3 className="section-title" style={{marginTop:'3rem'}}>7. SUPPORTING DOCUMENTS (UPLOAD)</h3>
+          <p style={{background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '1rem', borderRadius: '12px', fontSize: '0.8rem', marginBottom: '1.5rem', border: '1px solid rgba(59, 130, 246, 0.2)'}}>
+            <strong>Admin Note:</strong> Ensure all updated documents are <strong>neat and clear</strong> (PDFs or Images).
+          </p>
           <div className="form-grid">
             {[
               { label: 'BANK PASSBOOK', name: 'bank_passbook', path: formData.bank_passbook_path },
