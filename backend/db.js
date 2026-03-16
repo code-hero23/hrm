@@ -11,41 +11,43 @@ if (!fs.existsSync(dataDir)) {
 let dbPath = path.join(dataDir, 'database.sqlite');
 const rootDbPath = path.join(__dirname, 'database.sqlite');
 
-// Recovery Logic: Move database from root to data folder if it contains data
+// Diagnostics and Aggressive Recovery Logic
 const rootDbExists = fs.existsSync(rootDbPath);
 const dataDbExists = fs.existsSync(dbPath);
 
-if (rootDbExists) {
-  const rootSize = fs.statSync(rootDbPath).size;
-  const dataSize = dataDbExists ? fs.statSync(dbPath).size : 0;
+console.log('--- DATABASE DIAGNOSTICS ---');
+console.log('Root DB Path:', rootDbPath, '| Exists:', rootDbExists);
+console.log('Data DB Path:', dbPath, '| Exists:', dataDbExists);
 
-  // Migrate if data DB doesn't exist OR if root DB is significantly larger (indicates more data)
-  if (!dataDbExists || (rootSize > dataSize + 1024)) {
-    console.log(`RECOVERY: Migrating database (Root: ${rootSize} bytes, Data: ${dataSize} bytes)`);
+// We use a separate connection for diagnostics to avoid locking the main one
+if (rootDbExists) {
     try {
-      if (dataDbExists) {
-        fs.copyFileSync(dbPath, dbPath + '.bak'); // Backup existing
-      }
-      fs.copyFileSync(rootDbPath, dbPath);
-      console.log('RECOVERY: Migration successful. VPS data should be restored.');
-    } catch (err) {
-      console.error('RECOVERY FAILED:', err.message);
+        const rootSize = fs.statSync(rootDbPath).size;
+        console.log(`Root DB File Size: ${rootSize} bytes`);
+
+        // Aggressive Migration: If root database is found, we assume it's the one with data
+        // especially if it's typical SQLite size (usually >= 20480 for a few records)
+        if (rootSize > 0) {
+            const dataSize = dataDbExists ? fs.statSync(dbPath).size : 0;
+            
+            // If Data DB is significantly smaller (like empty) or missing, MOVE ROOT TO DATA
+            if (!dataDbExists || rootSize > dataSize) {
+                console.log('!!! RECOVERY: DATA MISMATCH DETECTED !!!');
+                console.log(`Root DB (${rootSize}) is likely the correct one. Data DB is ${dataSize}.`);
+                console.log('Migrating root data to persistent volume...');
+                
+                if (dataDbExists) fs.copyFileSync(dbPath, dbPath + '.bak_' + Date.now());
+                fs.copyFileSync(rootDbPath, dbPath);
+                
+                console.log('RECOVERY: Migration successful. Connecting to restored data.');
+            }
+        }
+    } catch (e) {
+        console.error('RECOVERY LOGIC ERROR:', e.message);
     }
-  }
 }
 
 const db = new sqlite3.Database(dbPath);
-
-// Diagnostics
-db.get("SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='employees'", (err, row) => {
-  if (row && row.count > 0) {
-    db.get("SELECT count(*) as total FROM employees", (err, res) => {
-      console.log(`DATABASE STATUS: employees table found with ${res ? res.total : 0} records.`);
-    });
-  } else {
-    console.log('DATABASE STATUS: employees table not found. Brand new database.');
-  }
-});
 
 db.serialize(() => {
   db.run(`
