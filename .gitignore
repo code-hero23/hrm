@@ -12,6 +12,7 @@ frontend/node_modules/
 backend/.env
 frontend/.env
 backend/data/
+backend/database.sqlite
 backend/uploads/*
 !backend/uploads/.gitkeep
 
