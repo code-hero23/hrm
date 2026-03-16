@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, Save, Upload } from 'lucide-react';
+import API_BASE_URL from '../config';
 
 const Onboarding = ({ isPublic }) => {
   const navigate = useNavigate();
@@ -47,7 +48,7 @@ const Onboarding = ({ isPublic }) => {
     if (photo) data.append('photo', photo);
 
     try {
-      await axios.post('http://localhost:5000/api/employees', data);
+      await axios.post(`${API_BASE_URL}/api/employees`, data);
       alert('Employee onboarded successfully!');
       navigate('/');
     } catch (err) {

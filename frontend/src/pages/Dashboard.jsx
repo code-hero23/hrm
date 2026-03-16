@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Search, UserCircle, Filter, Share2, Copy, Check } from 'lucide-react';
+import API_BASE_URL from '../config';
 
 const Dashboard = () => {
   const [employees, setEmployees] = useState([]);
@@ -17,7 +18,7 @@ const Dashboard = () => {
   const fetchEmployees = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`http://localhost:5000/api/employees`);
+      const res = await axios.get(`${API_BASE_URL}/api/employees`);
       setEmployees(res.data);
     } catch (err) {
       console.error(err);
@@ -164,7 +165,7 @@ const Dashboard = () => {
                 <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
                   <div style={{ width: '80px', height: '80px', borderRadius: '16px', background: 'rgba(255,255,255,0.05)', overflow: 'hidden', border: '1px solid var(--glass-border)', flexShrink: 0 }}>
                     {emp.photo_path ? (
-                      <img src={`http://localhost:5000${emp.photo_path}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={`${API_BASE_URL}${emp.photo_path}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <UserCircle size={40} color="#475569" />

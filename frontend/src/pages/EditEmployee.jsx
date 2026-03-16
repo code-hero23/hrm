@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, Save, Upload, ArrowLeft } from 'lucide-react';
+import API_BASE_URL from '../config';
 
 const EditEmployee = () => {
   const { id } = useParams();
@@ -28,10 +29,10 @@ const EditEmployee = () => {
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/employees/${id}`);
+        const res = await axios.get(`${API_BASE_URL}/api/employees/${id}`);
         setFormData(res.data);
         if (res.data.photo_path) {
-          setPhotoPreview(`http://localhost:5000${res.data.photo_path}`);
+          setPhotoPreview(`${API_BASE_URL}${res.data.photo_path}`);
         }
       } catch (err) {
         console.error(err);
@@ -68,7 +69,7 @@ const EditEmployee = () => {
     if (photo) data.append('photo', photo);
 
     try {
-      await axios.put(`http://localhost:5000/api/employees/${id}`, data);
+      await axios.put(`${API_BASE_URL}/api/employees/${id}`, data);
       alert('Employee updated successfully!');
       navigate(`/employee/${id}`);
     } catch (err) {

@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Printer, Download, ArrowLeft, Trash2, CheckCircle, UserCircle, Edit3, ChevronRight } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import API_BASE_URL from '../config';
 
 const StatusDropdown = ({ currentStatus, onUpdate }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -103,7 +104,7 @@ const EmployeeDetails = () => {
 
   const fetchEmployee = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/employees/${id}`);
+      const res = await axios.get(`${API_BASE_URL}/api/employees/${id}`);
       setEmployee(res.data);
     } catch (err) {
       console.error(err);
@@ -113,7 +114,7 @@ const EmployeeDetails = () => {
 
   const updateStatus = async (newStatus) => {
     try {
-      await axios.patch(`http://localhost:5000/api/employees/${id}`, { status: newStatus });
+      await axios.patch(`${API_BASE_URL}/api/employees/${id}`, { status: newStatus });
       fetchEmployee();
     } catch (err) {
       console.error(err);
@@ -162,7 +163,7 @@ const EmployeeDetails = () => {
         <div style={{ display: 'flex', gap: '3rem', alignItems: 'flex-start' }}>
           <div style={{ width: '180px', height: '220px', borderRadius: '20px', background: 'rgba(255,255,255,0.02)', overflow: 'hidden', border: '1px solid var(--glass-border)', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
             {employee.photo_path ? (
-              <img src={`http://localhost:5000${employee.photo_path}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+              <img src={`${API_BASE_URL}${employee.photo_path}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
             ) : (
               <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' }}>
                 <UserCircle size={64} />
@@ -238,7 +239,7 @@ const EmployeeDetails = () => {
             </div>
             <div style={{ width: '40mm', textAlign: 'right' }}>
                {employee.photo_path ? (
-                 <img src={`http://localhost:5000${employee.photo_path}`} style={{ width: '35mm', height: '45mm', border: '1px solid black', objectFit: 'cover' }} />
+                 <img src={`${API_BASE_URL}${employee.photo_path}`} style={{ width: '35mm', height: '45mm', border: '1px solid black', objectFit: 'cover' }} />
                ) : (
                  <div style={{ width: '35mm', height: '45mm', border: '1px solid black', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8pt' }}>NO PHOTO</div>
                )}

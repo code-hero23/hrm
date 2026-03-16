@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Lock, User, Eye, EyeOff } from 'lucide-react';
+import API_BASE_URL from '../config';
 
 const Login = ({ onLogin }) => {
     const [username, setUsername] = useState('');
@@ -11,7 +12,7 @@ const Login = ({ onLogin }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post('http://localhost:5000/api/login', { username, password });
+            const res = await axios.post(`${API_BASE_URL}/api/login`, { username, password });
             localStorage.setItem('adminUser', JSON.stringify(res.data));
             onLogin(res.data);
         } catch (err) {

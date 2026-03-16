@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Upload, FileUp, CheckCircle, AlertCircle, Trash2, Save } from 'lucide-react';
+import API_BASE_URL from '../config';
 
 const BulkImport = () => {
     const [data, setData] = useState([]);
@@ -32,7 +33,7 @@ const BulkImport = () => {
         if (data.length === 0) return;
         setLoading(true);
         try {
-            await axios.post('http://localhost:5000/api/employees/bulk', { employees: data });
+            await axios.post(`${API_BASE_URL}/api/employees/bulk`, { employees: data });
             setSuccess(true);
             setTimeout(() => navigate('/'), 2000);
         } catch (err) {
