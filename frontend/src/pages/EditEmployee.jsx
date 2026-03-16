@@ -19,12 +19,20 @@ const EditEmployee = () => {
     father_husband_number: '', mother_wife_number: '', alternate_number: '',
     account_holder_name: '', account_number: '', bank_name: '', ifsc_code: '', branch: '',
     education_qualification: '', year_of_passing: '', institute: '',
-    office_sim: '', laptop_system: '', official_email_crm: '',
+    official_email_crm: '', official_email_crm_date: '',
+    bank_passbook_path: '', pan_card_path: '', aadhaar_card_path: '', educational_certificate_path: '',
+    signature_name: '',
     documents_submitted: JSON.stringify({}),
     previous_employment: JSON.stringify([])
   });
   const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [docs, setDocs] = useState({
+    bank_passbook: null,
+    pan_card: null,
+    aadhaar_card: null,
+    educational_certificate: null
+  });
 
   useEffect(() => {
     const fetchEmployee = async () => {
@@ -48,16 +56,29 @@ const EditEmployee = () => {
     setFormData(prev => ({ ...prev, [name]: value.toUpperCase() }));
   };
 
-  const handlePhotoChange = (e) => {
+  const handleFileChange = (e, name) => {
     const file = e.target.files[0];
     if (file) {
-      setPhoto(file);
-      setPhotoPreview(URL.createObjectURL(file));
+      setDocs(prev => ({ ...prev, [name]: file }));
     }
   };
 
   const nextStep = () => setStep(prev => prev + 1);
   const prevStep = () => setStep(prev => prev - 1);
+
+  const addEmployment = () => {
+    const current = JSON.parse(formData.previous_employment || '[]');
+    setFormData(prev => ({
+      ...prev,
+      previous_employment: JSON.stringify([...current, { company: '', crm: '', designation: '', period: '' }])
+    }));
+  };
+
+  const updateEmployment = (index, field, value) => {
+    const current = JSON.parse(formData.previous_employment || '[]');
+    current[index][field] = value.toUpperCase();
+    setFormData(prev => ({ ...prev, previous_employment: JSON.stringify(current) }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -67,6 +88,9 @@ const EditEmployee = () => {
         data.append(key, formData[key] || '');
     });
     if (photo) data.append('photo', photo);
+    Object.keys(docs).forEach(key => {
+      if (docs[key]) data.append(key, docs[key]);
+    });
 
     try {
       await axios.put(`${API_BASE_URL}/api/employees/${id}`, data);
@@ -175,20 +199,57 @@ const EditEmployee = () => {
           <div className="form-grid">
             <div className="form-group"><label>QUALIFICATION</label><input name="education_qualification" value={formData.education_qualification} onChange={handleChange} /></div>
             <div className="form-group"><label>YEAR OF PASSING</label><input name="year_of_passing" value={formData.year_of_passing} onChange={handleChange} /></div>
-            <div className="form-group"><label>INSTITUTE</label><input name="institute" value={formData.institute} onChange={handleChange} /></div>
+            <div className="form-group"><label>INSTITUTE</label><input name="institute" value={formData.institute || ''} onChange={handleChange} /></div>
+          </div>
+          <h3 className="section-title">5. OFFICE ASSETS & SYSTEMS</h3>
+          <div className="form-grid">
+            <div className="form-group"><label>OFFICE SIM</label><input name="office_sim" value={formData.office_sim || ''} onChange={handleChange} /></div>
+            <div className="form-group"><label>SIM ALLOCATED DATE</label><input type="date" name="office_sim_date" value={formData.office_sim_date || ''} onChange={handleChange} /></div>
+            <div className="form-group"><label>LAPTOP/SYSTEM</label><input name="laptop_system" value={formData.laptop_system || ''} onChange={handleChange} /></div>
+            <div className="form-group"><label>LAPTOP ALLOCATED DATE</label><input type="date" name="laptop_system_date" value={formData.laptop_system_date || ''} onChange={handleChange} /></div>
+            <div className="form-group"><label>OFFICIAL EMAIL/CRM</label><input name="official_email_crm" value={formData.official_email_crm || ''} onChange={handleChange} /></div>
+            <div className="form-group"><label>CRM ALLOCATED DATE</label><input type="date" name="official_email_crm_date" value={formData.official_email_crm_date || ''} onChange={handleChange} /></div>
           </div>
         </div>
       );
       case 5: return (
         <div>
-          <h3 className="section-title">5. OFFICE ASSETS & SUBMISSIONS</h3>
+          <h3 className="section-title">6. PREVIOUS EMPLOYMENT</h3>
+          {JSON.parse(formData.previous_employment || '[]').map((job, idx) => (
+            <div key={idx} style={{marginBottom:'1.5rem', padding:'1.5rem', background:'rgba(255,255,255,0.02)', borderRadius:'12px', border:'1px solid var(--glass-border)'}}>
+              <div className="form-grid">
+                <div className="form-group"><label>COMPANY</label><input value={job.company} onChange={(e) => updateEmployment(idx, 'company', e.target.value)} /></div>
+                <div className="form-group"><label>CRM</label><input value={job.crm} onChange={(e) => updateEmployment(idx, 'crm', e.target.value)} /></div>
+                <div className="form-group"><label>DESIGNATION</label><input value={job.designation} onChange={(e) => updateEmployment(idx, 'designation', e.target.value)} /></div>
+                <div className="form-group"><label>PERIOD</label><input value={job.period} onChange={(e) => updateEmployment(idx, 'period', e.target.value)} /></div>
+              </div>
+            </div>
+          ))}
+          <button type="button" onClick={addEmployment} className="btn btn-secondary" style={{width:'100%', border:'1px dashed var(--glass-border)'}}>+ Add Employment History</button>
+          
+          <h3 className="section-title" style={{marginTop:'3rem'}}>7. SUPPORTING DOCUMENTS (UPLOAD)</h3>
           <div className="form-grid">
-            <div className="form-group"><label>OFFICE SIM</label><input name="office_sim" value={formData.office_sim} onChange={handleChange} /></div>
-            <div className="form-group"><label>LAPTOP/SYSTEM</label><input name="laptop_system" value={formData.laptop_system} onChange={handleChange} /></div>
-            <div className="form-group"><label>OFFICIAL EMAIL/CRM</label><input name="official_email_crm" value={formData.official_email_crm} onChange={handleChange} /></div>
+            {[
+              { label: 'BANK PASSBOOK', name: 'bank_passbook', path: formData.bank_passbook_path },
+              { label: 'PAN CARD', name: 'pan_card', path: formData.pan_card_path },
+              { label: 'AADHAAR CARD', name: 'aadhaar_card', path: formData.aadhaar_card_path },
+              { label: 'EDUCATIONAL CERTIFICATE', name: 'educational_certificate', path: formData.educational_certificate_path }
+            ].map(doc => (
+              <div className="form-group" key={doc.name}>
+                <label>{doc.label}</label>
+                <div style={{display:'flex', gap:'1rem', alignItems:'center'}}>
+                  <input type="file" onChange={(e) => handleFileChange(e, doc.name)} accept="image/*,.pdf" style={{fontSize:'0.7rem'}} />
+                  {doc.path && !docs[doc.name] && <a href={`${API_BASE_URL}${doc.path}`} target="_blank" rel="noreferrer" style={{fontSize:'0.7rem', color:'#60a5fa'}}>View Existing</a>}
+                </div>
+                {docs[doc.name] && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs[doc.name].name}</p>}
+              </div>
+            ))}
           </div>
-          <div className="card" style={{marginTop:'2rem', background:'rgba(59, 130, 246, 0.05)', borderColor:'rgba(59, 130, 246, 0.2)'}}>
-            <p style={{fontSize:'0.875rem', fontWeight:600}}>Review mode enabled. All fields are editable.</p>
+          
+          <h3 className="section-title" style={{marginTop:'3rem'}}>8. DIGITAL SIGNATURE</h3>
+          <div className="form-group">
+            <label>SIGNATURE NAME</label>
+            <input name="signature_name" value={formData.signature_name || ''} onChange={handleChange} />
           </div>
         </div>
       );

@@ -71,7 +71,13 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + path.extname(file.originalname));
   }
 });
-const upload = multer({ storage });
+const upload = multer({ storage }).fields([
+  { name: 'photo', maxCount: 1 },
+  { name: 'bank_passbook', maxCount: 1 },
+  { name: 'pan_card', maxCount: 1 },
+  { name: 'aadhaar_card', maxCount: 1 },
+  { name: 'educational_certificate', maxCount: 1 }
+]);
 
 // Routes
 app.get('/api/employees', (req, res) => {
@@ -98,9 +104,15 @@ app.get('/api/employees/:id', (req, res) => {
   });
 });
 
-app.post('/api/employees', upload.single('photo'), (req, res) => {
+app.post('/api/employees', upload, (req, res) => {
   const data = req.body;
-  const photo_path = req.file ? `/uploads/${req.file.filename}` : null;
+  const files = req.files || {};
+  
+  const photo_path = files.photo ? `/uploads/${files.photo[0].filename}` : null;
+  const bank_passbook_path = files.bank_passbook ? `/uploads/${files.bank_passbook[0].filename}` : null;
+  const pan_card_path = files.pan_card ? `/uploads/${files.pan_card[0].filename}` : null;
+  const aadhaar_card_path = files.aadhaar_card ? `/uploads/${files.aadhaar_card[0].filename}` : null;
+  const educational_certificate_path = files.educational_certificate ? `/uploads/${files.educational_certificate[0].filename}` : null;
 
   const query = `
     INSERT INTO employees (
@@ -112,8 +124,9 @@ app.post('/api/employees', upload.single('photo'), (req, res) => {
       father_husband_number, mother_wife_number, alternate_number,
       account_holder_name, account_number, bank_name, ifsc_code, branch,
       documents_submitted, education_qualification, year_of_passing, institute, previous_employment,
-      office_sim, office_sim_date, laptop_system, laptop_system_date, official_email_crm, official_email_crm_date
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      office_sim, office_sim_date, laptop_system, laptop_system_date, official_email_crm, official_email_crm_date,
+      bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, signature_name
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `;
 
   const params = [
@@ -125,7 +138,8 @@ app.post('/api/employees', upload.single('photo'), (req, res) => {
     data.father_husband_number, data.mother_wife_number, data.alternate_number,
     data.account_holder_name, data.account_number, data.bank_name, data.ifsc_code, data.branch,
     data.documents_submitted, data.education_qualification, data.year_of_passing, data.institute, data.previous_employment,
-    data.office_sim, data.office_sim_date, data.laptop_system, data.laptop_system_date, data.official_email_crm, data.official_email_crm_date
+    data.office_sim, data.office_sim_date, data.laptop_system, data.laptop_system_date, data.official_email_crm, data.official_email_crm_date,
+    bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name
   ];
 
   db.run(query, params, function(err) {
@@ -173,10 +187,16 @@ app.post('/api/employees/bulk', (req, res) => {
   stmt.finalize();
 });
 
-app.put('/api/employees/:id', upload.single('photo'), (req, res) => {
+app.put('/api/employees/:id', upload, (req, res) => {
   const data = req.body;
-  const photo_path = req.file ? `/uploads/${req.file.filename}` : data.photo_path;
+  const files = req.files || {};
   
+  const photo_path = files.photo ? `/uploads/${files.photo[0].filename}` : data.photo_path;
+  const bank_passbook_path = files.bank_passbook ? `/uploads/${files.bank_passbook[0].filename}` : data.bank_passbook_path;
+  const pan_card_path = files.pan_card ? `/uploads/${files.pan_card[0].filename}` : data.pan_card_path;
+  const aadhaar_card_path = files.aadhaar_card ? `/uploads/${files.aadhaar_card[0].filename}` : data.aadhaar_card_path;
+  const educational_certificate_path = files.educational_certificate ? `/uploads/${files.educational_certificate[0].filename}` : data.educational_certificate_path;
+
   const query = `
     UPDATE employees SET 
       status=?, file_no=?, full_name=?, father_mother_name=?, dob=?, gender=?, contact_number=?, blood_group=?, 
@@ -188,7 +208,8 @@ app.put('/api/employees/:id', upload.single('photo'), (req, res) => {
       account_holder_name=?, account_number=?, bank_name=?, ifsc_code=?, branch=?,
       documents_submitted=?, education_qualification=?, year_of_passing=?, institute=?,
       previous_employment=?, office_sim=?, office_sim_date=?, laptop_system=?, 
-      laptop_system_date=?, official_email_crm=?, official_email_crm_date=?
+      laptop_system_date=?, official_email_crm=?, official_email_crm_date=?,
+      bank_passbook_path=?, pan_card_path=?, aadhaar_card_path=?, educational_certificate_path=?, signature_name=?
     WHERE id = ?
   `;
 
@@ -203,6 +224,7 @@ app.put('/api/employees/:id', upload.single('photo'), (req, res) => {
     data.documents_submitted, data.education_qualification, data.year_of_passing, data.institute,
     data.previous_employment, data.office_sim, data.office_sim_date, data.laptop_system, 
     data.laptop_system_date, data.official_email_crm, data.official_email_crm_date,
+    bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name,
     req.params.id
   ];
 

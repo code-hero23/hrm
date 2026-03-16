@@ -75,6 +75,13 @@ db.serialize(() => {
       laptop_system_date TEXT,
       official_email_crm TEXT,
       official_email_crm_date TEXT,
+      
+      -- Supporting Documents
+      bank_passbook_path TEXT,
+      pan_card_path TEXT,
+      aadhaar_card_path TEXT,
+      educational_certificate_path TEXT,
+      signature_name TEXT,
 
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )

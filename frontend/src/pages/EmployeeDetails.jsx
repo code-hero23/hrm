@@ -213,6 +213,33 @@ const EmployeeDetails = () => {
           <div className="form-group"><label>IFSC Code</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.ifsc_code || '—'}</p></div>
           <div className="form-group"><label>Bank & Branch</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.bank_name ? `${employee.bank_name} - ${employee.branch}` : '—'}</p></div>
         </div>
+
+        <div className="section-title">Office Assets & Systems</div>
+        <div className="form-grid">
+          <div className="form-group"><label>Office SIM</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.office_sim || '—'} {employee.office_sim_date && `(Allocated: ${employee.office_sim_date})`}</p></div>
+          <div className="form-group"><label>Laptop/System</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.laptop_system || '—'} {employee.laptop_system_date && `(Allocated: ${employee.laptop_system_date})`}</p></div>
+          <div className="form-group"><label>Official Email/CRM</label><p style={{fontSize: '1rem', fontWeight: 500, textTransform:'none'}}>{employee.official_email_crm || '—'} {employee.official_email_crm_date && `(Allocated: ${employee.official_email_crm_date})`}</p></div>
+        </div>
+
+        <div className="section-title">Supporting Documents</div>
+        <div className="form-grid">
+          <div className="form-group">
+            <label>Bank Passbook</label>
+            {employee.bank_passbook_path ? <a href={`${API_BASE_URL}${employee.bank_passbook_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee">View Document</a> : <p>—</p>}
+          </div>
+          <div className="form-group">
+            <label>PAN Card</label>
+            {employee.pan_card_path ? <a href={`${API_BASE_URL}${employee.pan_card_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee">View Document</a> : <p>—</p>}
+          </div>
+          <div className="form-group">
+            <label>Aadhaar Card</label>
+            {employee.aadhaar_card_path ? <a href={`${API_BASE_URL}${employee.aadhaar_card_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee">View Document</a> : <p>—</p>}
+          </div>
+          <div className="form-group">
+            <label>Educational Certificate</label>
+            {employee.educational_certificate_path ? <a href={`${API_BASE_URL}${employee.educational_certificate_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee">View Document</a> : <p>—</p>}
+          </div>
+        </div>
       </div>
 
 
@@ -311,6 +338,7 @@ const EmployeeDetails = () => {
               <thead>
                 <tr style={{ background: '#f5f5f5' }}>
                   <th style={{ border: '1px solid #ddd', padding: '1mm' }}>Company</th>
+                  <th style={{ border: '1px solid #ddd', padding: '1mm' }}>CRM</th>
                   <th style={{ border: '1px solid #ddd', padding: '1mm' }}>Designation</th>
                   <th style={{ border: '1px solid #ddd', padding: '1mm' }}>Period</th>
                 </tr>
@@ -319,15 +347,16 @@ const EmployeeDetails = () => {
                 {(() => {
                   try {
                     const exp = JSON.parse(employee.previous_employment || '[]');
-                    if (!exp.length) return <tr><td colSpan="3" style={{ border: '1px solid #ddd', padding: '1mm', textAlign: 'center' }}>No previous employment recorded.</td></tr>;
+                    if (!exp.length) return <tr><td colSpan="4" style={{ border: '1px solid #ddd', padding: '1mm', textAlign: 'center' }}>No previous employment recorded.</td></tr>;
                     return exp.map((job, idx) => (
                       <tr key={idx}>
                         <td style={{ border: '1px solid #ddd', padding: '1mm' }}>{job.company}</td>
+                        <td style={{ border: '1px solid #ddd', padding: '1mm' }}>{job.crm}</td>
                         <td style={{ border: '1px solid #ddd', padding: '1mm' }}>{job.designation}</td>
                         <td style={{ border: '1px solid #ddd', padding: '1mm' }}>{job.period}</td>
                       </tr>
                     ));
-                  } catch (e) { return <tr><td colSpan="3" style={{ textAlign: 'center' }}>Error parsing experience data.</td></tr>; }
+                  } catch (e) { return <tr><td colSpan="4" style={{ textAlign: 'center' }}>Error parsing experience data.</td></tr>; }
                 })()}
               </tbody>
             </table>
@@ -337,7 +366,7 @@ const EmployeeDetails = () => {
              <p style={{ fontSize: '9pt', fontStyle: 'italic' }}>I hereby declare that all the information provided above is true and correct to the best of my knowledge.</p>
              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10mm' }}>
                 <div style={{ textAlign: 'center' }}>
-                  <p style={{ margin: 0 }}>__________________________</p>
+                  <p style={{ margin: 0, borderBottom: '1px solid black' }}>{employee.signature_name || employee.full_name}</p>
                   <p style={{ fontSize: '9pt' }}>Employee Signature</p>
                 </div>
                 <div style={{ textAlign: 'center' }}>

@@ -18,12 +18,19 @@ const Onboarding = ({ isPublic }) => {
     father_husband_number: '', mother_wife_number: '', alternate_number: '',
     account_holder_name: '', account_number: '', bank_name: '', ifsc_code: '', branch: '',
     education_qualification: '', year_of_passing: '', institute: '',
-    office_sim: '', laptop_system: '', official_email_crm: '',
+    official_email_crm: '', official_email_crm_date: '',
+    signature_name: '',
     documents_submitted: JSON.stringify({}),
     previous_employment: JSON.stringify([])
   });
   const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [docs, setDocs] = useState({
+    bank_passbook: null,
+    pan_card: null,
+    aadhaar_card: null,
+    educational_certificate: null
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,14 +45,38 @@ const Onboarding = ({ isPublic }) => {
     }
   };
 
+  const handleFileChange = (e, name) => {
+    const file = e.target.files[0];
+    if (file) {
+      setDocs(prev => ({ ...prev, [name]: file }));
+    }
+  };
+
   const nextStep = () => setStep(prev => prev + 1);
   const prevStep = () => setStep(prev => prev - 1);
+  
+  const addEmployment = () => {
+    const current = JSON.parse(formData.previous_employment);
+    setFormData(prev => ({
+      ...prev,
+      previous_employment: JSON.stringify([...current, { company: '', crm: '', designation: '', period: '' }])
+    }));
+  };
+
+  const updateEmployment = (index, field, value) => {
+    const current = JSON.parse(formData.previous_employment);
+    current[index][field] = value.toUpperCase();
+    setFormData(prev => ({ ...prev, previous_employment: JSON.stringify(current) }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData();
     Object.keys(formData).forEach(key => data.append(key, formData[key]));
     if (photo) data.append('photo', photo);
+    Object.keys(docs).forEach(key => {
+      if (docs[key]) data.append(key, docs[key]);
+    });
 
     try {
       await axios.post(`${API_BASE_URL}/api/employees`, data);
@@ -159,11 +190,60 @@ const Onboarding = ({ isPublic }) => {
             <div className="form-group"><label>YEAR OF PASSING</label><input name="year_of_passing" value={formData.year_of_passing} onChange={handleChange} /></div>
             <div className="form-group"><label>INSTITUTE</label><input name="institute" value={formData.institute} onChange={handleChange} /></div>
           </div>
+          <h3 className="section-title">5. OFFICE ASSETS & SYSTEMS</h3>
+          <div className="form-grid">
+            <div className="form-group"><label>OFFICE SIM</label><input name="office_sim" value={formData.office_sim} onChange={handleChange} /></div>
+            <div className="form-group"><label>SIM ALLOCATED DATE</label><input type="date" name="office_sim_date" value={formData.office_sim_date} onChange={handleChange} /></div>
+            <div className="form-group"><label>LAPTOP/SYSTEM</label><input name="laptop_system" value={formData.laptop_system} onChange={handleChange} /></div>
+            <div className="form-group"><label>LAPTOP ALLOCATED DATE</label><input type="date" name="laptop_system_date" value={formData.laptop_system_date} onChange={handleChange} /></div>
+            <div className="form-group"><label>OFFICIAL EMAIL/CRM</label><input name="official_email_crm" value={formData.official_email_crm} onChange={handleChange} /></div>
+            <div className="form-group"><label>CRM ALLOCATED DATE</label><input type="date" name="official_email_crm_date" value={formData.official_email_crm_date} onChange={handleChange} /></div>
+          </div>
         </div>
       );
       case 5: return (
         <div>
-          <h3 className="section-title">6. DECLARATION & CONSENT</h3>
+          <h3 className="section-title">6. PREVIOUS EMPLOYMENT</h3>
+          {JSON.parse(formData.previous_employment).map((job, idx) => (
+            <div key={idx} style={{marginBottom:'1.5rem', padding:'1.5rem', background:'rgba(255,255,255,0.02)', borderRadius:'12px', border:'1px solid var(--glass-border)'}}>
+              <div className="form-grid">
+                <div className="form-group"><label>COMPANY</label><input value={job.company} onChange={(e) => updateEmployment(idx, 'company', e.target.value)} /></div>
+                <div className="form-group"><label>CRM</label><input value={job.crm} onChange={(e) => updateEmployment(idx, 'crm', e.target.value)} /></div>
+                <div className="form-group"><label>DESIGNATION</label><input value={job.designation} onChange={(e) => updateEmployment(idx, 'designation', e.target.value)} /></div>
+                <div className="form-group"><label>PERIOD</label><input value={job.period} onChange={(e) => updateEmployment(idx, 'period', e.target.value)} /></div>
+              </div>
+            </div>
+          ))}
+          <button type="button" onClick={addEmployment} className="btn btn-secondary" style={{width:'100%', border:'1px dashed var(--glass-border)'}}>+ Add Employment History</button>
+          
+          <h3 className="section-title" style={{marginTop:'3rem'}}>7. SUPPORTING DOCUMENTS (UPLOAD)</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label>BANK PASSBOOK</label>
+              <input type="file" onChange={(e) => handleFileChange(e, 'bank_passbook')} accept="image/*,.pdf" />
+              {docs.bank_passbook && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.bank_passbook.name}</p>}
+            </div>
+            <div className="form-group">
+              <label>PAN CARD</label>
+              <input type="file" onChange={(e) => handleFileChange(e, 'pan_card')} accept="image/*,.pdf" />
+              {docs.pan_card && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.pan_card.name}</p>}
+            </div>
+            <div className="form-group">
+              <label>AADHAAR CARD</label>
+              <input type="file" onChange={(e) => handleFileChange(e, 'aadhaar_card')} accept="image/*,.pdf" />
+              {docs.aadhaar_card && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.aadhaar_card.name}</p>}
+            </div>
+            <div className="form-group">
+              <label>EDUCATIONAL CERTIFICATE</label>
+              <input type="file" onChange={(e) => handleFileChange(e, 'educational_certificate')} accept="image/*,.pdf" />
+              {docs.educational_certificate && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.educational_certificate.name}</p>}
+            </div>
+          </div>
+        </div>
+      );
+      case 6: return (
+        <div>
+          <h3 className="section-title">8. DECLARATION & CONSENT</h3>
           <div className="card" style={{fontSize:'0.85rem', color:'var(--text-dim)', marginBottom:'2rem'}}>
             <p>I hereby declare that all the above information is true to the best of my knowledge. I understand that any false information may lead to termination. I also acknowledge that the original certificates submitted will be returned upon completion of exit formalities.</p>
             <p style={{marginTop:'1rem'}}>I give my free, voluntary, specific, informed, and unconditional consent to ORBIX DESIGNS PRIVATE LIMITED for Data Collection, Storage & Processing.</p>
@@ -200,7 +280,7 @@ const Onboarding = ({ isPublic }) => {
           <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', marginTop: '0.25rem' }}>Please fill all fields in CAPITAL letters as requested.</p>
         </div>
         <div className="badge" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-          Step {step} of 5
+          Step {step} of 6
         </div>
       </div>
 
@@ -215,7 +295,7 @@ const Onboarding = ({ isPublic }) => {
               </button>
             ) : <div />}
             
-            {step < 5 ? (
+            {step < 6 ? (
               <button type="button" onClick={nextStep} className="btn btn-primary">
                 Continue <ChevronRight size={18} />
               </button>
