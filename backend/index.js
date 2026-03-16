@@ -157,11 +157,13 @@ app.post('/api/employees', upload, async (req, res) => {
     data.emergency_contact_name, data.emergency_contact_relationship, data.emergency_contact_number,
     data.father_husband_number, data.mother_wife_number, data.alternate_number,
     data.account_holder_name, data.account_number, data.bank_name, data.ifsc_code, data.branch,
-    data.documents_submitted, data.education_qualification, data.year_of_passing, data.institute, data.previous_employment,
+    data.documents_submitted, data.education_qualification, data.year_of_passing, data.institute, 
+    typeof data.previous_employment === 'object' ? JSON.stringify(data.previous_employment) : data.previous_employment,
     data.office_sim, data.office_sim_date, data.laptop_system, data.laptop_system_date, data.official_email_crm, data.official_email_crm_date,
     data.asset_crm, data.asset_peopledesk, data.asset_projects, data.asset_id_card, data.asset_official_mail, data.asset_offer_letter,
     data.check_sim || 0, data.check_laptop || 0, data.check_crm || 0, data.check_peopledesk || 0, data.check_projects || 0, data.check_id_card || 0, data.check_official_mail || 0, data.check_offer_letter || 0,
-    bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name, data.background_verification
+    bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name, 
+    typeof data.background_verification === 'object' ? JSON.stringify(data.background_verification) : data.background_verification
   ];
 
   db.run(query, params, function(err) {
@@ -177,22 +179,37 @@ app.post('/api/employees/bulk', async (req, res) => {
     return res.status(400).json({ error: 'Invalid data format.' });
   }
 
-  let successCount = 0;
-  let errorCount = 0;
-
-  // Get current max file_no sequence
-  const lastEmp = await new Promise((resolve) => {
-    db.get("SELECT file_no FROM employees WHERE file_no LIKE 'HRM/26/%' ORDER BY file_no DESC LIMIT 1", (err, row) => {
-      resolve(row);
-    });
+  // Filter out completely empty or near-empty rows (e.g., from XLSX extra rows)
+  const filteredEmployees = employees.filter(emp => {
+    const keys = Object.keys(emp).filter(k => emp[k] !== null && emp[k] !== undefined && emp[k] !== '');
+    return keys.length > 0;
   });
 
-  let nextNum = 1;
-  if (lastEmp && lastEmp.file_no) {
-    const parts = lastEmp.file_no.split('/');
-    const lastNum = parseInt(parts[parts.length - 1]);
-    if (!isNaN(lastNum)) nextNum = lastNum + 1;
+  if (filteredEmployees.length === 0) {
+    return res.json({ message: 'No valid data to import.', total: employees.length, success: 0, errors: 0 });
   }
+
+  let successCount = 0;
+  let errorMessages = [];
+
+  // Get current max file_no sequence
+  const getNextFileNo = async () => {
+    const lastEmp = await new Promise((resolve) => {
+      db.get("SELECT file_no FROM employees WHERE file_no LIKE 'HRM/26/%' ORDER BY file_no DESC LIMIT 1", (err, row) => {
+        resolve(row);
+      });
+    });
+
+    let nextNum = 1;
+    if (lastEmp && lastEmp.file_no) {
+      const parts = lastEmp.file_no.split('/');
+      const lastNum = parseInt(parts[parts.length - 1]);
+      if (!isNaN(lastNum)) nextNum = lastNum + 1;
+    }
+    return nextNum;
+  };
+
+  let nextNum = await getNextFileNo();
 
   const validKeys = [
     "status", "file_no", "full_name", "father_mother_name", "dob", "gender", "contact_number", "blood_group", 
@@ -212,12 +229,7 @@ app.post('/api/employees/bulk', async (req, res) => {
     db.run('BEGIN TRANSACTION');
     
     let processed = 0;
-    if (employees.length === 0) {
-        db.run('COMMIT', () => res.json({ message: 'Empty import', total: 0, success: 0, errors: 0 }));
-        return;
-    }
-
-    employees.forEach(emp => {
+    filteredEmployees.forEach(emp => {
       // Auto-generate file_no if missing
       if (!emp.file_no || emp.file_no === '') {
         emp.file_no = `HRM/26/${String(nextNum++).padStart(3, '0')}`;
@@ -225,37 +237,44 @@ app.post('/api/employees/bulk', async (req, res) => {
 
       const keys = Object.keys(emp).filter(k => validKeys.includes(k));
       if (keys.length === 0) {
-        errorCount++;
         processed++;
-        if (processed === employees.length) {
-            db.run('COMMIT', (err) => {
-                if (err) return res.status(500).json({ error: 'Transaction failed' });
-                res.json({ message: 'Bulk import completed', total: employees.length, success: successCount, errors: errorCount });
-            });
-        }
+        if (processed === filteredEmployees.length) finish();
         return;
       }
 
       const placeholders = keys.map(() => '?').join(',');
-      const values = keys.map(k => (typeof emp[k] === 'object') ? JSON.stringify(emp[k]) : emp[k]);
+      const values = keys.map(k => {
+        const val = emp[k];
+        if (val === undefined || val === '') return null;
+        if (typeof val === 'object') return JSON.stringify(val);
+        return val;
+      });
       
       const query = `INSERT INTO employees (${keys.join(',')}) VALUES (${placeholders})`;
       db.run(query, values, function(err) {
         if (err) {
           console.error('Bulk Insert Error:', err.message);
-          errorCount++;
+          errorMessages.push(`Row ${processed + 1}: ${err.message}`);
         } else {
           successCount++;
         }
         processed++;
-        if (processed === employees.length) {
-          db.run('COMMIT', (err) => {
-            if (err) return res.status(500).json({ error: 'Transaction failed' });
-            res.json({ message: 'Bulk import completed', total: employees.length, success: successCount, errors: errorCount });
-          });
-        }
+        if (processed === filteredEmployees.length) finish();
       });
     });
+
+    function finish() {
+      db.run('COMMIT', (err) => {
+        if (err) return res.status(500).json({ error: 'Transaction commit failed: ' + err.message });
+        res.json({ 
+          message: 'Bulk import completed', 
+          total: filteredEmployees.length, 
+          success: successCount, 
+          errors: errorMessages.length,
+          errorDetails: errorMessages.slice(0, 5) // Send first 5 errors for debugging
+        });
+      });
+    }
   });
 });
 
@@ -296,11 +315,13 @@ app.put('/api/employees/:id', upload, (req, res) => {
     data.father_husband_number, data.mother_wife_number, data.alternate_number,
     data.account_holder_name, data.account_number, data.bank_name, data.ifsc_code, data.branch,
     data.documents_submitted, data.education_qualification, data.year_of_passing, data.institute,
-    data.previous_employment, data.office_sim, data.office_sim_date, data.laptop_system, 
+    typeof data.previous_employment === 'object' ? JSON.stringify(data.previous_employment) : data.previous_employment,
+    data.office_sim, data.office_sim_date, data.laptop_system, 
     data.laptop_system_date, data.official_email_crm, data.official_email_crm_date,
     data.asset_crm, data.asset_peopledesk, data.asset_projects, data.asset_id_card, data.asset_official_mail, data.asset_offer_letter,
     data.check_sim || 0, data.check_laptop || 0, data.check_crm || 0, data.check_peopledesk || 0, data.check_projects || 0, data.check_id_card || 0, data.check_official_mail || 0, data.check_offer_letter || 0,
-    bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name, data.background_verification,
+    bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name, 
+    typeof data.background_verification === 'object' ? JSON.stringify(data.background_verification) : data.background_verification,
     req.params.id
   ];
 

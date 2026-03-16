@@ -91,7 +91,18 @@ const BulkImport = () => {
                         <h4 style={{fontSize:'1.5rem', color:'#f87171'}}>{importResult.errors}</h4>
                     </div>
                 </div>
-                <p style={{ color: 'var(--text-dim)', marginTop: '2rem' }}>Redirecting to dashboard...</p>
+
+                {importResult.errorDetails && importResult.errorDetails.length > 0 && (
+                    <div style={{marginTop: '2rem', textAlign: 'left', background: 'rgba(239, 68, 68, 0.05)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.1)'}}>
+                        <p style={{fontSize: '0.75rem', color: '#f87171', fontWeight: 700, marginBottom: '0.5rem'}}>ERROR LOG (First 5):</p>
+                        {importResult.errorDetails.map((err, i) => (
+                            <p key={i} style={{fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: '0.2rem'}}>• {err}</p>
+                        ))}
+                    </div>
+                )}
+
+                <p style={{ color: 'var(--text-dim)', marginTop: '2rem' }}>Redirecting to dashboard in a few seconds...</p>
+                <Link to="/" className="btn btn-secondary" style={{marginTop: '1rem'}}>Back to Dashboard Now</Link>
             </div>
         );
     }

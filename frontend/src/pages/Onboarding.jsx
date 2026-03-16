@@ -44,7 +44,20 @@ const Onboarding = ({ isPublic }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // Only apply uppercase to fields that are NOT email-related
+    
+    // Numeric only validation
+    const numericFields = [
+      'contact_number', 'emergency_contact_number', 'father_husband_number', 
+      'mother_wife_number', 'alternate_number', 'account_number', 'aadhaar_number'
+    ];
+    if (numericFields.includes(name)) {
+      if (value !== '' && !/^\d+$/.test(value)) return;
+      if (name === 'aadhaar_number' && value.length > 12) return;
+    }
+
+    // PAN Card length limit
+    if (name === 'pan_number' && value.length > 10) return;
+
     const isEmailField = name === 'personal_email' || name === 'official_email_crm';
     setFormData(prev => ({ ...prev, [name]: isEmailField ? value : value.toUpperCase() }));
   };
@@ -82,6 +95,11 @@ const Onboarding = ({ isPublic }) => {
   };
 
   const updateBGC = (path, value) => {
+    // Numeric validation for contact fields in BGC
+    if (path.endsWith('mobile') || path.endsWith('contact')) {
+        if (value !== '' && !/^\d+$/.test(value)) return;
+    }
+
     const bgc = JSON.parse(formData.background_verification);
     // Simple path-based update for nested objects
     const parts = path.split('.');
@@ -96,6 +114,18 @@ const Onboarding = ({ isPublic }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validations
+    if (formData.aadhaar_number && formData.aadhaar_number.length !== 12) {
+      alert("Aadhaar Number must be exactly 12 digits");
+      return;
+    }
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    if (formData.pan_number && !panRegex.test(formData.pan_number)) {
+      alert("Invalid PAN Format (Sample: ASASA4569A)");
+      return;
+    }
+
     const data = new FormData();
     Object.keys(formData).forEach(key => data.append(key, formData[key]));
     if (photo) data.append('photo', photo);
