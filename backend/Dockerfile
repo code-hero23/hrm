@@ -14,8 +14,8 @@ RUN npm install --production --build-from-source sqlite3
 # Bundle app source
 COPY . .
 
-# Create uploads directory
-RUN mkdir -p uploads
+# Create uploads and data directory
+RUN mkdir -p uploads data
 
 # Expose the port from our backend code
 EXPOSE 5018
