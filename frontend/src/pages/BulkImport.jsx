@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { Upload, FileUp, CheckCircle, AlertCircle, Trash2, Save } from 'lucide-react';
 import API_BASE_URL from '../config';
+import logo from '../assets/logo.jpg';
 
 const BulkImport = () => {
     const [data, setData] = useState([]);
@@ -76,33 +77,62 @@ const BulkImport = () => {
 
     if (success && importResult) {
         return (
-            <div className="card slide-in" style={{ textAlign: 'center', padding: '4rem' }}>
-                <div style={{ background: importResult.errors > 0 ? '#eab308' : '#22c55e', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
-                    <CheckCircle color="white" size={32} />
-                </div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Import Processed!</h2>
-                <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}>
-                    <div className="card" style={{padding:'1rem', minWidth:'100px', background:'rgba(34, 197, 94, 0.1)', borderColor:'rgba(34, 197, 94, 0.2)'}}>
-                        <p style={{fontSize:'0.7rem', color:'var(--text-dim)'}}>SUCCESS</p>
-                        <h4 style={{fontSize:'1.5rem', color:'#4ade80'}}>{importResult.success}</h4>
-                    </div>
-                    <div className="card" style={{padding:'1rem', minWidth:'100px', background:'rgba(239, 68, 68, 0.1)', borderColor:'rgba(239, 68, 68, 0.2)'}}>
-                        <p style={{fontSize:'0.7rem', color:'var(--text-dim)'}}>ERRORS</p>
-                        <h4 style={{fontSize:'1.5rem', color:'#f87171'}}>{importResult.errors}</h4>
+            <div className="card slide-in" style={{ textAlign: 'center', padding: '5rem 2rem', maxWidth: '600px', margin: '4rem auto' }}>
+                {logo && <img src={logo} alt="Orbix" style={{ height: '60px', width: 'auto', marginBottom: '3rem' }} />}
+                
+                <div className="success-animation" style={{ marginBottom: '2.5rem' }}>
+                    <div style={{ 
+                        background: '#22c55e', 
+                        width: '100px', 
+                        height: '100px', 
+                        borderRadius: '50%', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        margin: '0 auto',
+                        boxShadow: '0 0 30px rgba(34, 197, 94, 0.4)',
+                        animation: 'scaleUp 0.5s ease-out forwards'
+                    }}>
+                        <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'drawCheck 0.5s 0.3s ease-in-out both' }}>
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
                     </div>
                 </div>
 
+                <h2 style={{ fontSize: '2.25rem', fontWeight: 900, marginBottom: '1rem', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    Import Processed!
+                </h2>
+                <p style={{ color: 'var(--text-dim)', fontSize: '1.1rem', lineHeight: '1.6', maxWidth: '400px', margin: '0 auto' }}>
+                    Successfully imported <strong>{importResult.success}</strong> employee records.
+                    {importResult.errors > 0 && <span style={{ color: '#ef4444', display: 'block', marginTop: '0.5rem' }}>{importResult.errors} records failed to import.</span>}
+                </p>
+
                 {importResult.errorDetails && importResult.errorDetails.length > 0 && (
-                    <div style={{marginTop: '2rem', textAlign: 'left', background: 'rgba(239, 68, 68, 0.05)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.1)'}}>
-                        <p style={{fontSize: '0.75rem', color: '#f87171', fontWeight: 700, marginBottom: '0.5rem'}}>ERROR LOG (First 5):</p>
+                    <div style={{ textAlign: 'left', marginTop: '2rem', padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', maxHeight: '200px', overflowY: 'auto' }}>
+                        <p style={{ fontWeight: 700, fontSize: '0.8rem', color: '#ef4444', marginBottom: '0.5rem' }}>ERROR LOG:</p>
                         {importResult.errorDetails.map((err, i) => (
-                            <p key={i} style={{fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: '0.2rem'}}>• {err}</p>
+                            <p key={i} style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>• {err}</p>
                         ))}
                     </div>
                 )}
+                
+                <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--glass-border)' }}>
+                    <Link to="/" className="btn btn-secondary">Back to Dashboard</Link>
+                </div>
 
-                <p style={{ color: 'var(--text-dim)', marginTop: '2rem' }}>Redirecting to dashboard in a few seconds...</p>
-                <Link to="/" className="btn btn-secondary" style={{marginTop: '1rem'}}>Back to Dashboard Now</Link>
+                <style>{`
+                    @keyframes scaleUp {
+                        0% { transform: scale(0); opacity: 0; }
+                        100% { transform: scale(1); opacity: 1; }
+                    }
+                    @keyframes drawCheck {
+                        0% { stroke-dasharray: 50; stroke-dashoffset: 50; }
+                        100% { stroke-dasharray: 50; stroke-dashoffset: 0; }
+                    }
+                    .success-animation {
+                        perspective: 1000px;
+                    }
+                `}</style>
             </div>
         );
     }

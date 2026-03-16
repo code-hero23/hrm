@@ -136,7 +136,16 @@ const EmployeeDetails = () => {
 
   const handleDownloadPDF = async () => {
     const element = printRef.current;
-    const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+    
+    // Ensure images are loaded and give a tiny bit of time for layout
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const canvas = await html2canvas(element, { 
+      scale: 2, 
+      useCORS: true, 
+      allowTaint: true,
+      logging: false 
+    });
     const imgData = canvas.toDataURL('image/png');
     
     const pdf = new jsPDF('p', 'mm', 'a4');
@@ -333,9 +342,9 @@ const EmployeeDetails = () => {
               <p><strong>Present Address:</strong> {employee.present_address}</p>
               <p><strong>Permanent Address:</strong> {employee.permanent_address}</p>
             </div>
-            <div style={{ width: '40mm', textAlign: 'right' }}>
+              <div style={{ width: '40mm', textAlign: 'right' }}>
                {employee.photo_path ? (
-                 <img src={`${API_BASE_URL}${employee.photo_path}`} style={{ width: '35mm', height: '45mm', border: '1px solid black', objectFit: 'cover' }} />
+                 <img src={`${API_BASE_URL || window.location.origin}${employee.photo_path}`} crossOrigin="anonymous" style={{ width: '35mm', height: '45mm', border: '1px solid black', objectFit: 'cover' }} />
                ) : (
                  <div style={{ width: '35mm', height: '45mm', border: '1px solid black', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8pt' }}>NO PHOTO</div>
                )}
@@ -492,30 +501,27 @@ const EmployeeDetails = () => {
           <div style={{ pageBreakBefore: 'always', marginTop: '15mm' }}>
             <h3 style={{ borderBottom: '2px solid black', paddingBottom: '2mm', fontSize: '14pt', margin: '10mm 0 8mm' }}>X. ATTACHED PROOFS & DOCUMENTS</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8mm' }}>
-              {employee.pan_card_path && (
-                <div style={{ border: '1px solid #eee', padding: '2mm' }}>
-                  <p style={{ fontSize: '8pt', fontWeight: 700, marginBottom: '2mm', textAlign:'center', background:'#f5f5f5' }}>PAN CARD PROOF</p>
-                  <img src={`${API_BASE_URL}${employee.pan_card_path}`} style={{ width: '100%', height: 'auto', maxHeight:'70mm', objectFit:'contain' }} crossOrigin="anonymous" alt="PAN" />
-                </div>
-              )}
-              {employee.aadhaar_card_path && (
-                <div style={{ border: '1px solid #eee', padding: '2mm' }}>
-                  <p style={{ fontSize: '8pt', fontWeight: 700, marginBottom: '2mm', textAlign:'center', background:'#f5f5f5' }}>AADHAAR CARD PROOF</p>
-                  <img src={`${API_BASE_URL}${employee.aadhaar_card_path}`} style={{ width: '100%', height: 'auto', maxHeight:'70mm', objectFit:'contain' }} crossOrigin="anonymous" alt="AADHAAR" />
-                </div>
-              )}
-              {employee.bank_passbook_path && (
-                <div style={{ border: '1px solid #eee', padding: '2mm' }}>
-                  <p style={{ fontSize: '8pt', fontWeight: 700, marginBottom: '2mm', textAlign:'center', background:'#f5f5f5' }}>BANK PASSBOOK PROOF</p>
-                  <img src={`${API_BASE_URL}${employee.bank_passbook_path}`} style={{ width: '100%', height: 'auto', maxHeight:'70mm', objectFit:'contain' }} crossOrigin="anonymous" alt="BANK" />
-                </div>
-              )}
-              {employee.educational_certificate_path && (
-                <div style={{ border: '1px solid #eee', padding: '2mm' }}>
-                  <p style={{ fontSize: '8pt', fontWeight: 700, marginBottom: '2mm', textAlign:'center', background:'#f5f5f5' }}>EDUCATIONAL CERTIFICATE</p>
-                  <img src={`${API_BASE_URL}${employee.educational_certificate_path}`} style={{ width: '100%', height: 'auto', maxHeight:'70mm', objectFit:'contain' }} crossOrigin="anonymous" alt="EDU" />
-                </div>
-              )}
+              {[
+                { label: 'PAN CARD PROOF', path: employee.pan_card_path },
+                { label: 'AADHAAR CARD PROOF', path: employee.aadhaar_card_path },
+                { label: 'BANK PASSBOOK PROOF', path: employee.bank_passbook_path },
+                { label: 'EDUCATIONAL CERTIFICATE', path: employee.educational_certificate_path }
+              ].map(doc => {
+                if (!doc.path) return null;
+                const isPdf = doc.path.toLowerCase().endsWith('.pdf');
+                return (
+                  <div key={doc.label} style={{ border: '1px solid #eee', padding: '2mm' }}>
+                    <p style={{ fontSize: '8pt', fontWeight: 700, marginBottom: '2mm', textAlign:'center', background:'#f5f5f5' }}>{doc.label}</p>
+                    {isPdf ? (
+                      <div style={{ height: '40mm', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed #ccc', fontSize: '8pt', color: '#666' }}>
+                        DOCUMENT IS PDF (CONTENT NOT RENDERED IN REPORT)
+                      </div>
+                    ) : (
+                      <img src={`${API_BASE_URL || window.location.origin}${doc.path}`} crossOrigin="anonymous" style={{ width: '100%', height: 'auto', maxHeight:'70mm', objectFit:'contain' }} alt={doc.label} />
+                    )}
+                  </div>
+                );
+              })}
             </div>
             {!employee.pan_card_path && !employee.aadhaar_card_path && !employee.bank_passbook_path && !employee.educational_certificate_path && (
               <p style={{textAlign:'center', color:'#666', marginTop:'10mm'}}>NO DOCUMENT PROOFS UPLOADED</p>

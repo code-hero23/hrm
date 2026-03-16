@@ -135,8 +135,7 @@ const Onboarding = ({ isPublic }) => {
 
     try {
       await axios.post(`${API_BASE_URL}/api/employees`, data);
-      alert('Employee onboarded successfully!');
-      navigate('/');
+      setIsSubmitted(true);
     } catch (err) {
       console.error(err);
       alert('Error submitting form');
@@ -523,12 +522,59 @@ const Onboarding = ({ isPublic }) => {
 
   if (isSubmitted) {
     return (
-      <div className="card slide-in" style={{ textAlign: 'center', padding: '4rem' }}>
-        <div style={{ background: '#22c55e', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
-          <Save color="white" size={32} />
+      <div className="card slide-in" style={{ textAlign: 'center', padding: '5rem 2rem', maxWidth: '600px', margin: '4rem auto' }}>
+        {logo && <img src={logo} alt="Orbix" style={{ height: '60px', width: 'auto', marginBottom: '3rem' }} />}
+        
+        <div className="success-animation" style={{ marginBottom: '2.5rem' }}>
+          <div style={{ 
+            background: '#22c55e', 
+            width: '100px', 
+            height: '100px', 
+            borderRadius: '50%', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            margin: '0 auto',
+            boxShadow: '0 0 30px rgba(34, 197, 94, 0.4)',
+            animation: 'scaleUp 0.5s ease-out forwards'
+          }}>
+            <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'drawCheck 0.5s 0.3s ease-in-out both' }}>
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
         </div>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Form Submitted Successfully!</h2>
-        <p style={{ color: 'var(--text-dim)' }}>Your information has been securely received. {isPublic ? 'You can now close this window.' : 'Redirecting to dashboard...'}</p>
+
+        <h2 style={{ fontSize: '2.25rem', fontWeight: 900, marginBottom: '1rem', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          Form Submitted Successfully!
+        </h2>
+        <p style={{ color: 'var(--text-dim)', fontSize: '1.1rem', lineHeight: '1.6', maxWidth: '400px', margin: '0 auto' }}>
+          Thank you for completing the onboarding process. Your information has been securely received by our HR department.
+        </p>
+        
+        <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--glass-border)' }}>
+          <p style={{ fontSize: '0.875rem', color: '#60a5fa', fontWeight: 600 }}>
+            {isPublic ? 'You may now close this window safely.' : 'Reviewing your submission...'}
+          </p>
+          {!isPublic && (
+            <button onClick={() => navigate('/')} className="btn btn-secondary" style={{ marginTop: '1.5rem' }}>
+              Go to Dashboard
+            </button>
+          )}
+        </div>
+
+        <style>{`
+          @keyframes scaleUp {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+          }
+          @keyframes drawCheck {
+            0% { stroke-dasharray: 50; stroke-dashoffset: 50; }
+            100% { stroke-dasharray: 50; stroke-dashoffset: 0; }
+          }
+          .success-animation {
+            perspective: 1000px;
+          }
+        `}</style>
       </div>
     );
   }

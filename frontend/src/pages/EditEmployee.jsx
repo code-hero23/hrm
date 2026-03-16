@@ -10,6 +10,7 @@ const EditEmployee = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     status: 'Onboard',
     file_no: '', full_name: '', father_mother_name: '', dob: '', gender: '', contact_number: '', blood_group: '', 
@@ -150,13 +151,73 @@ const EditEmployee = () => {
 
     try {
       await axios.put(`${API_BASE_URL}/api/employees/${id}`, data);
-      alert('Employee updated successfully!');
-      navigate(`/employee/${id}`);
+      setIsSubmitted(true);
     } catch (err) {
       console.error(err);
       alert('Error updating employee');
     }
   };
+
+  if (loading) return <div className="loading">Loading employee data...</div>;
+
+  if (isSubmitted) {
+    return (
+      <div className="card slide-in" style={{ textAlign: 'center', padding: '5rem 2rem', maxWidth: '600px', margin: '4rem auto' }}>
+        {logo && <img src={logo} alt="Orbix" style={{ height: '60px', width: 'auto', marginBottom: '3rem' }} />}
+        
+        <div className="success-animation" style={{ marginBottom: '2.5rem' }}>
+          <div style={{ 
+            background: '#22c55e', 
+            width: '100px', 
+            height: '100px', 
+            borderRadius: '50%', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            margin: '0 auto',
+            boxShadow: '0 0 30px rgba(34, 197, 94, 0.4)',
+            animation: 'scaleUp 0.5s ease-out forwards'
+          }}>
+            <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'drawCheck 0.5s 0.3s ease-in-out both' }}>
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <h2 style={{ fontSize: '2.25rem', fontWeight: 900, marginBottom: '1rem', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          Updated Successfully!
+        </h2>
+        <p style={{ color: 'var(--text-dim)', fontSize: '1.1rem', lineHeight: '1.6', maxWidth: '400px', margin: '0 auto' }}>
+          The employee record for <strong>{formData.full_name}</strong> has been successfully updated.
+        </p>
+        
+        <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--glass-border)' }}>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <button onClick={() => navigate(`/employee/${id}`)} className="btn btn-primary">
+              View Profile
+            </button>
+            <button onClick={() => navigate('/')} className="btn btn-secondary">
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes scaleUp {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+          }
+          @keyframes drawCheck {
+            0% { stroke-dasharray: 50; stroke-dashoffset: 50; }
+            100% { stroke-dasharray: 50; stroke-dashoffset: 0; }
+          }
+          .success-animation {
+            perspective: 1000px;
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   const renderStep = () => {
     switch(step) {
