@@ -171,51 +171,75 @@ app.post('/api/employees', upload, async (req, res) => {
   });
 });
 
-app.post('/api/employees/bulk', (req, res) => {
+app.post('/api/employees/bulk', async (req, res) => {
   const { employees } = req.body;
   if (!employees || !Array.isArray(employees)) {
-    return res.status(400).json({ error: 'Invalid data format. Expected an array of employees.' });
+    return res.status(400).json({ error: 'Invalid data format.' });
   }
 
-  let errors = 0;
+  let successCount = 0;
+  let errorCount = 0;
+
+  // Get current max file_no sequence
+  const lastEmp = await new Promise((resolve) => {
+    db.get("SELECT file_no FROM employees WHERE file_no LIKE 'HRM/26/%' ORDER BY file_no DESC LIMIT 1", (err, row) => {
+      resolve(row);
+    });
+  });
+
+  let nextNum = 1;
+  if (lastEmp && lastEmp.file_no) {
+    const parts = lastEmp.file_no.split('/');
+    const lastNum = parseInt(parts[parts.length - 1]);
+    if (!isNaN(lastNum)) nextNum = lastNum + 1;
+  }
+
+  const validKeys = [
+    "status", "file_no", "full_name", "father_mother_name", "dob", "gender", "contact_number", "blood_group", 
+    "personal_email", "marital_status", "present_address", "permanent_address", "employee_id", "department", 
+    "designation", "date_of_joining", "work_location", "reporting_manager", "pan_number", "aadhaar_number", 
+    "other_id", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number", 
+    "father_husband_number", "mother_wife_number", "alternate_number", "account_holder_name", 
+    "account_number", "bank_name", "ifsc_code", "branch", "documents_submitted", "education_qualification", 
+    "year_of_passing", "institute", "previous_employment", "office_sim", "office_sim_date", 
+    "laptop_system", "laptop_system_date", "official_email_crm", "official_email_crm_date", 
+    "asset_crm", "asset_peopledesk", "asset_projects", "asset_id_card", "asset_official_mail", "asset_offer_letter",
+    "check_sim", "check_laptop", "check_crm", "check_peopledesk", "check_projects", "check_id_card", "check_official_mail", "check_offer_letter",
+    "signature_name", "background_verification"
+  ];
+
   db.serialize(() => {
     db.run('BEGIN TRANSACTION');
     
     employees.forEach(emp => {
-      // Normalize keys: full_name, status, etc.
-      // Filter keys to ensure they exist in our schema (basic protection)
-      const validKeys = [
-        "status", "file_no", "full_name", "father_mother_name", "dob", "gender", "contact_number", "blood_group", 
-        "personal_email", "marital_status", "present_address", "permanent_address", "employee_id", "department", 
-        "designation", "date_of_joining", "work_location", "reporting_manager", "pan_number", "aadhaar_number", 
-        "other_id", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number", 
-        "father_husband_number", "mother_wife_number", "alternate_number", "account_holder_name", 
-        "account_number", "bank_name", "ifsc_code", "branch", "documents_submitted", "education_qualification", 
-        "year_of_passing", "institute", "previous_employment", "office_sim", "office_sim_date", 
-        "laptop_system", "laptop_system_date", "official_email_crm", "official_email_crm_date", 
-        "asset_crm", "asset_peopledesk", "asset_projects", "asset_id_card", "asset_official_mail", "asset_offer_letter",
-        "check_sim", "check_laptop", "check_crm", "check_peopledesk", "check_projects", "check_id_card", "check_official_mail", "check_offer_letter",
-        "signature_name", "background_verification"
-      ];
+      // Auto-generate file_no if missing
+      if (!emp.file_no || emp.file_no === '') {
+        emp.file_no = `HRM/26/${String(nextNum++).padStart(3, '0')}`;
+      }
 
       const keys = Object.keys(emp).filter(k => validKeys.includes(k));
-      if (keys.length === 0) return;
+      if (keys.length === 0) {
+        errorCount++;
+        return;
+      }
 
       const placeholders = keys.map(() => '?').join(',');
-      const values = keys.map(k => emp[k]);
+      const values = keys.map(k => (typeof emp[k] === 'object') ? JSON.stringify(emp[k]) : emp[k]);
       
       const query = `INSERT INTO employees (${keys.join(',')}) VALUES (${placeholders})`;
       db.run(query, values, (err) => {
         if (err) {
           console.error('Bulk Insert Error:', err.message);
-          errors++;
+          errorCount++;
+        } else {
+          successCount++;
         }
       });
     });
 
     db.run('COMMIT', (err) => {
       if (err) return res.status(500).json({ error: 'Transaction failed' });
-      res.json({ message: 'Bulk import completed', count: employees.length, errors });
+      res.json({ message: 'Bulk import completed', total: employees.length, success: successCount, errors: errorCount });
     });
   });
 });

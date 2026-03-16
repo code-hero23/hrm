@@ -23,8 +23,33 @@ const BulkImport = () => {
             const ws = wb.Sheets[wsname];
             const json = XLSX.utils.sheet_to_json(ws);
             
-            // Basic mapping if headers don't match exactly (optional enhancement)
-            setData(json);
+            // Intelligent Mapping & Status Alignment
+            const mappedData = json.map(row => {
+                const newRow = {};
+                
+                // Map common headers to database keys
+                Object.keys(row).forEach(key => {
+                    const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                    
+                    // Specific mappings
+                    if (normalizedKey === 'full_name' || normalizedKey === 'name' || normalizedKey === 'fullname') newRow.full_name = row[key];
+                    else if (normalizedKey === 'personal_email' || normalizedKey === 'email') newRow.personal_email = row[key];
+                    else if (normalizedKey === 'dept' || normalizedKey === 'department') newRow.department = row[key];
+                    else if (normalizedKey === 'status') {
+                        let val = row[key]?.toString().trim();
+                        if (val?.toLowerCase() === 'working') newRow.status = 'Current Employee';
+                        else newRow.status = val;
+                    }
+                    else newRow[normalizedKey] = row[key];
+                });
+
+                // Default status if missing
+                if (!newRow.status) newRow.status = 'Current Employee';
+                
+                return newRow;
+            });
+
+            setData(mappedData);
         };
         reader.readAsBinaryString(file);
     };
