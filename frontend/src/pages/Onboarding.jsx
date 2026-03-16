@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, Save, Upload } from 'lucide-react';
 import API_BASE_URL from '../config';
 
 const Onboarding = ({ isPublic }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState({
@@ -25,6 +26,13 @@ const Onboarding = ({ isPublic }) => {
   });
   const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+
+  React.useEffect(() => {
+    const nameParam = searchParams.get('name');
+    if (nameParam) {
+      setFormData(prev => ({ ...prev, full_name: nameParam.toUpperCase() }));
+    }
+  }, [searchParams]);
   const [docs, setDocs] = useState({
     bank_passbook: null,
     pan_card: null,
@@ -96,7 +104,10 @@ const Onboarding = ({ isPublic }) => {
         <div>
           <h3 className="section-title">1. PERSONAL INFORMATION</h3>
           <div className="form-grid">
-            <div className="form-group"><label>FILE NO.</label><input name="file_no" value={formData.file_no} onChange={handleChange} /></div>
+            <div className="form-group">
+              <label>FILE NO. (AUTOMATIC)</label>
+              <input name="file_no" value={formData.file_no} onChange={handleChange} placeholder="Assigned automatically if empty" />
+            </div>
             <div className="form-group"><label>FULL NAME</label><input name="full_name" value={formData.full_name} onChange={handleChange} /></div>
             <div className="form-group"><label>FATHER'S / MOTHER'S NAME</label><input name="father_mother_name" value={formData.father_mother_name} onChange={handleChange} /></div>
             <div className="form-group"><label>DATE OF BIRTH</label><input type="date" name="dob" value={formData.dob} onChange={handleChange} /></div>

@@ -10,6 +10,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [copied, setCopied] = useState(false);
+  const [shareName, setShareName] = useState('');
 
   useEffect(() => {
     fetchEmployees();
@@ -58,7 +59,10 @@ const Dashboard = () => {
   });
 
   const copyFormLink = () => {
-    const link = `${window.location.origin}/fill-form`;
+    let link = `${window.location.origin}/fill-form`;
+    if (shareName) {
+      link += `?name=${encodeURIComponent(shareName)}`;
+    }
     
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(link).then(() => {
@@ -95,10 +99,20 @@ const Dashboard = () => {
           <h2 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.05em', marginBottom: '0.5rem' }}>Core Database</h2>
           <p style={{ color: 'var(--text-dim)', fontSize: '1rem' }}>Manage and monitor Orbix Designs workforce.</p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <button onClick={copyFormLink} className="btn btn-secondary">
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div className="card" style={{ padding: '0.4rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: '250px' }}>
+            <UserCircle size={18} color="var(--text-dim)" />
+            <input 
+              type="text" 
+              placeholder="Employee Name (for link)..." 
+              value={shareName}
+              onChange={(e) => setShareName(e.target.value)}
+              style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '0.875rem', width: '100%', outline: 'none' }} 
+            />
+          </div>
+          <button onClick={copyFormLink} className="btn btn-secondary" title="Shares a link pre-filled with the name above">
             {copied ? <Check size={18} color="#22c55e" /> : <Share2 size={18} />}
-            {copied ? 'Link Copied!' : 'Share Form Link'}
+            {copied ? 'Link Copied!' : 'Generate Link'}
           </button>
           <Link to="/onboard" className="btn btn-primary">
             <UserCircle size={18} /> Add Employee

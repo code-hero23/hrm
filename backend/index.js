@@ -104,7 +104,7 @@ app.get('/api/employees/:id', (req, res) => {
   });
 });
 
-app.post('/api/employees', upload, (req, res) => {
+app.post('/api/employees', upload, async (req, res) => {
   const data = req.body;
   const files = req.files || {};
   
@@ -113,6 +113,24 @@ app.post('/api/employees', upload, (req, res) => {
   const pan_card_path = files.pan_card ? `/uploads/${files.pan_card[0].filename}` : null;
   const aadhaar_card_path = files.aadhaar_card ? `/uploads/${files.aadhaar_card[0].filename}` : null;
   const educational_certificate_path = files.educational_certificate ? `/uploads/${files.educational_certificate[0].filename}` : null;
+
+  let file_no = data.file_no;
+  if (!file_no || file_no === 'undefined' || file_no === '') {
+    // Generate automatic file no: HRM/26/XXX
+    const lastEmp = await new Promise((resolve) => {
+      db.get("SELECT file_no FROM employees WHERE file_no LIKE 'HRM/26/%' ORDER BY file_no DESC LIMIT 1", (err, row) => {
+        resolve(row);
+      });
+    });
+
+    let nextNum = 1;
+    if (lastEmp && lastEmp.file_no) {
+      const parts = lastEmp.file_no.split('/');
+      const lastNum = parseInt(parts[parts.length - 1]);
+      if (!isNaN(lastNum)) nextNum = lastNum + 1;
+    }
+    file_no = `HRM/26/${String(nextNum).padStart(3, '0')}`;
+  }
 
   const query = `
     INSERT INTO employees (
@@ -130,7 +148,7 @@ app.post('/api/employees', upload, (req, res) => {
   `;
 
   const params = [
-    data.status || 'Onboard', data.file_no, data.full_name, data.father_mother_name, data.dob, data.gender, data.contact_number, data.blood_group,
+    data.status || 'Onboard', file_no, data.full_name, data.father_mother_name, data.dob, data.gender, data.contact_number, data.blood_group,
     data.personal_email, data.marital_status, data.present_address, data.permanent_address, photo_path,
     data.employee_id, data.department, data.designation, data.date_of_joining, data.work_location, data.reporting_manager,
     data.pan_number, data.aadhaar_number, data.other_id,
