@@ -3,12 +3,7 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
 
-const dataDir = path.resolve(__dirname, 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
-const dbPath = path.join(dataDir, 'database.sqlite');
+const dbPath = path.join(__dirname, 'database.sqlite');
 const db = new sqlite3.Database(dbPath);
 
 db.serialize(() => {
@@ -75,12 +70,14 @@ db.serialize(() => {
       laptop_system_date TEXT,
       official_email_crm TEXT,
       official_email_crm_date TEXT,
+      
       asset_crm TEXT,
       asset_peopledesk TEXT,
       asset_projects TEXT,
       asset_id_card TEXT,
       asset_official_mail TEXT,
       asset_offer_letter TEXT,
+      
       check_sim INTEGER DEFAULT 0,
       check_laptop INTEGER DEFAULT 0,
       check_crm INTEGER DEFAULT 0,
@@ -146,7 +143,13 @@ db.serialize(() => {
     'check_projects': 'INTEGER DEFAULT 0',
     'check_id_card': 'INTEGER DEFAULT 0',
     'check_official_mail': 'INTEGER DEFAULT 0',
-    'check_offer_letter': 'INTEGER DEFAULT 0'
+    'check_offer_letter': 'INTEGER DEFAULT 0',
+    'asset_crm': 'TEXT',
+    'asset_peopledesk': 'TEXT',
+    'asset_projects': 'TEXT',
+    'asset_id_card': 'TEXT',
+    'asset_official_mail': 'TEXT',
+    'asset_offer_letter': 'TEXT'
   };
 
   Object.entries(potentialMissingColumns).forEach(([name, type]) => {
