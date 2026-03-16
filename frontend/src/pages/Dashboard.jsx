@@ -59,9 +59,33 @@ const Dashboard = () => {
 
   const copyFormLink = () => {
     const link = `${window.location.origin}/fill-form`;
-    navigator.clipboard.writeText(link);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }).catch(err => {
+        console.error('Failed to copy: ', err);
+      });
+    } else {
+      // Fallback for non-secure contexts (HTTP)
+      const textarea = document.createElement('textarea');
+      textarea.value = link;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      textarea.style.top = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        console.error('Fallback: Oops, unable to copy', err);
+      }
+      document.body.removeChild(textarea);
+    }
   };
 
   return (
