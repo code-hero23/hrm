@@ -331,6 +331,26 @@ app.put('/api/employees/:id', upload, (req, res) => {
   });
 });
 
+app.patch('/api/employees/:id', (req, res) => {
+  const data = req.body;
+  const fields = Object.keys(data);
+  if (fields.length === 0) return res.status(400).json({ error: 'No fields to update' });
+
+  const sets = fields.map(field => `${field} = ?`).join(', ');
+  const values = fields.map(field => {
+    const val = data[field];
+    if (typeof val === 'object' && val !== null) return JSON.stringify(val);
+    return val;
+  });
+  values.push(req.params.id);
+
+  const query = `UPDATE employees SET ${sets} WHERE id = ?`;
+  db.run(query, values, function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: 'Employee updated successfully' });
+  });
+});
+
 app.delete('/api/employees/:id', (req, res) => {
   db.run('DELETE FROM employees WHERE id = ?', [req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
