@@ -88,9 +88,9 @@ db.serialize(() => {
     )
   `);
 
-  // Insert default admin if not exists (username: admin, password: password123)
-  const hashedPassword = bcrypt.hashSync('password123', 10);
-  db.run(`INSERT OR IGNORE INTO users (username, password) VALUES ('admin', '${hashedPassword}')`);
+  // Insert default admin if not exists (username: Admin@cookscape.com, password: Hrmaster@2026)
+  const hashedPassword = bcrypt.hashSync('Hrmaster@2026', 10);
+  db.run(`INSERT OR IGNORE INTO users (username, password) VALUES ('Admin@cookscape.com', '${hashedPassword}')`);
 
   console.log('Database initialized');
 });
