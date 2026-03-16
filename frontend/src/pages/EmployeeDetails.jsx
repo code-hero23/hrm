@@ -121,6 +121,19 @@ const EmployeeDetails = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (window.confirm('Are you sure you want to delete this employee record? This action cannot be undone.')) {
+      try {
+        await axios.delete(`${API_BASE_URL}/api/employees/${id}`);
+        alert('Employee record deleted successfully');
+        navigate('/');
+      } catch (err) {
+        console.error(err);
+        alert('Error deleting employee record');
+      }
+    }
+  };
+
   const handleDownloadPDF = async () => {
     const element = printRef.current;
     const canvas = await html2canvas(element, { scale: 2 });
@@ -145,6 +158,9 @@ const EmployeeDetails = () => {
           <ArrowLeft size={20} /> <span style={{fontWeight: 700}}>Back to Workforce</span>
         </button>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button onClick={handleDelete} className="btn btn-secondary" style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', background: 'rgba(239, 68, 68, 0.05)' }}>
+            <Trash2 size={18} /> Delete Record
+          </button>
           <button onClick={() => navigate(`/edit-employee/${id}`)} className="btn btn-primary" style={{ background: 'linear-gradient(135deg, #4f46e5, #4338ca)', border: 'none' }}>
             <Edit3 size={18} /> Edit Profile
           </button>

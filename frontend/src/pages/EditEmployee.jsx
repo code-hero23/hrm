@@ -53,7 +53,9 @@ const EditEmployee = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value.toUpperCase() }));
+    // Only apply uppercase to fields that are NOT email-related
+    const isEmailField = name === 'personal_email' || name === 'official_email_crm';
+    setFormData(prev => ({ ...prev, [name]: isEmailField ? value : value.toUpperCase() }));
   };
 
   const handleFileChange = (e, name) => {

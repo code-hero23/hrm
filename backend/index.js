@@ -155,36 +155,44 @@ app.post('/api/employees/bulk', (req, res) => {
     return res.status(400).json({ error: 'Invalid data format. Expected an array of employees.' });
   }
 
-  const query = `
-    INSERT INTO employees (
-      status, full_name, department, designation, personal_email, contact_number, employee_id
-    ) VALUES (?,?,?,?,?,?,?)
-  `;
-
-  const stmt = db.prepare(query);
   let errors = 0;
-
   db.serialize(() => {
     db.run('BEGIN TRANSACTION');
+    
     employees.forEach(emp => {
-      stmt.run([
-        emp.status || 'Working',
-        emp.full_name || emp.fullName || emp.Name,
-        emp.department || emp.Dept,
-        emp.designation,
-        emp.personal_email || emp.personalEmail || emp.email,
-        emp.contact_number || emp.contact,
-        emp.employee_id || emp.empId
-      ], (err) => {
-        if (err) errors++;
+      // Normalize keys: full_name, status, etc.
+      // Filter keys to ensure they exist in our schema (basic protection)
+      const validKeys = [
+        "status", "file_no", "full_name", "father_mother_name", "dob", "gender", "contact_number", "blood_group", 
+        "personal_email", "marital_status", "present_address", "permanent_address", "employee_id", "department", 
+        "designation", "date_of_joining", "work_location", "reporting_manager", "pan_number", "aadhaar_number", 
+        "other_id", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number", 
+        "father_husband_number", "mother_wife_number", "alternate_number", "account_holder_name", 
+        "account_number", "bank_name", "ifsc_code", "branch", "documents_submitted", "education_qualification", 
+        "year_of_passing", "institute", "previous_employment", "office_sim", "office_sim_date", 
+        "laptop_system", "laptop_system_date", "official_email_crm", "official_email_crm_date", "signature_name"
+      ];
+
+      const keys = Object.keys(emp).filter(k => validKeys.includes(k));
+      if (keys.length === 0) return;
+
+      const placeholders = keys.map(() => '?').join(',');
+      const values = keys.map(k => emp[k]);
+      
+      const query = `INSERT INTO employees (${keys.join(',')}) VALUES (${placeholders})`;
+      db.run(query, values, (err) => {
+        if (err) {
+          console.error('Bulk Insert Error:', err.message);
+          errors++;
+        }
       });
     });
+
     db.run('COMMIT', (err) => {
       if (err) return res.status(500).json({ error: 'Transaction failed' });
       res.json({ message: 'Bulk import completed', count: employees.length, errors });
     });
   });
-  stmt.finalize();
 });
 
 app.put('/api/employees/:id', upload, (req, res) => {
@@ -234,11 +242,10 @@ app.put('/api/employees/:id', upload, (req, res) => {
   });
 });
 
-app.patch('/api/employees/:id', (req, res) => {
-  const { status } = req.body;
-  db.run('UPDATE employees SET status = ? WHERE id = ?', [status, req.params.id], function(err) {
+app.delete('/api/employees/:id', (req, res) => {
+  db.run('DELETE FROM employees WHERE id = ?', [req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: 'Status updated' });
+    res.json({ message: 'Employee deleted successfully' });
   });
 });
 
