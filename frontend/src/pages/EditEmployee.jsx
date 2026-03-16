@@ -433,6 +433,7 @@ const EditEmployee = () => {
                   <h4 style={{fontSize:'0.8rem', color:'#60a5fa', marginBottom:'1rem'}}>III. CLOSE FRIEND VERIFICATION</h4>
                   <div className="form-grid">
                     <div className="form-group"><label>CLOSE FRIEND NAME</label><input value={bgc.friend?.name || ''} onChange={(e) => updateBGC('friend.name', e.target.value)} required /></div>
+                    <div className="form-group"><label>DESIGNATION</label><input value={bgc.friend?.designation || ''} onChange={(e) => updateBGC('friend.designation', e.target.value)} required /></div>
                     <div className="form-group"><label>CONTACT NO.</label><input value={bgc.friend?.contact || ''} onChange={(e) => updateBGC('friend.contact', e.target.value)} required /></div>
                     <div className="form-group"><label>EMAIL ID</label><input type="email" style={{textTransform:'none'}} value={bgc.friend?.email || ''} onChange={(e) => updateBGC('friend.email', e.target.value)} required /></div>
                   </div>
@@ -442,6 +443,7 @@ const EditEmployee = () => {
                   <h4 style={{fontSize:'0.8rem', color:'#60a5fa', marginBottom:'1rem'}}>IV. NON-FAMILY MEMBER (RELATIVE) VERIFICATION</h4>
                   <div className="form-grid">
                     <div className="form-group"><label>RELATIVE NAME</label><input value={bgc.relative?.name || ''} onChange={(e) => updateBGC('relative.name', e.target.value)} required /></div>
+                    <div className="form-group"><label>DESIGNATION</label><input value={bgc.relative?.designation || ''} onChange={(e) => updateBGC('relative.designation', e.target.value)} required /></div>
                     <div className="form-group"><label>CONTACT NO.</label><input value={bgc.relative?.contact || ''} onChange={(e) => updateBGC('relative.contact', e.target.value)} required /></div>
                   </div>
                 </div>
