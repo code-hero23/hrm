@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronRight, ChevronLeft, Save, Upload, ArrowLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Save, Upload, ArrowLeft, UserCircle } from 'lucide-react';
 import API_BASE_URL from '../config';
 import logo from '../assets/logo.jpg';
 
