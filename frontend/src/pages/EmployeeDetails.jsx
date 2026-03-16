@@ -136,7 +136,7 @@ const EmployeeDetails = () => {
 
   const handleDownloadPDF = async () => {
     const element = printRef.current;
-    const canvas = await html2canvas(element, { scale: 2 });
+    const canvas = await html2canvas(element, { scale: 2, useCORS: true });
     const imgData = canvas.toDataURL('image/png');
     
     const pdf = new jsPDF('p', 'mm', 'a4');
@@ -463,24 +463,63 @@ const EmployeeDetails = () => {
             })()}
           </div>
 
-          <div style={{ marginTop: '10mm', borderTop: '1px solid black', paddingTop: '5mm' }}>
-             <p style={{ fontSize: '7.5pt', fontStyle: 'italic', textAlign:'justify', color:'#444', lineHeight:'1.2' }}>
-               I hereby declare that I have read and accepted the Consent Form, POSH Policy, Whistleblower Policy, and the full Employee Terms & Conditions of Orbix Designs Pvt Ltd. I confirm that all information provided is true and correct.
-             </p>
-             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10mm' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ margin: 0, borderBottom: '1px solid black' }}>{employee.signature_name || employee.full_name}</p>
-                  <p style={{ fontSize: '9pt' }}>Employee Signature</p>
+          <div style={{ pageBreakBefore: 'always', marginTop: '10mm' }}>
+            <h3 style={{ borderBottom: '2px solid black', paddingBottom: '2mm', fontSize: '14pt', margin: '10mm 0 5mm' }}>IX. DECLARATION & CONSENT</h3>
+            <div style={{ fontSize: '8pt', textAlign: 'justify', lineHeight: '1.4' }}>
+              <p>I, <strong>{employee.full_name}</strong>, residing at <strong>{employee.present_address}</strong>, hereby give my free, voluntary, specific, informed, and unconditional consent to ORBIX DESIGNS PRIVATE LIMITED for the purposes of employment, verification of documents, and data collection/processing.</p>
+              
+              <p style={{marginTop:'3mm'}}><strong>SCOPE:</strong> I authorize the collection/storage of personal and professional information, maintenance of records, internal sharing on a need-to-know basis, and verification of documents. My data will be treated confidentially with reasonable security measures as per the Information Technology Act, 2000 and Digital Personal Data Protection Act, 2023.</p>
+              
+              <p style={{marginTop:'3mm'}}><strong>POSH & WHISTLEBLOWER:</strong> I acknowledge that I have received, read, and understood the Prevention of Sexual Harassment (POSH) Policy and the Whistleblower Policy of Orbix Designs Pvt Ltd. I agree to comply with these policies and maintain a respectful workplace.</p>
+              
+              <p style={{marginTop:'3mm'}}><strong>EMPLOYEE TERMS:</strong> I accept the official Employee Terms & Conditions, including those regarding Appointment, Training, Compensation, Confidentiality, Code of Conduct, and Termination. I understand that salary and benefits are confidential and any breach of data protection will be treated as serious misconduct.</p>
+              
+              <div style={{ marginTop: '8mm', border: '1px solid black', padding: '4mm' }}>
+                <p><strong>FINAL DECLARATION:</strong> I hereby declare that all the information provided in this record is true and correct to the best of my knowledge. I understand that any false information or misrepresentation may lead to disciplinary action, including immediate termination of employment.</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10mm' }}>
+                   <div style={{ textAlign: 'center' }}>
+                     <p style={{ margin: 0, borderBottom: '1px solid black', minWidth: '40mm' }}>{employee.signature_name || employee.full_name}</p>
+                     <p style={{ fontSize: '7pt', marginTop: '1mm' }}>Employee Digital Signature</p>
+                   </div>
+                   <div style={{ textAlign: 'right' }}>
+                     <p>Date: {new Date().toLocaleDateString()}</p>
+                   </div>
                 </div>
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ margin: 0 }}>__________________________</p>
-                  <p style={{ fontSize: '9pt' }}>Authorized Signatory</p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ pageBreakBefore: 'always', marginTop: '15mm' }}>
+            <h3 style={{ borderBottom: '2px solid black', paddingBottom: '2mm', fontSize: '14pt', margin: '10mm 0 8mm' }}>X. ATTACHED PROOFS & DOCUMENTS</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8mm' }}>
+              {employee.pan_card_path && (
+                <div style={{ border: '1px solid #eee', padding: '2mm' }}>
+                  <p style={{ fontSize: '8pt', fontWeight: 700, marginBottom: '2mm', textAlign:'center', background:'#f5f5f5' }}>PAN CARD PROOF</p>
+                  <img src={`${API_BASE_URL}${employee.pan_card_path}`} style={{ width: '100%', height: 'auto', maxHeight:'70mm', objectFit:'contain' }} crossOrigin="anonymous" alt="PAN" />
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
-                  <p><strong>Place:</strong> ________________</p>
+              )}
+              {employee.aadhaar_card_path && (
+                <div style={{ border: '1px solid #eee', padding: '2mm' }}>
+                  <p style={{ fontSize: '8pt', fontWeight: 700, marginBottom: '2mm', textAlign:'center', background:'#f5f5f5' }}>AADHAAR CARD PROOF</p>
+                  <img src={`${API_BASE_URL}${employee.aadhaar_card_path}`} style={{ width: '100%', height: 'auto', maxHeight:'70mm', objectFit:'contain' }} crossOrigin="anonymous" alt="AADHAAR" />
                 </div>
-             </div>
+              )}
+              {employee.bank_passbook_path && (
+                <div style={{ border: '1px solid #eee', padding: '2mm' }}>
+                  <p style={{ fontSize: '8pt', fontWeight: 700, marginBottom: '2mm', textAlign:'center', background:'#f5f5f5' }}>BANK PASSBOOK PROOF</p>
+                  <img src={`${API_BASE_URL}${employee.bank_passbook_path}`} style={{ width: '100%', height: 'auto', maxHeight:'70mm', objectFit:'contain' }} crossOrigin="anonymous" alt="BANK" />
+                </div>
+              )}
+              {employee.educational_certificate_path && (
+                <div style={{ border: '1px solid #eee', padding: '2mm' }}>
+                  <p style={{ fontSize: '8pt', fontWeight: 700, marginBottom: '2mm', textAlign:'center', background:'#f5f5f5' }}>EDUCATIONAL CERTIFICATE</p>
+                  <img src={`${API_BASE_URL}${employee.educational_certificate_path}`} style={{ width: '100%', height: 'auto', maxHeight:'70mm', objectFit:'contain' }} crossOrigin="anonymous" alt="EDU" />
+                </div>
+              )}
+            </div>
+            {!employee.pan_card_path && !employee.aadhaar_card_path && !employee.bank_passbook_path && !employee.educational_certificate_path && (
+              <p style={{textAlign:'center', color:'#666', marginTop:'10mm'}}>NO DOCUMENT PROOFS UPLOADED</p>
+            )}
           </div>
         </div>
       </div>
