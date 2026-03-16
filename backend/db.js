@@ -8,8 +8,33 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-const dbPath = path.join(dataDir, 'database.sqlite');
+let dbPath = path.join(dataDir, 'database.sqlite');
+const rootDbPath = path.join(__dirname, 'database.sqlite');
+
+// Recovery Logic: If DB exists in root but not in data folder, move it to data folder
+if (fs.existsSync(rootDbPath) && !fs.existsSync(dbPath)) {
+  console.log('RECOVERY: Moving database from root to data directory for persistence');
+  try {
+    fs.copyFileSync(rootDbPath, dbPath);
+    // Optional: fs.unlinkSync(rootDbPath); // Keep it as backup for now
+    console.log('RECOVERY: Migration successful.');
+  } catch (err) {
+    console.error('RECOVERY FAILED:', err.message);
+  }
+}
+
 const db = new sqlite3.Database(dbPath);
+
+// Diagnostics
+db.get("SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='employees'", (err, row) => {
+  if (row && row.count > 0) {
+    db.get("SELECT count(*) as total FROM employees", (err, res) => {
+      console.log(`DATABASE STATUS: employees table found with ${res ? res.total : 0} records.`);
+    });
+  } else {
+    console.log('DATABASE STATUS: employees table not found. Brand new database.');
+  }
+});
 
 db.serialize(() => {
   db.run(`
