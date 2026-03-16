@@ -3,7 +3,12 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
 
-const dbPath = path.join(__dirname, 'database.sqlite');
+const dataDir = path.resolve(__dirname, 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+const dbPath = path.join(dataDir, 'database.sqlite');
 const db = new sqlite3.Database(dbPath);
 
 db.serialize(() => {
