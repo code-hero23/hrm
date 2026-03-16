@@ -8,4 +8,4 @@ git reset --hard origin/main
 echo "Building and starting containers..."
 sudo docker compose up -d --build
 
-echo "Deployment complete! App should be available at http://www.hrm.orbixdesigns.com"
+echo "Deployment complete! App should be available at http://hrm.orbixdesigns.com"
