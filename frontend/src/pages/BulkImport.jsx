@@ -8,6 +8,7 @@ import API_BASE_URL from '../config';
 const BulkImport = () => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [importResult, setImportResult] = useState(null);
     const [success, setSuccess] = useState(false);
     const navigate = useNavigate();
 
@@ -58,9 +59,10 @@ const BulkImport = () => {
         if (data.length === 0) return;
         setLoading(true);
         try {
-            await axios.post(`${API_BASE_URL}/api/employees/bulk`, { employees: data });
+            const res = await axios.post(`${API_BASE_URL}/api/employees/bulk`, { employees: data });
+            setImportResult(res.data);
             setSuccess(true);
-            setTimeout(() => navigate('/'), 2000);
+            setTimeout(() => navigate('/'), 5000); // Give more time to see the result
         } catch (err) {
             console.error(err);
             alert('Error during bulk import. Check console for details.');
@@ -72,14 +74,24 @@ const BulkImport = () => {
         setData(prev => prev.filter((_, i) => i !== index));
     };
 
-    if (success) {
+    if (success && importResult) {
         return (
             <div className="card slide-in" style={{ textAlign: 'center', padding: '4rem' }}>
-                <div style={{ background: '#22c55e', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                <div style={{ background: importResult.errors > 0 ? '#eab308' : '#22c55e', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
                     <CheckCircle color="white" size={32} />
                 </div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Import Successful!</h2>
-                <p style={{ color: 'var(--text-dim)', marginTop: '0.5rem' }}>{data.length} records have been added to the database.</p>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Import Processed!</h2>
+                <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}>
+                    <div className="card" style={{padding:'1rem', minWidth:'100px', background:'rgba(34, 197, 94, 0.1)', borderColor:'rgba(34, 197, 94, 0.2)'}}>
+                        <p style={{fontSize:'0.7rem', color:'var(--text-dim)'}}>SUCCESS</p>
+                        <h4 style={{fontSize:'1.5rem', color:'#4ade80'}}>{importResult.success}</h4>
+                    </div>
+                    <div className="card" style={{padding:'1rem', minWidth:'100px', background:'rgba(239, 68, 68, 0.1)', borderColor:'rgba(239, 68, 68, 0.2)'}}>
+                        <p style={{fontSize:'0.7rem', color:'var(--text-dim)'}}>ERRORS</p>
+                        <h4 style={{fontSize:'1.5rem', color:'#f87171'}}>{importResult.errors}</h4>
+                    </div>
+                </div>
+                <p style={{ color: 'var(--text-dim)', marginTop: '2rem' }}>Redirecting to dashboard...</p>
             </div>
         );
     }

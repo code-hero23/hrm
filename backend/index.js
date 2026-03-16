@@ -211,6 +211,12 @@ app.post('/api/employees/bulk', async (req, res) => {
   db.serialize(() => {
     db.run('BEGIN TRANSACTION');
     
+    let processed = 0;
+    if (employees.length === 0) {
+        db.run('COMMIT', () => res.json({ message: 'Empty import', total: 0, success: 0, errors: 0 }));
+        return;
+    }
+
     employees.forEach(emp => {
       // Auto-generate file_no if missing
       if (!emp.file_no || emp.file_no === '') {
@@ -220,6 +226,13 @@ app.post('/api/employees/bulk', async (req, res) => {
       const keys = Object.keys(emp).filter(k => validKeys.includes(k));
       if (keys.length === 0) {
         errorCount++;
+        processed++;
+        if (processed === employees.length) {
+            db.run('COMMIT', (err) => {
+                if (err) return res.status(500).json({ error: 'Transaction failed' });
+                res.json({ message: 'Bulk import completed', total: employees.length, success: successCount, errors: errorCount });
+            });
+        }
         return;
       }
 
@@ -227,19 +240,21 @@ app.post('/api/employees/bulk', async (req, res) => {
       const values = keys.map(k => (typeof emp[k] === 'object') ? JSON.stringify(emp[k]) : emp[k]);
       
       const query = `INSERT INTO employees (${keys.join(',')}) VALUES (${placeholders})`;
-      db.run(query, values, (err) => {
+      db.run(query, values, function(err) {
         if (err) {
           console.error('Bulk Insert Error:', err.message);
           errorCount++;
         } else {
           successCount++;
         }
+        processed++;
+        if (processed === employees.length) {
+          db.run('COMMIT', (err) => {
+            if (err) return res.status(500).json({ error: 'Transaction failed' });
+            res.json({ message: 'Bulk import completed', total: employees.length, success: successCount, errors: errorCount });
+          });
+        }
       });
-    });
-
-    db.run('COMMIT', (err) => {
-      if (err) return res.status(500).json({ error: 'Transaction failed' });
-      res.json({ message: 'Bulk import completed', total: employees.length, success: successCount, errors: errorCount });
     });
   });
 });
