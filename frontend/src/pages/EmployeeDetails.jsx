@@ -5,6 +5,7 @@ import { Printer, Download, ArrowLeft, Trash2, CheckCircle, UserCircle, Edit3, C
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import API_BASE_URL from '../config';
+import LifecycleTracker from '../components/LifecycleTracker';
 
 const StatusDropdown = ({ currentStatus, onUpdate }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -160,6 +161,15 @@ const EmployeeDetails = () => {
   if (loading) return <div style={{textAlign:'center', padding:'4rem'}}>Loading record...</div>;
   if (!employee) return <div style={{textAlign:'center', padding:'4rem'}}>Employee not found.</div>;
 
+  const handleLifecycleUpdate = async (newSteps) => {
+    try {
+      await axios.patch(`${API_BASE_URL}/api/employees/${id}`, { lifecycle_steps: JSON.stringify(newSteps) });
+      setEmployee(prev => ({ ...prev, lifecycle_steps: JSON.stringify(newSteps) }));
+    } catch (err) {
+      console.error('Failed to update lifecycle steps:', err);
+    }
+  };
+
   return (
     <div className="slide-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3rem', alignItems: 'center' }}>
@@ -220,6 +230,13 @@ const EmployeeDetails = () => {
             </div>
           </div>
         </div>
+
+        <LifecycleTracker 
+          employeeId={id} 
+          initialSteps={employee.lifecycle_steps} 
+          doj={employee.date_of_joining} 
+          onUpdate={handleLifecycleUpdate} 
+        />
 
         <div className="section-title">Identity & Contacts</div>
         <div className="form-grid">

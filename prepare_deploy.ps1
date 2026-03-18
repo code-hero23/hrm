@@ -11,7 +11,6 @@ if (Test-Path $BundleDir) {
 
 # Create folder structure
 New-Item -ItemType Directory -Path "$BundleDir\backend" -Force
-New-Item -ItemType Directory -Path "$BundleDir\backend\uploads" -Force
 New-Item -ItemType Directory -Path "$BundleDir\frontend" -Force
 
 # Copy Backend files
@@ -21,7 +20,7 @@ Copy-Item "backend\index.js" "$BundleDir\backend\"
 Copy-Item "backend\db.js" "$BundleDir\backend\"
 Copy-Item "backend\ecosystem.config.js" "$BundleDir\backend\"
 Copy-Item "backend\.env.example" "$BundleDir\backend\"
-Copy-Item "backend\Dockerfile" "$BundleDir\backend\"  # Added this
+Copy-Item "backend\Dockerfile" "$BundleDir\backend\"
 
 # Build Frontend
 Write-Host "Building frontend..." -ForegroundColor Green

@@ -137,6 +137,7 @@ db.serialize(() => {
       educational_certificate_path TEXT,
       signature_name TEXT,
       background_verification TEXT, -- JSON string for verification details
+      lifecycle_steps TEXT, -- JSON string for 19-step onboarding workflow
 
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
@@ -192,7 +193,8 @@ db.serialize(() => {
     'asset_projects': 'TEXT',
     'asset_id_card': 'TEXT',
     'asset_official_mail': 'TEXT',
-    'asset_offer_letter': 'TEXT'
+    'asset_offer_letter': 'TEXT',
+    'lifecycle_steps': 'TEXT'
   };
 
   Object.entries(potentialMissingColumns).forEach(([name, type]) => {

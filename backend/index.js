@@ -149,8 +149,9 @@ app.post('/api/employees', upload, async (req, res) => {
       office_sim, office_sim_date, laptop_system, laptop_system_date, official_email_crm, official_email_crm_date,
       asset_crm, asset_peopledesk, asset_projects, asset_id_card, asset_official_mail, asset_offer_letter,
       check_sim, check_laptop, check_crm, check_peopledesk, check_projects, check_id_card, check_official_mail, check_offer_letter,
-      bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, signature_name, background_verification
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, signature_name, background_verification,
+      lifecycle_steps
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `;
 
   const params = [
@@ -167,7 +168,8 @@ app.post('/api/employees', upload, async (req, res) => {
     data.asset_crm, data.asset_peopledesk, data.asset_projects, data.asset_id_card, data.asset_official_mail, data.asset_offer_letter,
     data.check_sim || 0, data.check_laptop || 0, data.check_crm || 0, data.check_peopledesk || 0, data.check_projects || 0, data.check_id_card || 0, data.check_official_mail || 0, data.check_offer_letter || 0,
     bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name, 
-    typeof data.background_verification === 'object' ? JSON.stringify(data.background_verification) : data.background_verification
+    typeof data.background_verification === 'object' ? JSON.stringify(data.background_verification) : data.background_verification,
+    typeof data.lifecycle_steps === 'object' ? JSON.stringify(data.lifecycle_steps) : data.lifecycle_steps
   ];
 
   db.run(query, params, function(err) {
@@ -226,7 +228,7 @@ app.post('/api/employees/bulk', async (req, res) => {
     "laptop_system", "laptop_system_date", "official_email_crm", "official_email_crm_date", 
     "asset_crm", "asset_peopledesk", "asset_projects", "asset_id_card", "asset_official_mail", "asset_offer_letter",
     "check_sim", "check_laptop", "check_crm", "check_peopledesk", "check_projects", "check_id_card", "check_official_mail", "check_offer_letter",
-    "signature_name", "background_verification"
+    "signature_name", "background_verification", "lifecycle_steps"
   ];
 
   db.serialize(() => {
@@ -306,7 +308,8 @@ app.put('/api/employees/:id', upload, (req, res) => {
       laptop_system_date=?, official_email_crm=?, official_email_crm_date=?,
       asset_crm=?, asset_peopledesk=?, asset_projects=?, asset_id_card=?, asset_official_mail=?, asset_offer_letter=?,
       check_sim=?, check_laptop=?, check_crm=?, check_peopledesk=?, check_projects=?, check_id_card=?, check_official_mail=?, check_offer_letter=?,
-      bank_passbook_path=?, pan_card_path=?, aadhaar_card_path=?, educational_certificate_path=?, signature_name=?, background_verification=?
+      bank_passbook_path=?, pan_card_path=?, aadhaar_card_path=?, educational_certificate_path=?, signature_name=?, background_verification=?,
+      lifecycle_steps=?
     WHERE id = ?
   `;
 
@@ -326,6 +329,7 @@ app.put('/api/employees/:id', upload, (req, res) => {
     data.check_sim || 0, data.check_laptop || 0, data.check_crm || 0, data.check_peopledesk || 0, data.check_projects || 0, data.check_id_card || 0, data.check_official_mail || 0, data.check_offer_letter || 0,
     bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name, 
     typeof data.background_verification === 'object' ? JSON.stringify(data.background_verification) : data.background_verification,
+    typeof data.lifecycle_steps === 'object' ? JSON.stringify(data.lifecycle_steps) : data.lifecycle_steps,
     req.params.id
   ];
 
