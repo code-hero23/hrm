@@ -15,7 +15,7 @@ const EditEmployee = () => {
     status: 'Onboard',
     file_no: '', full_name: '', father_mother_name: '', dob: '', gender: '', contact_number: '', blood_group: '', 
     personal_email: '', marital_status: '', present_address: '', permanent_address: '',
-    employee_id: '', department: '', designation: '', date_of_joining: '', work_location: '', reporting_manager: '',
+    employee_id: '', department: '', designation: '', date_of_joining: '', official_joining_date: '', work_location: '', reporting_manager: '',
     pan_number: '', aadhaar_number: '', other_id: '',
     emergency_contact_name: '', emergency_contact_relationship: '', emergency_contact_number: '', 
     father_husband_number: '', mother_wife_number: '', alternate_number: '',
@@ -288,6 +288,7 @@ const EditEmployee = () => {
             <div className="form-group"><label>DEPARTMENT</label><input name="department" value={formData.department} onChange={handleChange} required /></div>
             <div className="form-group"><label>DESIGNATION</label><input name="designation" value={formData.designation} onChange={handleChange} required /></div>
             <div className="form-group"><label>DATE OF JOINING</label><input type="date" name="date_of_joining" value={formData.date_of_joining} onChange={handleChange} required /></div>
+            <div className="form-group"><label>OFFICIAL JOINING DATE</label><input type="date" name="official_joining_date" value={formData.official_joining_date || ''} onChange={handleChange} /></div>
             <div className="form-group"><label>WORK LOCATION / BRANCH</label>
               <select 
                 name="work_location" 

@@ -216,18 +216,52 @@ const Dashboard = () => {
                       <span className={`badge badge-${emp.status.toLowerCase().replace(/ /g, '-')}`} style={{ scale: '0.7', transformOrigin: 'right' }}>{emp.status}</span>
                     </div>
                     <p style={{ fontSize: '0.8125rem', color: 'var(--text-dim)', fontWeight: 600, marginTop: '0.25rem' }}>{emp.designation}</p>
-                    <div style={{ marginTop: '1rem', borderTop: '1px solid var(--glass-border)', paddingTop: '0.75rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                    <div style={{ marginTop: '1rem', borderTop: '1px solid var(--glass-border)', paddingTop: '0.75rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                       <div>
                         <p style={{ fontSize: '0.625rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase' }}>Dept</p>
-                        <p style={{ fontSize: '0.75rem', fontWeight: 700 }}>{emp.department || 'N/A'}</p>
+                        <p style={{ fontSize: '0.75rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{emp.department || 'N/A'}</p>
                       </div>
                       <div>
                         <p style={{ fontSize: '0.625rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase' }}>ID</p>
                         <p style={{ fontSize: '0.75rem', fontWeight: 700 }}>{emp.employee_id || 'PENDING'}</p>
                       </div>
+                      <div>
+                        <p style={{ fontSize: '0.625rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase' }}>D.O.J</p>
+                        <p style={{ fontSize: '0.75rem', fontWeight: 700 }}>{emp.date_of_joining || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: '0.625rem', color: '#60a5fa', fontWeight: 800, textTransform: 'uppercase' }}>Official</p>
+                        <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#60a5fa' }}>{emp.official_joining_date || 'N/A'}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
+
+                {/* Dashboard Progress Bar */}
+                {(() => {
+                  const steps = emp.lifecycle_steps ? (typeof emp.lifecycle_steps === 'string' ? JSON.parse(emp.lifecycle_steps) : emp.lifecycle_steps) : [];
+                  const total = steps.length || 20;
+                  const done = steps.filter(s => s.done).length;
+                  const progress = Math.round((done / total) * 100);
+                  const isDone = progress === 100;
+                  
+                  return (
+                    <div style={{ marginTop: '1.5rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                         <span style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Completion</span>
+                         <span style={{ fontSize: '0.75rem', fontWeight: 900, color: isDone ? '#4ade80' : 'white' }}>{progress}%</span>
+                      </div>
+                      <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
+                        <div style={{ 
+                          width: `${progress}%`, 
+                          height: '100%', 
+                          background: isDone ? '#22c55e' : (progress < 40 ? '#ef4444' : '#3b82f6'),
+                          transition: 'width 0.5s ease'
+                        }} />
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </Link>
           ))}

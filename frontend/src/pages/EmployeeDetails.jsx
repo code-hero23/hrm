@@ -97,6 +97,7 @@ const EmployeeDetails = () => {
   const navigate = useNavigate();
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isEditingOJ, setIsEditingOJ] = useState(false);
   const printRef = useRef();
 
   useEffect(() => {
@@ -119,6 +120,17 @@ const EmployeeDetails = () => {
       fetchEmployee();
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const updateOfficialJoiningDate = async (newDate) => {
+    try {
+      await axios.patch(`${API_BASE_URL}/api/employees/${id}`, { official_joining_date: newDate });
+      setEmployee(prev => ({ ...prev, official_joining_date: newDate }));
+      setIsEditingOJ(false);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update date');
     }
   };
 
@@ -214,7 +226,7 @@ const EmployeeDetails = () => {
               <span className={`badge badge-${employee.status.toLowerCase().replace(/ /g, '-')}`} style={{ fontSize: '0.875rem' }}>{employee.status}</span>
             </div>
             
-            <div style={{ marginTop: '2.5rem', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+            <div style={{ marginTop: '2.5rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
               <div>
                 <p style={{ fontSize: '0.625rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>EMPLOYEE ID</p>
                 <p style={{ fontSize: '1.125rem', fontWeight: 700 }}>{employee.employee_id || 'PENDING'}</p>
@@ -227,9 +239,70 @@ const EmployeeDetails = () => {
                 <p style={{ fontSize: '0.625rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>D.O.J</p>
                 <p style={{ fontSize: '1.125rem', fontWeight: 700 }}>{employee.date_of_joining || 'N/A'}</p>
               </div>
+              <div style={{ padding: '0.5rem', borderRadius: '12px', background: isEditingOJ ? 'rgba(59, 130, 246, 0.1)' : 'transparent', transition: '0.3s' }}>
+                <p style={{ fontSize: '0.625rem', color: '#60a5fa', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  OFFICIAL D.O.J
+                  {!isEditingOJ && <Edit3 size={12} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => setIsEditingOJ(true)} />}
+                </p>
+                {isEditingOJ ? (
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <input 
+                      type="date" 
+                      defaultValue={employee.official_joining_date || ''} 
+                      className="form-group input" 
+                      style={{ padding: '4px 8px', fontSize: '0.875rem', width: 'auto' }}
+                      onBlur={(e) => updateOfficialJoiningDate(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') updateOfficialJoiningDate(e.target.value);
+                        if (e.key === 'Escape') setIsEditingOJ(false);
+                      }}
+                      autoFocus
+                    />
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '1.125rem', fontWeight: 700, color: '#60a5fa', cursor: 'pointer' }} onClick={() => setIsEditingOJ(true)}>
+                    {employee.official_joining_date || 'N/A'}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
+
+        {(() => {
+          const steps = employee.lifecycle_steps ? (typeof employee.lifecycle_steps === 'string' ? JSON.parse(employee.lifecycle_steps) : employee.lifecycle_steps) : [];
+          const total = steps.length || 20;
+          const done = steps.filter(s => s.done).length;
+          const progress = Math.round((done / total) * 100);
+          const risk = progress < 40 && total > 0;
+          
+          return (
+            <div style={{ marginBottom: '2.5rem', animation: 'fadeIn 0.8s ease-out' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: progress === 100 ? '#22c55e' : (risk ? '#ef4444' : '#3b82f6'), boxShadow: `0 0 10px ${progress === 100 ? '#22c55e' : (risk ? '#ef4444' : '#3b82f6')}` }} />
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                    Onboarding Completion
+                  </span>
+                </div>
+                <span style={{ fontSize: '1.25rem', fontWeight: 900, color: progress === 100 ? '#4ade80' : 'white' }}>
+                  {progress}<span style={{ fontSize: '0.75rem', opacity: 0.5, marginLeft: '2px' }}>%</span>
+                </span>
+              </div>
+              <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.03)' }}>
+                <div style={{ 
+                  width: `${progress}%`, 
+                  height: '100%', 
+                  background: progress === 100 
+                    ? 'linear-gradient(90deg, #22c55e, #4ade80)' 
+                    : risk ? 'linear-gradient(90deg, #ef4444, #f87171)' : 'linear-gradient(90deg, #3b82f6, #60a5fa)',
+                  transition: 'width 1s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  boxShadow: progress > 0 ? `0 0 15px ${risk ? 'rgba(239, 68, 68, 0.3)' : 'rgba(59, 130, 246, 0.3)'}` : 'none'
+                }} />
+              </div>
+            </div>
+          );
+        })()}
 
         <LifecycleTracker 
           employeeId={id} 
@@ -381,6 +454,7 @@ const EmployeeDetails = () => {
                   <td style={{ padding: '1mm 0' }}><strong>Department:</strong> {employee.department}</td>
                   <td style={{ padding: '1mm 0' }}><strong>Designation:</strong> {employee.designation}</td>
                   <td style={{ padding: '1mm 0' }}><strong>Date of Joining:</strong> {employee.date_of_joining}</td>
+                  <td style={{ padding: '1mm 0' }}><strong>Official Join Date:</strong> {employee.official_joining_date || 'N/A'}</td>
                 </tr>
                 <tr>
                   <td style={{ padding: '1mm 0' }}><strong>Work Location:</strong> {employee.work_location}</td>

@@ -150,7 +150,7 @@ app.post('/api/employees', upload, async (req, res) => {
       asset_crm, asset_peopledesk, asset_projects, asset_id_card, asset_official_mail, asset_offer_letter,
       check_sim, check_laptop, check_crm, check_peopledesk, check_projects, check_id_card, check_official_mail, check_offer_letter,
       bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, signature_name, background_verification,
-      lifecycle_steps
+      lifecycle_steps, official_joining_date
     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `;
 
@@ -169,7 +169,8 @@ app.post('/api/employees', upload, async (req, res) => {
     data.check_sim || 0, data.check_laptop || 0, data.check_crm || 0, data.check_peopledesk || 0, data.check_projects || 0, data.check_id_card || 0, data.check_official_mail || 0, data.check_offer_letter || 0,
     bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name, 
     typeof data.background_verification === 'object' ? JSON.stringify(data.background_verification) : data.background_verification,
-    typeof data.lifecycle_steps === 'object' ? JSON.stringify(data.lifecycle_steps) : data.lifecycle_steps
+    typeof data.lifecycle_steps === 'object' ? JSON.stringify(data.lifecycle_steps) : data.lifecycle_steps,
+    data.official_joining_date
   ];
 
   db.run(query, params, function(err) {
@@ -228,7 +229,7 @@ app.post('/api/employees/bulk', async (req, res) => {
     "laptop_system", "laptop_system_date", "official_email_crm", "official_email_crm_date", 
     "asset_crm", "asset_peopledesk", "asset_projects", "asset_id_card", "asset_official_mail", "asset_offer_letter",
     "check_sim", "check_laptop", "check_crm", "check_peopledesk", "check_projects", "check_id_card", "check_official_mail", "check_offer_letter",
-    "signature_name", "background_verification", "lifecycle_steps"
+    "signature_name", "background_verification", "lifecycle_steps", "official_joining_date"
   ];
 
   db.serialize(() => {
@@ -309,7 +310,7 @@ app.put('/api/employees/:id', upload, (req, res) => {
       asset_crm=?, asset_peopledesk=?, asset_projects=?, asset_id_card=?, asset_official_mail=?, asset_offer_letter=?,
       check_sim=?, check_laptop=?, check_crm=?, check_peopledesk=?, check_projects=?, check_id_card=?, check_official_mail=?, check_offer_letter=?,
       bank_passbook_path=?, pan_card_path=?, aadhaar_card_path=?, educational_certificate_path=?, signature_name=?, background_verification=?,
-      lifecycle_steps=?
+      lifecycle_steps=?, official_joining_date=?
     WHERE id = ?
   `;
 
@@ -330,6 +331,7 @@ app.put('/api/employees/:id', upload, (req, res) => {
     bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name, 
     typeof data.background_verification === 'object' ? JSON.stringify(data.background_verification) : data.background_verification,
     typeof data.lifecycle_steps === 'object' ? JSON.stringify(data.lifecycle_steps) : data.lifecycle_steps,
+    data.official_joining_date,
     req.params.id
   ];
 
@@ -363,6 +365,61 @@ app.delete('/api/employees/:id', (req, res) => {
   db.run('DELETE FROM employees WHERE id = ?', [req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Employee deleted successfully' });
+  });
+});
+ 
+// Resource Bucket API
+app.get('/api/bucket', (req, res) => {
+  const query = `
+    SELECT b.*, e.full_name as assigned_to_name 
+    FROM resource_bucket b 
+    LEFT JOIN employees e ON b.assigned_to = e.id
+    ORDER BY b.id DESC
+  `;
+  db.all(query, [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+ 
+app.post('/api/bucket/bulk', (req, res) => {
+  const services = req.body; // Array of { type, value }
+  if (!Array.isArray(services)) return res.status(400).json({ error: 'Data must be an array' });
+ 
+  const stmt = db.prepare('INSERT OR IGNORE INTO resource_bucket (type, value) VALUES (?, ?)');
+  services.forEach(item => {
+    stmt.run(item.type, item.value);
+  });
+  stmt.finalize((err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: 'Resources imported successfully' });
+  });
+});
+ 
+app.patch('/api/bucket/:id/assign', (req, res) => {
+  const { assigned_to } = req.body;
+  if (!assigned_to) return res.status(400).json({ error: 'assigned_to is required' });
+ 
+  const date = new Date().toISOString().split('T')[0];
+  const query = 'UPDATE resource_bucket SET assigned_to = ?, status = "Assigned", assigned_date = ? WHERE id = ?';
+  db.run(query, [assigned_to, date, req.params.id], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: 'Resource assigned successfully' });
+  });
+});
+ 
+app.patch('/api/bucket/:id/unassign', (req, res) => {
+  const query = 'UPDATE resource_bucket SET assigned_to = NULL, status = "Available", assigned_date = NULL WHERE id = ?';
+  db.run(query, [req.params.id], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: 'Resource unassigned successfully' });
+  });
+});
+ 
+app.delete('/api/bucket/:id', (req, res) => {
+  db.run('DELETE FROM resource_bucket WHERE id = ?', [req.params.id], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: 'Resource deleted successfully' });
   });
 });
 

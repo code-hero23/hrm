@@ -74,6 +74,7 @@ db.serialize(() => {
       department TEXT,
       designation TEXT,
       date_of_joining TEXT,
+      official_joining_date TEXT,
       work_location TEXT,
       reporting_manager TEXT,
 
@@ -150,6 +151,18 @@ db.serialize(() => {
       password TEXT
     )
   `);
+ 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS resource_bucket (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL,
+      value TEXT NOT NULL UNIQUE,
+      status TEXT DEFAULT 'Available',
+      assigned_to INTEGER,
+      assigned_date TEXT,
+      FOREIGN KEY(assigned_to) REFERENCES employees(id)
+    )
+  `);
 
   // Insert default admin if not exists (username: Admin@cookscape.com, password: Hrmaster@2026)
   const hashedPassword = bcrypt.hashSync('Hrmaster@2026', 10);
@@ -194,7 +207,8 @@ db.serialize(() => {
     'asset_id_card': 'TEXT',
     'asset_official_mail': 'TEXT',
     'asset_offer_letter': 'TEXT',
-    'lifecycle_steps': 'TEXT'
+    'lifecycle_steps': 'TEXT',
+    'official_joining_date': 'TEXT'
   };
 
   Object.entries(potentialMissingColumns).forEach(([name, type]) => {
