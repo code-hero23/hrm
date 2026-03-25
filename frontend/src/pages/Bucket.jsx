@@ -25,6 +25,7 @@ const Bucket = () => {
   const [bulkData, setBulkData] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('Email');
 
   useEffect(() => {
     fetchData();
@@ -107,9 +108,10 @@ const Bucket = () => {
   };
 
   const filteredResources = resources.filter(r => {
+    const matchesTab = r.type.toLowerCase() === activeTab.toLowerCase();
     const matchesStatus = filterStatus === 'All' || r.status === filterStatus;
     const matchesSearch = r.value.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesStatus && matchesSearch;
+    return matchesTab && matchesStatus && matchesSearch;
   });
 
   if (loading) return <div className="p-8 text-center text-white">Loading Bucket...</div>;
@@ -122,7 +124,7 @@ const Bucket = () => {
             <Database size={40} className="text-accent" /> Resource Bucket
           </h1>
           <p style={{ color: 'var(--text-dim)', fontSize: '1.1rem', marginTop: '0.5rem' }}>
-            Manage and assign official company emails and phone numbers.
+            Manage and assign official company {activeTab.toLowerCase()} addresses.
           </p>
         </div>
         <button 
@@ -134,13 +136,38 @@ const Bucket = () => {
         </button>
       </header>
 
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '1rem' }}>
+        {['Email', 'Phone'].map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              padding: '0.75rem 2rem',
+              borderRadius: '12px',
+              border: 'none',
+              background: activeTab === tab ? 'var(--accent)' : 'rgba(255,255,255,0.05)',
+              color: activeTab === tab ? 'white' : 'var(--text-dim)',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}
+          >
+            {tab === 'Email' ? <Mail size={18} /> : <Phone size={18} />}
+            {tab === 'Email' ? 'Official Emails' : 'Phone Numbers'}
+          </button>
+        ))}
+      </div>
+
       {/* Stats Board */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
         {[
-          { label: 'Total Resources', value: resources.length, icon: Database, color: '#3b82f6' },
-          { label: 'Available', value: resources.filter(r => r.status === 'Available').length, icon: CheckCircle, color: '#22c55e' },
-          { label: 'Assigned', value: resources.filter(r => r.status === 'Assigned').length, icon: Activity, color: '#f59e0b' },
-          { label: 'Email IDs', value: resources.filter(r => r.type.toLowerCase() === 'email').length, icon: Mail, color: '#8b5cf6' }
+          { label: `Total ${activeTab}s`, value: resources.filter(r => r.type.toLowerCase() === activeTab.toLowerCase()).length, icon: Database, color: '#3b82f6' },
+          { label: 'Available', value: resources.filter(r => r.type.toLowerCase() === activeTab.toLowerCase() && r.status === 'Available').length, icon: CheckCircle, color: '#22c55e' },
+          { label: 'Assigned', value: resources.filter(r => r.type.toLowerCase() === activeTab.toLowerCase() && r.status === 'Assigned').length, icon: Activity, color: '#f59e0b' }
         ].map((stat, i) => (
           <div key={i} className="card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
             <div style={{ background: `${stat.color}20`, padding: '1rem', borderRadius: '12px' }}>
@@ -160,7 +187,7 @@ const Bucket = () => {
           <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
           <input 
             type="text" 
-            placeholder="Search by value..." 
+            placeholder={`Search ${activeTab.toLowerCase()}...`}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{ 
@@ -198,7 +225,7 @@ const Bucket = () => {
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--glass-border)' }}>
-              <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Type & Value</th>
+              <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Value</th>
               <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
               <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assigned To</th>
               <th style={{ padding: '1.25rem 1.5rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Actions</th>
@@ -207,7 +234,7 @@ const Bucket = () => {
           <tbody>
             {filteredResources.length === 0 ? (
               <tr>
-                <td colSpan="4" style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-dim)' }}>No resources found matching your search.</td>
+                <td colSpan="4" style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-dim)' }}>No {activeTab.toLowerCase()}s found matching your search.</td>
               </tr>
             ) : filteredResources.map(resource => (
               <tr key={resource.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: '0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.01)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
@@ -298,7 +325,7 @@ const Bucket = () => {
                   onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
                   onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
                 >
-                  <p style={{ margin: 0, fontWeight: 700 }}>{emp.name}</p>
+                  <p style={{ margin: 0, fontWeight: 700 }}>{emp.full_name}</p>
                   <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-dim)' }}>{emp.designation} • {emp.department}</p>
                 </div>
               ))}
@@ -306,6 +333,7 @@ const Bucket = () => {
           </div>
         </div>
       )}
+
 
       {/* Bulk Import Modal */}
       {showBulkModal && (

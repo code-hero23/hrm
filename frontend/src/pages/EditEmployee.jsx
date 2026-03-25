@@ -226,10 +226,10 @@ const EditEmployee = () => {
           <h3 className="section-title">1. PERSONAL INFORMATION</h3>
           <div className="form-grid">
             <div className="form-group"><label>FILE NO.</label><input name="file_no" value={formData.file_no} onChange={handleChange} /></div>
-            <div className="form-group"><label>FULL NAME</label><input name="full_name" value={formData.full_name} onChange={handleChange} required /></div>
-            <div className="form-group"><label>FATHER'S / MOTHER'S NAME</label><input name="father_mother_name" value={formData.father_mother_name} onChange={handleChange} required /></div>
-            <div className="form-group"><label>DATE OF BIRTH</label><input type="date" name="dob" value={formData.dob} onChange={handleChange} required /></div>
-            <div className="form-group"><label>GENDER</label>
+            <div className="form-group"><label>FULL NAME <span style={{color:'#ef4444'}}>*</span></label><input name="full_name" value={formData.full_name} onChange={handleChange} required /></div>
+            <div className="form-group"><label>FATHER'S / MOTHER'S NAME <span style={{color:'#ef4444'}}>*</span></label><input name="father_mother_name" value={formData.father_mother_name} onChange={handleChange} required /></div>
+            <div className="form-group"><label>DATE OF BIRTH <span style={{color:'#ef4444'}}>*</span></label><input type="date" name="dob" value={formData.dob} onChange={handleChange} required /></div>
+            <div className="form-group"><label>GENDER <span style={{color:'#ef4444'}}>*</span></label>
               <select name="gender" value={formData.gender} onChange={handleChange} required>
                 <option value="">Select</option>
                 <option value="MALE">MALE</option>
@@ -237,10 +237,10 @@ const EditEmployee = () => {
                 <option value="OTHER">OTHER</option>
               </select>
             </div>
-            <div className="form-group"><label>CONTACT NUMBER (+91)</label><input name="contact_number" value={formData.contact_number} onChange={handleChange} required /></div>
-            <div className="form-group"><label>BLOOD GROUP</label><input name="blood_group" value={formData.blood_group} onChange={handleChange} required /></div>
-            <div className="form-group"><label>PERSONAL EMAIL ID</label><input type="email" name="personal_email" value={formData.personal_email} onChange={handleChange} style={{textTransform:'none'}} required /></div>
-            <div className="form-group"><label>MARITAL STATUS</label>
+            <div className="form-group"><label>CONTACT NUMBER (+91) <span style={{color:'#ef4444'}}>*</span></label><input name="contact_number" value={formData.contact_number} onChange={handleChange} required /></div>
+            <div className="form-group"><label>BLOOD GROUP <span style={{color:'#ef4444'}}>*</span></label><input name="blood_group" value={formData.blood_group} onChange={handleChange} required /></div>
+            <div className="form-group"><label>PERSONAL EMAIL ID <span style={{color:'#ef4444'}}>*</span></label><input type="email" name="personal_email" value={formData.personal_email} onChange={handleChange} style={{textTransform:'none'}} required /></div>
+            <div className="form-group"><label>MARITAL STATUS <span style={{color:'#ef4444'}}>*</span></label>
                <select name="marital_status" value={formData.marital_status} onChange={handleChange} required>
                 <option value="">Select</option>
                 <option value="SINGLE">SINGLE</option>
@@ -249,8 +249,8 @@ const EditEmployee = () => {
               </select>
             </div>
           </div>
-          <div className="form-group" style={{marginTop:'1.5rem'}}><label>PRESENT ADDRESS</label><textarea name="present_address" value={formData.present_address} onChange={handleChange} required></textarea></div>
-          <div className="form-group" style={{marginTop:'1.5rem'}}><label>PERMANENT ADDRESS</label><textarea name="permanent_address" value={formData.permanent_address} onChange={handleChange} required></textarea></div>
+          <div className="form-group" style={{marginTop:'1.5rem'}}><label>PRESENT ADDRESS <span style={{color:'#ef4444'}}>*</span></label><textarea name="present_address" value={formData.present_address} onChange={handleChange} required></textarea></div>
+          <div className="form-group" style={{marginTop:'1.5rem'}}><label>PERMANENT ADDRESS <span style={{color:'#ef4444'}}>*</span></label><textarea name="permanent_address" value={formData.permanent_address} onChange={handleChange} required></textarea></div>
           <div className="form-group" style={{marginTop:'1.5rem'}}>
             <label>PHOTO (PASSPORT SIZE)</label>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -285,11 +285,11 @@ const EditEmployee = () => {
               </select>
             </div>
             <div className="form-group"><label>EMPLOYEE ID (OPTIONAL)</label><input name="employee_id" value={formData.employee_id} onChange={handleChange} /></div>
-            <div className="form-group"><label>DEPARTMENT</label><input name="department" value={formData.department} onChange={handleChange} required /></div>
-            <div className="form-group"><label>DESIGNATION</label><input name="designation" value={formData.designation} onChange={handleChange} required /></div>
-            <div className="form-group"><label>DATE OF JOINING</label><input type="date" name="date_of_joining" value={formData.date_of_joining} onChange={handleChange} required /></div>
+            <div className="form-group"><label>DEPARTMENT <span style={{color:'#ef4444'}}>*</span></label><input name="department" value={formData.department} onChange={handleChange} required /></div>
+            <div className="form-group"><label>DESIGNATION <span style={{color:'#ef4444'}}>*</span></label><input name="designation" value={formData.designation} onChange={handleChange} required /></div>
+            <div className="form-group"><label>DATE OF JOINING <span style={{color:'#ef4444'}}>*</span></label><input type="date" name="date_of_joining" value={formData.date_of_joining} onChange={handleChange} required /></div>
             <div className="form-group"><label>OFFICIAL JOINING DATE</label><input type="date" name="official_joining_date" value={formData.official_joining_date || ''} onChange={handleChange} /></div>
-            <div className="form-group"><label>WORK LOCATION / BRANCH</label>
+            <div className="form-group"><label>WORK LOCATION / BRANCH <span style={{color:'#ef4444'}}>*</span></label>
               <select 
                 name="work_location" 
                 value={['MTRS', 'PORUR', 'OMR', ''].includes(formData.work_location) ? formData.work_location : 'OTHER'} 
@@ -323,15 +323,15 @@ const EditEmployee = () => {
         <div>
           <h3 className="section-title">3. IDENTIFICATION & EMERGENCY</h3>
           <div className="form-grid">
-            <div className="form-group"><label>PAN NUMBER</label><input name="pan_number" value={formData.pan_number} onChange={handleChange} required /></div>
-            <div className="form-group"><label>AADHAAR NUMBER</label><input name="aadhaar_number" value={formData.aadhaar_number} onChange={handleChange} required /></div>
+            <div className="form-group"><label>PAN NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="pan_number" value={formData.pan_number} onChange={handleChange} required /></div>
+            <div className="form-group"><label>AADHAAR NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="aadhaar_number" value={formData.aadhaar_number} onChange={handleChange} required /></div>
             <div className="form-group"><label>OTHER ID (OPTIONAL)</label><input name="other_id" value={formData.other_id} onChange={handleChange} /></div>
           </div>
           <h4 style={{margin:'2rem 0 1rem', fontSize:'0.9rem'}}>EMERGENCY CONTACT</h4>
           <div className="form-grid">
-            <div className="form-group"><label>NAME</label><input name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleChange} required /></div>
-            <div className="form-group"><label>RELATIONSHIP</label><input name="emergency_contact_relationship" value={formData.emergency_contact_relationship} onChange={handleChange} required /></div>
-            <div className="form-group"><label>CONTACT NUMBER</label><input name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} required /></div>
+            <div className="form-group"><label>NAME <span style={{color:'#ef4444'}}>*</span></label><input name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleChange} required /></div>
+            <div className="form-group"><label>RELATIONSHIP <span style={{color:'#ef4444'}}>*</span></label><input name="emergency_contact_relationship" value={formData.emergency_contact_relationship} onChange={handleChange} required /></div>
+            <div className="form-group"><label>CONTACT NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} required /></div>
           </div>
         </div>
       );
@@ -339,17 +339,17 @@ const EditEmployee = () => {
         <div>
            <h3 className="section-title">4. BANK & EDUCATION</h3>
            <div className="form-grid">
-            <div className="form-group"><label>ACCOUNT HOLDER NAME</label><input name="account_holder_name" value={formData.account_holder_name} onChange={handleChange} required /></div>
-            <div className="form-group"><label>ACCOUNT NO.</label><input name="account_number" value={formData.account_number} onChange={handleChange} required /></div>
-            <div className="form-group"><label>BANK NAME</label><input name="bank_name" value={formData.bank_name} onChange={handleChange} required /></div>
-            <div className="form-group"><label>IFSC CODE</label><input name="ifsc_code" value={formData.ifsc_code} onChange={handleChange} required /></div>
-            <div className="form-group"><label>BRANCH</label><input name="branch" value={formData.branch} onChange={handleChange} required /></div>
+            <div className="form-group"><label>ACCOUNT HOLDER NAME <span style={{color:'#ef4444'}}>*</span></label><input name="account_holder_name" value={formData.account_holder_name} onChange={handleChange} required /></div>
+            <div className="form-group"><label>ACCOUNT NO. <span style={{color:'#ef4444'}}>*</span></label><input name="account_number" value={formData.account_number} onChange={handleChange} required /></div>
+            <div className="form-group"><label>BANK NAME <span style={{color:'#ef4444'}}>*</span></label><input name="bank_name" value={formData.bank_name} onChange={handleChange} required /></div>
+            <div className="form-group"><label>IFSC CODE <span style={{color:'#ef4444'}}>*</span></label><input name="ifsc_code" value={formData.ifsc_code} onChange={handleChange} required /></div>
+            <div className="form-group"><label>BRANCH <span style={{color:'#ef4444'}}>*</span></label><input name="branch" value={formData.branch} onChange={handleChange} required /></div>
           </div>
           <h4 style={{margin:'2rem 0 1rem', fontSize:'0.9rem'}}>EDUCATION</h4>
           <div className="form-grid">
-            <div className="form-group"><label>QUALIFICATION</label><input name="education_qualification" value={formData.education_qualification} onChange={handleChange} required /></div>
-            <div className="form-group"><label>YEAR OF PASSING</label><input name="year_of_passing" value={formData.year_of_passing} onChange={handleChange} required /></div>
-            <div className="form-group"><label>INSTITUTE</label><input name="institute" value={formData.institute || ''} onChange={handleChange} required /></div>
+            <div className="form-group"><label>QUALIFICATION <span style={{color:'#ef4444'}}>*</span></label><input name="education_qualification" value={formData.education_qualification} onChange={handleChange} required /></div>
+            <div className="form-group"><label>YEAR OF PASSING <span style={{color:'#ef4444'}}>*</span></label><input name="year_of_passing" value={formData.year_of_passing} onChange={handleChange} required /></div>
+            <div className="form-group"><label>INSTITUTE <span style={{color:'#ef4444'}}>*</span></label><input name="institute" value={formData.institute || ''} onChange={handleChange} required /></div>
           </div>
           <h3 className="section-title">5. OFFICE ASSETS & SYSTEMS (OPTIONAL)</h3>
           <div className="form-grid">
@@ -560,8 +560,8 @@ const EditEmployee = () => {
           
           <h3 className="section-title" style={{marginTop:'3rem'}}>8. DIGITAL SIGNATURE</h3>
           <div className="form-group">
-            <label>SIGNATURE NAME</label>
-            <input name="signature_name" value={formData.signature_name || ''} onChange={handleChange} />
+            <label>SIGNATURE NAME <span style={{color:'#ef4444'}}>*</span></label>
+            <input name="signature_name" value={formData.signature_name || ''} onChange={handleChange} required />
           </div>
         </div>
       );

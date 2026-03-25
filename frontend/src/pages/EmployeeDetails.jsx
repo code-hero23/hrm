@@ -182,6 +182,12 @@ const EmployeeDetails = () => {
     }
   };
 
+  const isNA = (val) => {
+    if (!val) return true;
+    const s = String(val).trim().toUpperCase();
+    return s === 'N/A' || s === 'N/A(-)' || s === 'N/A(' || s === '—' || s === '-';
+  };
+
   return (
     <div className="slide-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3rem', alignItems: 'center' }}>
@@ -481,13 +487,19 @@ const EmployeeDetails = () => {
           </div>
 
           <div style={{ marginBottom: '6mm' }}>
-            <p><strong>{employee.check_sim === 1 ? '✓ ' : '☐ '}Office SIM:</strong> {employee.office_sim || 'N/A'} ({employee.office_sim_date || '—'})</p>
-            <p><strong>{employee.check_laptop === 1 ? '✓ ' : '☐ '}Laptop/System:</strong> {employee.laptop_system || 'N/A'} ({employee.laptop_system_date || '—'})</p>
-            <p><strong>Official Email/CRM:</strong> {employee.official_email_crm || 'N/A'} ({employee.official_email_crm_date || '—'})</p>
-            <p><strong>{employee.check_official_mail === 1 ? '✓ ' : '☐ '}Official Mail ID:</strong> {employee.asset_official_mail || 'N/A'}</p>
-            <p><strong>{employee.check_crm === 1 ? '✓ ' : '☐ '}CRM (Asset):</strong> {employee.asset_crm || 'N/A'} &nbsp;&nbsp; <strong>{employee.check_peopledesk === 1 ? '✓ ' : '☐ '}Peopledesk:</strong> {employee.asset_peopledesk || 'N/A'}</p>
-            <p><strong>{employee.check_projects === 1 ? '✓ ' : '☐ '}Projects:</strong> {employee.asset_projects || 'N/A'} &nbsp;&nbsp; <strong>{employee.check_id_card === 1 ? '✓ ' : '☐ '}ID Card:</strong> {employee.asset_id_card || 'N/A'}</p>
-            <p><strong>{employee.check_offer_letter === 1 ? '✓ ' : '☐ '}Offer Letter:</strong> {employee.asset_offer_letter || 'N/A'}</p>
+            {!isNA(employee.office_sim) && <p><strong>{employee.check_sim === 1 ? '✓ ' : '☐ '}Office SIM:</strong> {employee.office_sim} {!isNA(employee.office_sim_date) && `(${employee.office_sim_date})`}</p>}
+            {!isNA(employee.laptop_system) && <p><strong>{employee.check_laptop === 1 ? '✓ ' : '☐ '}Laptop/System:</strong> {employee.laptop_system} {!isNA(employee.laptop_system_date) && `(${employee.laptop_system_date})`}</p>}
+            {!isNA(employee.official_email_crm) && <p><strong>Official Email/CRM:</strong> {employee.official_email_crm} {!isNA(employee.official_email_crm_date) && `(${employee.official_email_crm_date})`}</p>}
+            {!isNA(employee.asset_official_mail) && <p><strong>{employee.check_official_mail === 1 ? '✓ ' : '☐ '}Official Mail ID:</strong> {employee.asset_official_mail}</p>}
+            <p>
+              {!isNA(employee.asset_crm) && <span><strong>{employee.check_crm === 1 ? '✓ ' : '☐ '}CRM (Asset):</strong> {employee.asset_crm} &nbsp;&nbsp; </span>} 
+              {!isNA(employee.asset_peopledesk) && <span><strong>{employee.check_peopledesk === 1 ? '✓ ' : '☐ '}Peopledesk:</strong> {employee.asset_peopledesk}</span>}
+            </p>
+            <p>
+              {!isNA(employee.asset_projects) && <span><strong>{employee.check_projects === 1 ? '✓ ' : '☐ '}Projects:</strong> {employee.asset_projects} &nbsp;&nbsp; </span>} 
+              {!isNA(employee.asset_id_card) && <span><strong>{employee.check_id_card === 1 ? '✓ ' : '☐ '}ID Card:</strong> {employee.asset_id_card}</span>}
+            </p>
+            {!isNA(employee.asset_offer_letter) && <p><strong>{employee.check_offer_letter === 1 ? '✓ ' : '☐ '}Offer Letter:</strong> {employee.asset_offer_letter}</p>}
           </div>
 
           <div style={{ marginBottom: '6mm' }}>
