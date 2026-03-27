@@ -53,7 +53,7 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS employees (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      status TEXT DEFAULT 'Onboard', -- Onboard, Working, Resigned
+      status TEXT DEFAULT 'Onboard', -- New, Onboard, Working, Trainee, Resigned, etc.
       
       -- Personal Info
       file_no TEXT,

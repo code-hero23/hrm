@@ -11,7 +11,7 @@ const Onboarding = ({ isPublic }) => {
   const [step, setStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState({
-    status: 'Trainee', // Changed default status to Trainee
+    status: 'New', // Changed default status to New
     file_no: '', full_name: '', father_mother_name: '', dob: '', gender: '', contact_number: '', blood_group: '',
     personal_email: '', marital_status: '', present_address: '', permanent_address: '',
     employee_id: '', department: '', designation: '', date_of_joining: '', official_joining_date: '', work_location: 'PORUR', reporting_manager: '', // Set default work_location to PORUR

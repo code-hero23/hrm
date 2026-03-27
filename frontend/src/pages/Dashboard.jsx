@@ -4,6 +4,16 @@ import { Link } from 'react-router-dom';
 import { Search, UserCircle, Filter, Share2, Copy, Check } from 'lucide-react';
 import API_BASE_URL from '../config';
 
+const formatDate = (dateString) => {
+  if (!dateString || dateString === 'N/A') return 'N/A';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = String(date.getFullYear()).slice(-2);
+  return `${day}/${month}/${year}`;
+};
+
 const Dashboard = () => {
   const [employees, setEmployees] = useState([]);
   const [status, setStatus] = useState('');
@@ -31,6 +41,7 @@ const Dashboard = () => {
   // Stats calculation
   const stats = {
     total: employees.length,
+    new: employees.filter(e => e.status === 'New').length,
     trainee: employees.filter(e => e.status === 'Trainee').length,
     onboard: employees.filter(e => e.status === 'Onboard').length,
     current: employees.filter(e => e.status === 'Current Employee').length,
@@ -40,6 +51,7 @@ const Dashboard = () => {
   };
 
   const statusMap = {
+    'New': '#22d3ee',
     'Trainee': '#3b82f6',
     'Onboard': '#eab308',
     'Current Employee': '#22c55e',
@@ -126,6 +138,10 @@ const Dashboard = () => {
           <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Workforce</p>
           <h4 style={{ fontSize: '1.5rem', fontWeight: 900, marginTop: '0.5rem' }}>{stats.total}</h4>
         </div>
+        <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #22d3ee' }}>
+          <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>New joining</p>
+          <h4 style={{ fontSize: '1.5rem', fontWeight: 900, marginTop: '0.5rem', color: '#22d3ee' }}>{stats.new}</h4>
+        </div>
         <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #3b82f6' }}>
           <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Trainee</p>
           <h4 style={{ fontSize: '1.5rem', fontWeight: 900, marginTop: '0.5rem', color: '#60a5fa' }}>{stats.trainee}</h4>
@@ -176,7 +192,7 @@ const Dashboard = () => {
             <Filter size={16} /> FILTER:
           </div>
           <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-            {['', 'Trainee', 'Onboard', 'Current Employee', 'Bix Employee', 'Bench', 'Resigned'].map((s) => (
+            {['New', 'Trainee', 'Onboard', 'Current Employee', 'Bix Employee', 'Bench', 'Resigned', ''].map((s) => (
               <button
                 key={s}
                 onClick={() => setStatus(s)}
@@ -227,11 +243,11 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <p style={{ fontSize: '0.625rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase' }}>D.O.J</p>
-                        <p style={{ fontSize: '0.75rem', fontWeight: 700 }}>{emp.date_of_joining || 'N/A'}</p>
+                        <p style={{ fontSize: '0.75rem', fontWeight: 700 }}>{formatDate(emp.date_of_joining) || 'N/A'}</p>
                       </div>
                       <div>
                         <p style={{ fontSize: '0.625rem', color: '#60a5fa', fontWeight: 800, textTransform: 'uppercase' }}>Official</p>
-                        <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#60a5fa' }}>{emp.official_joining_date || 'N/A'}</p>
+                        <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#60a5fa' }}>{formatDate(emp.official_joining_date) || 'N/A'}</p>
                       </div>
                     </div>
                   </div>

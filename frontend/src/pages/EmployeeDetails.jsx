@@ -7,10 +7,21 @@ import html2canvas from 'html2canvas';
 import API_BASE_URL from '../config';
 import LifecycleTracker from '../components/LifecycleTracker';
 
+const formatDate = (dateString) => {
+  if (!dateString || dateString === 'N/A') return 'N/A';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = String(date.getFullYear()).slice(-2);
+  return `${day}/${month}/${year}`;
+};
+
 const StatusDropdown = ({ currentStatus, onUpdate }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const statuses = [
+    { value: 'New', label: 'New', color: '#22d3ee' },
     { value: 'Trainee', label: 'Trainee', color: '#3b82f6' },
     { value: 'Onboard', label: 'Onboard', color: '#eab308' },
     { value: 'Current Employee', label: 'Current Employee', color: '#22c55e' },
@@ -243,7 +254,7 @@ const EmployeeDetails = () => {
               </div>
               <div>
                 <p style={{ fontSize: '0.625rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>D.O.J</p>
-                <p style={{ fontSize: '1.125rem', fontWeight: 700 }}>{employee.date_of_joining || 'N/A'}</p>
+                <p style={{ fontSize: '1.125rem', fontWeight: 700 }}>{formatDate(employee.date_of_joining) || 'N/A'}</p>
               </div>
               <div style={{ padding: '0.5rem', borderRadius: '12px', background: isEditingOJ ? 'rgba(59, 130, 246, 0.1)' : 'transparent', transition: '0.3s' }}>
                 <p style={{ fontSize: '0.625rem', color: '#60a5fa', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -267,7 +278,7 @@ const EmployeeDetails = () => {
                   </div>
                 ) : (
                   <p style={{ fontSize: '1.125rem', fontWeight: 700, color: '#60a5fa', cursor: 'pointer' }} onClick={() => setIsEditingOJ(true)}>
-                    {employee.official_joining_date || 'N/A'}
+                    {formatDate(employee.official_joining_date) || 'N/A'}
                   </p>
                 )}
               </div>
@@ -319,7 +330,7 @@ const EmployeeDetails = () => {
 
         <div className="section-title">Identity & Contacts</div>
         <div className="form-grid">
-          <div className="form-group"><label>Date of Birth</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.dob || '—'}</p></div>
+          <div className="form-group"><label>Date of Birth</label><p style={{fontSize: '1rem', fontWeight: 500}}>{formatDate(employee.dob) || '—'}</p></div>
           <div className="form-group"><label>Gender</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.gender || '—'}</p></div>
           <div className="form-group"><label>Contact</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.contact_number || '—'}</p></div>
           <div className="form-group"><label>Email</label><p style={{fontSize: '1.1rem', fontWeight: 500, textTransform: 'none', color: '#60a5fa'}}>{employee.personal_email || '—'}</p></div>
@@ -337,8 +348,8 @@ const EmployeeDetails = () => {
 
         <div className="section-title">Office Assets & Systems (Optional)</div>
         <div className="form-grid">
-          <div className="form-group"><label>{employee.check_sim === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Office SIM (Optional)</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.office_sim || '—'} {employee.office_sim_date && `(Allocated: ${employee.office_sim_date})`}</p></div>
-          <div className="form-group"><label>{employee.check_laptop === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Laptop/System (Optional)</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.laptop_system || '—'} {employee.laptop_system_date && `(Allocated: ${employee.laptop_system_date})`}</p></div>
+          <div className="form-group"><label>{employee.check_sim === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Office SIM (Optional)</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.office_sim || '—'} {employee.office_sim_date && `(Allocated: ${formatDate(employee.office_sim_date)})`}</p></div>
+          <div className="form-group"><label>{employee.check_laptop === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Laptop/System (Optional)</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.laptop_system || '—'} {employee.laptop_system_date && `(Allocated: ${formatDate(employee.laptop_system_date)})`}</p></div>
           <div className="form-group"><label>{employee.check_official_mail === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Official Mail ID</label><p style={{fontSize: '1rem', fontWeight: 500, textTransform:'none'}}>{employee.asset_official_mail || '—'}</p></div>
           <div className="form-group"><label>{employee.check_crm === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}CRM (Asset)</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.asset_crm || '—'}</p></div>
           <div className="form-group"><label>{employee.check_peopledesk === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Peopledesk</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.asset_peopledesk || '—'}</p></div>
@@ -431,7 +442,7 @@ const EmployeeDetails = () => {
               <h3 style={{ borderBottom: '1px solid #ccc', paddingBottom: '1mm', fontSize: '12pt' }}>I. PERSONAL INFORMATION</h3>
               <p><strong>Full Name:</strong> {employee.full_name}</p>
               <p><strong>Father/Mother Name:</strong> {employee.father_mother_name}</p>
-              <p><strong>DOB:</strong> {employee.dob} &nbsp;&nbsp; <strong>Gender:</strong> {employee.gender}</p>
+              <p><strong>DOB:</strong> {formatDate(employee.dob)} &nbsp;&nbsp; <strong>Gender:</strong> {employee.gender}</p>
               <p><strong>Blood Group:</strong> {employee.blood_group} &nbsp;&nbsp; <strong>Marital Status:</strong> {employee.marital_status}</p>
               <p><strong>Contact No:</strong> {employee.contact_number}</p>
               <p><strong>Personal Email:</strong> {employee.personal_email}</p>
@@ -459,8 +470,8 @@ const EmployeeDetails = () => {
                 <tr>
                   <td style={{ padding: '1mm 0' }}><strong>Department:</strong> {employee.department}</td>
                   <td style={{ padding: '1mm 0' }}><strong>Designation:</strong> {employee.designation}</td>
-                  <td style={{ padding: '1mm 0' }}><strong>Date of Joining:</strong> {employee.date_of_joining}</td>
-                  <td style={{ padding: '1mm 0' }}><strong>Official Join Date:</strong> {employee.official_joining_date || 'N/A'}</td>
+                  <td style={{ padding: '1mm 0' }}><strong>Date of Joining:</strong> {formatDate(employee.date_of_joining)}</td>
+                  <td style={{ padding: '1mm 0' }}><strong>Official Join Date:</strong> {formatDate(employee.official_joining_date) || 'N/A'}</td>
                 </tr>
                 <tr>
                   <td style={{ padding: '1mm 0' }}><strong>Work Location:</strong> {employee.work_location}</td>
@@ -487,8 +498,8 @@ const EmployeeDetails = () => {
           </div>
 
           <div style={{ marginBottom: '6mm' }}>
-            {!isNA(employee.office_sim) && <p><strong>{employee.check_sim === 1 ? '✓ ' : '☐ '}Office SIM:</strong> {employee.office_sim} {!isNA(employee.office_sim_date) && `(${employee.office_sim_date})`}</p>}
-            {!isNA(employee.laptop_system) && <p><strong>{employee.check_laptop === 1 ? '✓ ' : '☐ '}Laptop/System:</strong> {employee.laptop_system} {!isNA(employee.laptop_system_date) && `(${employee.laptop_system_date})`}</p>}
+            {!isNA(employee.office_sim) && <p><strong>{employee.check_sim === 1 ? '✓ ' : '☐ '}Office SIM:</strong> {employee.office_sim} {!isNA(employee.office_sim_date) && `(${formatDate(employee.office_sim_date)})`}</p>}
+            {!isNA(employee.laptop_system) && <p><strong>{employee.check_laptop === 1 ? '✓ ' : '☐ '}Laptop/System:</strong> {employee.laptop_system} {!isNA(employee.laptop_system_date) && `(${formatDate(employee.laptop_system_date)})`}</p>}
             {!isNA(employee.official_email_crm) && <p><strong>Official Email/CRM:</strong> {employee.official_email_crm} {!isNA(employee.official_email_crm_date) && `(${employee.official_email_crm_date})`}</p>}
             {!isNA(employee.asset_official_mail) && <p><strong>{employee.check_official_mail === 1 ? '✓ ' : '☐ '}Official Mail ID:</strong> {employee.asset_official_mail}</p>}
             <p>

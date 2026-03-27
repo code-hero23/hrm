@@ -276,6 +276,7 @@ const EditEmployee = () => {
           <div className="form-grid">
             <div className="form-group"><label>EMPLOYEE STATUS</label>
               <select name="status" value={formData.status} onChange={handleChange}>
+                <option value="New">NEW</option>
                 <option value="Trainee">TRAINEE</option>
                 <option value="Onboard">ONBOARD</option>
                 <option value="Current Employee">CURRENT EMPLOYEE</option>
