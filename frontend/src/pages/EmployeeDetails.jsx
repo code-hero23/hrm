@@ -103,78 +103,57 @@ const StatusDropdown = ({ currentStatus, onUpdate }) => {
   );
 };
 
-const PDFPreview = ({ path }) => {
-  const [imgData, setImgData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const canvasRef = useRef(null);
+// 1. Reusable helper to process Image OR PDF to a high-quality Canvas/Image
+const processDocToImage = async (path) => {
+  const fullUrl = `${API_BASE_URL || window.location.origin}${path}`;
+  const isPdf = path.toLowerCase().endsWith('.pdf');
 
-  useEffect(() => {
-    let isMounted = true;
-    const renderPDF = async () => {
-      try {
-        // Load pdf.js dynamically if not present
-        if (!window.pdfjsLib) {
-          const script = document.createElement('script');
-          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+  try {
+    if (isPdf) {
+      if (!window.pdfjsLib) {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        document.head.appendChild(script);
+        await new Promise(resolve => {
           script.onload = () => {
             window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-            if (isMounted) startRendering();
+            resolve();
           };
-          document.head.appendChild(script);
-        } else {
-          startRendering();
-        }
-      } catch (err) {
-        console.error('PDF JS Load Error:', err);
-        if (isMounted) setLoading(false);
+        });
       }
-    };
 
-    const startRendering = async () => {
-      try {
-        const fullUrl = `${API_BASE_URL || window.location.origin}${path}`;
-        const loadingTask = window.pdfjsLib.getDocument(fullUrl);
-        const pdf = await loadingTask.promise;
-        const page = await pdf.getPage(1);
-        
-        const viewport = page.getViewport({ scale: 1.5 });
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        
-        const context = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+      const loadingTask = window.pdfjsLib.getDocument(fullUrl);
+      const pdf = await loadingTask.promise;
+      const page = await pdf.getPage(1);
+      
+      const viewport = page.getViewport({ scale: 2.0 }); // High res
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
 
-        await page.render({ canvasContext: context, viewport }).promise;
-        if (isMounted) {
-          setImgData(canvas.toDataURL());
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error('PDF Render Error:', err);
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    renderPDF();
-    return () => { isMounted = false; };
-  }, [path]);
-
-  if (loading) return <div style={{ fontSize: '8pt', color: '#94a3b8' }}>Rendering PDF Preview...</div>;
-  if (!imgData) return (
-    <div style={{ textAlign: 'center', padding: '5mm', border: '1px dashed #cbd5e1', background: '#f1f5f9', color: '#475569', borderRadius: '4px' }}>
-      <div style={{ fontSize: '24pt', marginBottom: '2mm' }}>📄</div>
-      <p style={{ fontSize: '9pt', fontWeight: 600 }}>PDF Document</p>
-      <p style={{ fontSize: '7pt', marginTop: '1mm' }}>Full content in original attachment.</p>
-    </div>
-  );
-
-  return (
-    <>
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
-      <img src={imgData} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="PDF Preview" />
-    </>
-  );
+      await page.render({ canvasContext: context, viewport }).promise;
+      return { data: canvas.toDataURL('image/jpeg', 0.9), type: 'JPEG' };
+    } else {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = fullUrl;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      return { data: canvas.toDataURL('image/jpeg', 0.9), type: 'JPEG' };
+    }
+  } catch (err) {
+    console.error('Error processing document:', path, err);
+    return null;
+  }
 };
 
 const EmployeeDetails = () => {
@@ -233,48 +212,72 @@ const EmployeeDetails = () => {
   };
 
   const handleDownloadPDF = async () => {
-    const element = printRef.current;
-    
-    // Ensure images are loaded and give more time for layout to settle
-    await new Promise(resolve => setTimeout(resolve, 1200));
-    
-    // Scale for high quality, but maintain aspect ratio for A4
-    const canvas = await html2canvas(element, { 
-      scale: 3, 
-      useCORS: true, 
-      allowTaint: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-      windowWidth: element.scrollWidth,
-      windowHeight: element.scrollHeight
-    });
-    
-    const imgData = canvas.toDataURL('image/jpeg', 0.9);
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
-    
-    const imgHeightInPdf = (canvasHeight * pdfWidth) / canvasWidth;
-    
-    let heightLeft = imgHeightInPdf;
-    let position = 0;
-    
-    // Page 1
-    pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeightInPdf);
-    heightLeft -= pdfHeight;
-    
-    // New Pages
-    while (heightLeft > 0) {
-      position -= pdfHeight; 
-      pdf.addPage();
+    try {
+      const element = printRef.current;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      // 1. Capture Main Profile (Multi-page capture)
+      const canvas = await html2canvas(element, { 
+        scale: 2, 
+        useCORS: true, 
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/jpeg', 0.9);
+      const imgHeightInPdf = (canvas.height * pdfWidth) / canvas.width;
+      
+      let heightLeft = imgHeightInPdf;
+      let position = 0;
+      
       pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeightInPdf);
       heightLeft -= pdfHeight;
+      
+      while (heightLeft > 0) {
+        position -= pdfHeight; 
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeightInPdf);
+        heightLeft -= pdfHeight;
+      }
+
+      // 2. Append all Document Proofs (Full-page sequential append)
+      const docsToAppend = [
+        { label: 'PAN CARD', path: employee.pan_card_path },
+        { label: 'AADHAAR CARD', path: employee.aadhaar_card_path },
+        { label: 'BANK PASSBOOK', path: employee.bank_passbook_path },
+        { label: 'EDUCATIONAL CERTIFICATE', path: employee.educational_certificate_path }
+      ].filter(d => d.path);
+
+      for (const doc of docsToAppend) {
+        const processed = await processDocToImage(doc.path);
+        if (processed) {
+          pdf.addPage();
+          // Title for the document page
+          pdf.setFontSize(14);
+          pdf.setFont("helvetica", "bold");
+          pdf.text(`DOCUMENT PROOF: ${doc.label}`, 10, 15);
+          pdf.setDrawColor(200, 200, 200);
+          pdf.line(10, 18, 200, 18);
+
+          // Add the image (maintaining aspect ratio, fitting centered)
+          const imgProps = pdf.getImageProperties(processed.data);
+          const ratio = Math.min((pdfWidth - 20) / imgProps.width, (pdfHeight - 40) / imgProps.height);
+          const dw = imgProps.width * ratio;
+          const dh = imgProps.height * ratio;
+          const dx = (pdfWidth - dw) / 2;
+          const dy = 30; // Start below title
+
+          pdf.addImage(processed.data, processed.type, dx, dy, dw, dh);
+        }
+      }
+      
+      pdf.save(`Employee_Report_${employee.full_name.replace(/\s+/g, '_')}.pdf`);
+    } catch (err) {
+      console.error('PDF Generation failed:', err);
+      alert('Error creating PDF report. Please try again.');
     }
-    
-    pdf.save(`Employee_Report_${employee.full_name.replace(/\s+/g, '_')}.pdf`);
   };
 
   if (loading) return <div style={{textAlign:'center', padding:'4rem'}}>Loading record...</div>;
@@ -748,20 +751,11 @@ const EmployeeDetails = () => {
                   <div key={doc.label} style={{ border: '1px solid #eee', padding: '2mm', borderRadius: '4px', background: '#fff' }}>
                     <p style={{ fontSize: '8pt', fontWeight: 700, padding: '1mm', marginBottom: '2mm', textAlign:'center', background:'#f8fafc', borderBottom: '1px solid #eee' }}>{doc.label}</p>
                     <div style={{ height: '75mm', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                      {isPdf ? (
-                        <PDFPreview path={doc.path} />
-                      ) : (
-                        <img 
-                          src={`${API_BASE_URL || window.location.origin}${doc.path}`} 
-                          crossOrigin="anonymous" 
-                          style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
-                          alt={doc.label} 
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.parentElement.innerHTML = '<div style="font-size:8pt; color:#ef4444">Failed to load image proof</div>';
-                          }}
-                        />
-                      )}
+                      <div style={{ textAlign: 'center', padding: '5mm', border: '1px dashed #cbd5e1', background: '#f1f5f9', color: '#475569', borderRadius: '4px' }}>
+                        <div style={{ fontSize: '24pt', marginBottom: '2mm' }}>📄</div>
+                        <p style={{ fontSize: '9pt', fontWeight: 600 }}>{isPdf ? 'PDF DOCUMENT' : 'IMAGE PROOF'}</p>
+                        <p style={{ fontSize: '7pt', marginTop: '1mm' }}>Full-size document appended to export PDF.</p>
+                      </div>
                     </div>
                   </div>
                 );
