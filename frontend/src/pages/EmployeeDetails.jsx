@@ -736,34 +736,8 @@ const EmployeeDetails = () => {
             </div>
           </div>
 
-          <div style={{ pageBreakBefore: 'always', marginTop: '15mm' }}>
-            <h3 style={{ borderBottom: '2px solid black', paddingBottom: '2mm', fontSize: '14pt', margin: '10mm 0 8mm' }}>X. ATTACHED PROOFS & DOCUMENTS</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8mm' }}>
-              {[
-                { label: 'PAN CARD PROOF', path: employee.pan_card_path },
-                { label: 'AADHAAR CARD PROOF', path: employee.aadhaar_card_path },
-                { label: 'BANK PASSBOOK PROOF', path: employee.bank_passbook_path },
-                { label: 'EDUCATIONAL CERTIFICATE', path: employee.educational_certificate_path }
-              ].map(doc => {
-                if (!doc.path) return null;
-                const isPdf = doc.path.toLowerCase().endsWith('.pdf');
-                return (
-                  <div key={doc.label} style={{ border: '1px solid #eee', padding: '2mm', borderRadius: '4px', background: '#fff' }}>
-                    <p style={{ fontSize: '8pt', fontWeight: 700, padding: '1mm', marginBottom: '2mm', textAlign:'center', background:'#f8fafc', borderBottom: '1px solid #eee' }}>{doc.label}</p>
-                    <div style={{ height: '75mm', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                      <div style={{ textAlign: 'center', padding: '5mm', border: '1px dashed #cbd5e1', background: '#f1f5f9', color: '#475569', borderRadius: '4px' }}>
-                        <div style={{ fontSize: '24pt', marginBottom: '2mm' }}>📄</div>
-                        <p style={{ fontSize: '9pt', fontWeight: 600 }}>{isPdf ? 'PDF DOCUMENT' : 'IMAGE PROOF'}</p>
-                        <p style={{ fontSize: '7pt', marginTop: '1mm' }}>Full-size document appended to export PDF.</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            {!employee.pan_card_path && !employee.aadhaar_card_path && !employee.bank_passbook_path && !employee.educational_certificate_path && (
-              <p style={{textAlign:'center', color:'#666', marginTop:'10mm'}}>NO DOCUMENT PROOFS UPLOADED</p>
-            )}
+          <div style={{ marginTop: '10mm', textAlign: 'center', borderTop: '1px solid #eee', paddingTop: '5mm' }}>
+            <p style={{ fontSize: '8pt', color: '#94a3b8' }}>End of Official Employee Record</p>
           </div>
         </div>
       </div>

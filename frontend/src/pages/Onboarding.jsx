@@ -14,7 +14,7 @@ const Onboarding = ({ isPublic }) => {
     status: 'New', // Changed default status to New
     file_no: '', full_name: '', father_mother_name: '', dob: '', gender: '', contact_number: '', blood_group: '',
     personal_email: '', marital_status: '', present_address: '', permanent_address: '',
-    employee_id: '', department: '', designation: '', date_of_joining: '', official_joining_date: '', work_location: 'PORUR', reporting_manager: '', // Set default work_location to PORUR
+    employee_id: '', department: '', designation: '', date_of_joining: '', official_joining_date: '', work_location: 'MTRS', reporting_manager: '', // Set default work_location to MTRS
     pan_number: '', aadhaar_number: '', other_id: '',
     emergency_contact_name: '', emergency_contact_relationship: '', emergency_contact_number: '',
     father_husband_number: '', mother_wife_number: '', alternate_number: '',
