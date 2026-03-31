@@ -161,15 +161,18 @@ const EmployeeDetails = () => {
   const handleDownloadPDF = async () => {
     const element = printRef.current;
     
-    // Ensure images are loaded and give a tiny bit of time for layout
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // Ensure images are loaded and give more time for layout to settle
+    await new Promise(resolve => setTimeout(resolve, 1200));
     
+    // Scale for high quality, but maintain aspect ratio for A4
     const canvas = await html2canvas(element, { 
-      scale: 2, 
+      scale: 3, 
       useCORS: true, 
       allowTaint: true,
       logging: false,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight
     });
     
     const imgData = canvas.toDataURL('image/jpeg', 0.9);
@@ -488,22 +491,26 @@ const EmployeeDetails = () => {
 
           <div style={{ marginBottom: '6mm' }}>
             <h3 style={{ borderBottom: '1px solid #ccc', paddingBottom: '1mm', fontSize: '12pt' }}>II. EMPLOYMENT DETAILS</h3>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10pt' }}>
               <tbody>
                 <tr>
-                  <td style={{ padding: '1mm 0', width: '33%' }}><strong>Employee ID:</strong> {employee.employee_id}</td>
-                  <td style={{ padding: '1mm 0', width: '33%' }}><strong>File No:</strong> {employee.file_no}</td>
-                  <td style={{ padding: '1mm 0', width: '33%' }}><strong>Status:</strong> {employee.status}</td>
+                  <td style={{ padding: '1.5mm 0', width: '50%' }}><strong>Employee ID:</strong> {employee.employee_id || '—'}</td>
+                  <td style={{ padding: '1.5mm 0', width: '50%' }}><strong>File No:</strong> {employee.file_no || '—'}</td>
                 </tr>
                 <tr>
-                  <td style={{ padding: '1mm 0' }}><strong>Department:</strong> {employee.department}</td>
-                  <td style={{ padding: '1mm 0' }}><strong>Designation:</strong> {employee.designation}</td>
-                  <td style={{ padding: '1mm 0' }}><strong>Date of Joining:</strong> {formatDate(employee.date_of_joining)}</td>
-                  <td style={{ padding: '1mm 0' }}><strong>Official Join Date:</strong> {formatDate(employee.official_joining_date) || 'N/A'}</td>
+                  <td style={{ padding: '1.5mm 0' }}><strong>Status:</strong> {employee.status}</td>
+                  <td style={{ padding: '1.5mm 0' }}><strong>Department:</strong> {employee.department}</td>
                 </tr>
                 <tr>
-                  <td style={{ padding: '1mm 0' }}><strong>Work Location:</strong> {employee.work_location}</td>
-                  <td style={{ padding: '1mm 0' }} colSpan="2"><strong>Reporting Manager:</strong> {employee.reporting_manager}</td>
+                  <td style={{ padding: '1.5mm 0' }}><strong>Designation:</strong> {employee.designation}</td>
+                  <td style={{ padding: '1.5mm 0' }}><strong>Work Location:</strong> {employee.work_location}</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '1.5mm 0' }}><strong>Date of Joining:</strong> {formatDate(employee.date_of_joining)}</td>
+                  <td style={{ padding: '1.5mm 0' }}><strong>Official Join Date:</strong> {formatDate(employee.official_joining_date) || '—'}</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '1.5mm 0' }} colSpan="2"><strong>Reporting Manager:</strong> {employee.reporting_manager || '—'}</td>
                 </tr>
               </tbody>
             </table>
@@ -511,13 +518,21 @@ const EmployeeDetails = () => {
 
           <div style={{ marginBottom: '6mm' }}>
             <h3 style={{ borderBottom: '1px solid #ccc', paddingBottom: '1mm', fontSize: '12pt' }}>III. IDENTIFICATION & EMERGENCY CONTACT</h3>
-            <p><strong>PAN Number:</strong> {employee.pan_number} &nbsp;&nbsp; <strong>Aadhaar Number:</strong> {employee.aadhaar_number} &nbsp;&nbsp; <strong>Other ID:</strong> {employee.other_id}</p>
-            <div style={{ marginTop: '2mm', background: '#f9f9f9', padding: '2mm', border: '1px solid #eee' }}>
-              <p><strong>Emergency Contact:</strong> {employee.emergency_contact_name} ({employee.emergency_contact_relationship}) - {employee.emergency_contact_number}</p>
-              <p><strong>Father/Husband No:</strong> {employee.father_husband_number} &nbsp;&nbsp; <strong>Mother/Wife No:</strong> {employee.mother_wife_number} &nbsp;&nbsp; <strong>Alt No:</strong> {employee.alternate_number}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2mm', marginBottom: '2mm' }}>
+              <p><strong>PAN Number:</strong> {employee.pan_number}</p>
+              <p><strong>Aadhaar Number:</strong> {employee.aadhaar_number}</p>
+              <p><strong>Other ID:</strong> {employee.other_id || '—'}</p>
+            </div>
+            <div style={{ background: '#f9f9f9', padding: '3mm', border: '1px solid #eee', borderRadius: '4px' }}>
+              <p style={{ marginBottom: '1.5mm' }}><strong>Emergency Contact:</strong> {employee.emergency_contact_name} ({employee.emergency_contact_relationship}) - <span style={{ color: '#2563eb' }}>{employee.emergency_contact_number}</span></p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2mm', fontSize: '9pt' }}>
+                <p><strong>Father/Husband No:</strong> {employee.father_husband_number}</p>
+                <p><strong>Mother/Wife No:</strong> {employee.mother_wife_number}</p>
+                <p><strong>Alternate No:</strong> {employee.alternate_number}</p>
+              </div>
             </div>
             {employee.documents_passwords && (
-              <p style={{marginTop:'2mm', fontSize:'9pt'}}><strong>Document Passwords:</strong> {employee.documents_passwords}</p>
+              <p style={{ marginTop: '2mm', fontSize: '9pt', color: '#dc2626' }}><strong>⚠️ Document Passwords:</strong> {employee.documents_passwords}</p>
             )}
           </div>
 
@@ -656,15 +671,28 @@ const EmployeeDetails = () => {
                 if (!doc.path) return null;
                 const isPdf = doc.path.toLowerCase().endsWith('.pdf');
                 return (
-                  <div key={doc.label} style={{ border: '1px solid #eee', padding: '2mm' }}>
-                    <p style={{ fontSize: '8pt', fontWeight: 700, marginBottom: '2mm', textAlign:'center', background:'#f5f5f5' }}>{doc.label}</p>
-                    {isPdf ? (
-                      <div style={{ height: '40mm', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed #ccc', fontSize: '8pt', color: '#666' }}>
-                        DOCUMENT IS PDF (CONTENT NOT RENDERED IN REPORT)
-                      </div>
-                    ) : (
-                      <img src={`${API_BASE_URL || window.location.origin}${doc.path}`} crossOrigin="anonymous" style={{ width: '100%', height: 'auto', maxHeight:'70mm', objectFit:'contain' }} alt={doc.label} />
-                    )}
+                  <div key={doc.label} style={{ border: '1px solid #eee', padding: '2mm', borderRadius: '4px', background: '#fff' }}>
+                    <p style={{ fontSize: '8pt', fontWeight: 700, padding: '1mm', marginBottom: '2mm', textAlign:'center', background:'#f8fafc', borderBottom: '1px solid #eee' }}>{doc.label}</p>
+                    <div style={{ height: '75mm', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                      {isPdf ? (
+                        <div style={{ textAlign: 'center', padding: '5mm', border: '1px dashed #cbd5e1', background: '#f1f5f9', color: '#475569', borderRadius: '4px' }}>
+                          <div style={{ fontSize: '24pt', marginBottom: '2mm' }}>📄</div>
+                          <p style={{ fontSize: '9pt', fontWeight: 600 }}>PDF Document</p>
+                          <p style={{ fontSize: '7pt', marginTop: '1mm' }}>Please view the original attached file for full content.</p>
+                        </div>
+                      ) : (
+                        <img 
+                          src={`${API_BASE_URL || window.location.origin}${doc.path}`} 
+                          crossOrigin="anonymous" 
+                          style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                          alt={doc.label} 
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.parentElement.innerHTML = '<div style="font-size:8pt; color:#ef4444">Failed to load image proof</div>';
+                          }}
+                        />
+                      )}
+                    </div>
                   </div>
                 );
               })}
