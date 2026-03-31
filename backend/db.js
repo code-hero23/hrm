@@ -208,7 +208,8 @@ db.serialize(() => {
     'asset_official_mail': 'TEXT',
     'asset_offer_letter': 'TEXT',
     'lifecycle_steps': 'TEXT',
-    'official_joining_date': 'TEXT'
+    'official_joining_date': 'TEXT',
+    'documents_passwords': 'TEXT'
   };
 
   Object.entries(potentialMissingColumns).forEach(([name, type]) => {

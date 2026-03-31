@@ -28,7 +28,8 @@ const EditEmployee = () => {
     signature_name: '',
     documents_submitted: JSON.stringify({}),
     previous_employment: JSON.stringify([]),
-    background_verification: JSON.stringify({ type: '', address: { house_type: '' } })
+    background_verification: JSON.stringify({ type: '', address: { house_type: '' } }),
+    documents_passwords: ''
   });
   const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -91,8 +92,38 @@ const EditEmployee = () => {
     }
   };
 
-  const nextStep = () => setStep(prev => prev + 1);
-  const prevStep = () => setStep(prev => prev - 1);
+  const validateStep = () => {
+    const stepRef = document.querySelector('form');
+    if (!stepRef) return true;
+    
+    const requiredInputs = stepRef.querySelectorAll('[required]');
+    let isValid = true;
+    
+    requiredInputs.forEach(input => {
+      if (!input.value || input.value.trim() === '') {
+        input.classList.add('invalid-field');
+        isValid = false;
+      } else {
+        input.classList.remove('invalid-field');
+      }
+    });
+
+    if (!isValid) {
+      alert("Please fill all mandatory fields marked with * before continuing.");
+    }
+    return isValid;
+  };
+
+  const nextStep = () => {
+    if (validateStep()) {
+      setStep(prev => prev + 1);
+      window.scrollTo(0, 0);
+    }
+  };
+  const prevStep = () => {
+    setStep(prev => prev - 1);
+    window.scrollTo(0, 0);
+  };
 
   const addEmployment = () => {
     const current = JSON.parse(formData.previous_employment || '[]');
@@ -333,6 +364,9 @@ const EditEmployee = () => {
             <div className="form-group"><label>NAME <span style={{color:'#ef4444'}}>*</span></label><input name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleChange} required /></div>
             <div className="form-group"><label>RELATIONSHIP <span style={{color:'#ef4444'}}>*</span></label><input name="emergency_contact_relationship" value={formData.emergency_contact_relationship} onChange={handleChange} required /></div>
             <div className="form-group"><label>CONTACT NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} required /></div>
+            <div className="form-group"><label>FATHER/HUSBAND NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="father_husband_number" value={formData.father_husband_number} onChange={handleChange} required /></div>
+            <div className="form-group"><label>MOTHER'S / WIFE NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="mother_wife_number" value={formData.mother_wife_number} onChange={handleChange} required /></div>
+            <div className="form-group"><label>ALTERNATE NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="alternate_number" value={formData.alternate_number} onChange={handleChange} required /></div>
           </div>
         </div>
       );
@@ -513,9 +547,9 @@ const EditEmployee = () => {
                 <div className="bgc-section" style={{marginBottom:'2rem', padding:'1.5rem', background:'rgba(255,255,255,0.02)', borderRadius:'12px', border:'1px solid var(--glass-border)'}}>
                   <h4 style={{fontSize:'0.8rem', color:'#60a5fa', marginBottom:'1rem'}}>IV. NON-FAMILY MEMBER (RELATIVE) VERIFICATION</h4>
                   <div className="form-grid">
-                    <div className="form-group"><label>RELATIVE NAME</label><input value={bgc.relative?.name || ''} onChange={(e) => updateBGC('relative.name', e.target.value)} required /></div>
-                    <div className="form-group"><label>DESIGNATION</label><input value={bgc.relative?.designation || ''} onChange={(e) => updateBGC('relative.designation', e.target.value)} required /></div>
-                    <div className="form-group"><label>CONTACT NO.</label><input value={bgc.relative?.contact || ''} onChange={(e) => updateBGC('relative.contact', e.target.value)} required /></div>
+                    <div className="form-group"><label>RELATIVE NAME <span style={{color:'#ef4444'}}>*</span></label><input value={bgc.relative?.name || ''} onChange={(e) => updateBGC('relative.name', e.target.value)} required /></div>
+                    <div className="form-group"><label>DESIGNATION <span style={{color:'#ef4444'}}>*</span></label><input value={bgc.relative?.designation || ''} onChange={(e) => updateBGC('relative.designation', e.target.value)} required /></div>
+                    <div className="form-group"><label>CONTACT NO. <span style={{color:'#ef4444'}}>*</span></label><input value={bgc.relative?.contact || ''} onChange={(e) => updateBGC('relative.contact', e.target.value)} required /></div>
                   </div>
                 </div>
               </div>
@@ -557,6 +591,17 @@ const EditEmployee = () => {
                 {docs[doc.name] && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs[doc.name].name}</p>}
               </div>
             ))}
+          </div>
+
+          <div className="form-group" style={{marginTop:'1.5rem'}}>
+            <label>PASSWORDS (IF ANY DOCS ARE ENCRYPTED)</label>
+            <input 
+              name="documents_passwords" 
+              value={formData.documents_passwords || ''} 
+              onChange={handleChange} 
+              placeholder="e.g. Aadhaar: 1234"
+              style={{textTransform:'none'}}
+            />
           </div>
           
           <h3 className="section-title" style={{marginTop:'3rem'}}>8. DIGITAL SIGNATURE</h3>

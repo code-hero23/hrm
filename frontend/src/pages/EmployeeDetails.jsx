@@ -162,23 +162,42 @@ const EmployeeDetails = () => {
     const element = printRef.current;
     
     // Ensure images are loaded and give a tiny bit of time for layout
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 800));
     
     const canvas = await html2canvas(element, { 
       scale: 2, 
       useCORS: true, 
       allowTaint: true,
-      logging: false 
+      logging: false,
+      backgroundColor: '#ffffff'
     });
-    const imgData = canvas.toDataURL('image/png');
     
+    const imgData = canvas.toDataURL('image/jpeg', 0.9);
     const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
     
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`Employee_Report_${employee.full_name}.pdf`);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    
+    const imgHeightInPdf = (canvasHeight * pdfWidth) / canvasWidth;
+    
+    let heightLeft = imgHeightInPdf;
+    let position = 0;
+    
+    // Page 1
+    pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeightInPdf);
+    heightLeft -= pdfHeight;
+    
+    // New Pages
+    while (heightLeft > 0) {
+      position -= pdfHeight; 
+      pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeightInPdf);
+      heightLeft -= pdfHeight;
+    }
+    
+    pdf.save(`Employee_Report_${employee.full_name.replace(/\s+/g, '_')}.pdf`);
   };
 
   if (loading) return <div style={{textAlign:'center', padding:'4rem'}}>Loading record...</div>;
@@ -397,8 +416,8 @@ const EmployeeDetails = () => {
                   </div>
                   <div>
                     <h5 style={{fontSize:'0.75rem', color:'var(--text-dim)', textTransform:'uppercase', marginBottom:'0.5rem'}}>Personal References</h5>
-                    <p style={{fontSize:'0.875rem'}}><strong>Friend:</strong> {bgc.friend?.name} ({bgc.friend?.contact})</p>
-                    <p style={{fontSize:'0.875rem'}}><strong>Relative:</strong> {bgc.relative?.name} ({bgc.relative?.contact})</p>
+                    <p style={{fontSize:'0.875rem'}}><strong>Friend:</strong> {bgc.friend?.name} ({bgc.friend?.designation}) • {bgc.friend?.contact}</p>
+                    <p style={{fontSize:'0.875rem'}}><strong>Relative:</strong> {bgc.relative?.name} ({bgc.relative?.designation}) • {bgc.relative?.contact}</p>
                   </div>
                 </div>
               </div>
@@ -425,6 +444,15 @@ const EmployeeDetails = () => {
             {employee.educational_certificate_path ? <a href={`${API_BASE_URL}${employee.educational_certificate_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee">View Document</a> : <p>—</p>}
           </div>
         </div>
+
+        {employee.documents_passwords && (
+          <div className="form-group" style={{marginTop:'1.5rem'}}>
+            <label>Document Passwords</label>
+            <p style={{fontSize:'0.9rem', color:'#60a5fa', background:'rgba(59, 130, 246, 0.1)', padding:'1rem', borderRadius:'8px', border:'1px solid rgba(59, 130, 246, 0.2)'}}>
+              {employee.documents_passwords}
+            </p>
+          </div>
+        )}
       </div>
 
 
@@ -488,6 +516,9 @@ const EmployeeDetails = () => {
               <p><strong>Emergency Contact:</strong> {employee.emergency_contact_name} ({employee.emergency_contact_relationship}) - {employee.emergency_contact_number}</p>
               <p><strong>Father/Husband No:</strong> {employee.father_husband_number} &nbsp;&nbsp; <strong>Mother/Wife No:</strong> {employee.mother_wife_number} &nbsp;&nbsp; <strong>Alt No:</strong> {employee.alternate_number}</p>
             </div>
+            {employee.documents_passwords && (
+              <p style={{marginTop:'2mm', fontSize:'9pt'}}><strong>Document Passwords:</strong> {employee.documents_passwords}</p>
+            )}
           </div>
 
           <div style={{ marginBottom: '6mm' }}>
@@ -578,7 +609,8 @@ const EmployeeDetails = () => {
                     {bgc.address?.owner_name && <p><strong>Owner:</strong> {bgc.address.owner_name} ({bgc.address.owner_contact})</p>}
                     {bgc.address?.pg_manager && <p><strong>PG Manager:</strong> {bgc.address.pg_manager} ({bgc.address.pg_contact})</p>}
                     <p><strong>Verified Address:</strong> {bgc.address?.current_address}</p>
-                    <p><strong>Personal References:</strong> Friend: {bgc.friend?.name} ({bgc.friend?.contact}, {bgc.friend?.email}) | Relative: {bgc.relative?.name} ({bgc.relative?.contact})</p>
+                    <p style={{marginTop:'2mm'}}><strong>CLOSE FRIEND:</strong> {bgc.friend?.name} ({bgc.friend?.designation}) • {bgc.friend?.contact} • {bgc.friend?.email}</p>
+                    <p><strong>RELATIVE:</strong> {bgc.relative?.name} ({bgc.relative?.designation}) • {bgc.relative?.contact}</p>
                     <p style={{ fontSize: '8pt', fontStyle: 'italic', marginTop: '1mm', color: '#555' }}>"Authorized company to contact references for verification purposes."</p>
                   </div>
                 );

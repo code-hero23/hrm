@@ -24,7 +24,8 @@ const Onboarding = ({ isPublic }) => {
     signature_name: '',
     documents_submitted: JSON.stringify({}),
     previous_employment: JSON.stringify([]),
-    background_verification: JSON.stringify({ type: '', address: { house_type: '' } })
+    background_verification: JSON.stringify({ type: '', address: { house_type: '' } }),
+    documents_passwords: ''
   });
   const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -77,8 +78,38 @@ const Onboarding = ({ isPublic }) => {
     }
   };
 
-  const nextStep = () => setStep(prev => prev + 1);
-  const prevStep = () => setStep(prev => prev - 1);
+  const validateStep = () => {
+    const stepRef = document.querySelector('form');
+    if (!stepRef) return true;
+    
+    const requiredInputs = stepRef.querySelectorAll('[required]');
+    let isValid = true;
+    
+    requiredInputs.forEach(input => {
+      if (!input.value || input.value.trim() === '') {
+        input.classList.add('invalid-field');
+        isValid = false;
+      } else {
+        input.classList.remove('invalid-field');
+      }
+    });
+
+    if (!isValid) {
+      alert("Please fill all mandatory fields marked with * before continuing.");
+    }
+    return isValid;
+  };
+
+  const nextStep = () => {
+    if (validateStep()) {
+      setStep(prev => prev + 1);
+      window.scrollTo(0, 0);
+    }
+  };
+  const prevStep = () => {
+    setStep(prev => prev - 1);
+    window.scrollTo(0, 0);
+  };
   
   const addEmployment = () => {
     const current = JSON.parse(formData.previous_employment);
@@ -310,6 +341,16 @@ const Onboarding = ({ isPublic }) => {
               {docs.educational_certificate && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.educational_certificate.name}</p>}
             </div>
           </div>
+          <div className="form-group" style={{marginTop:'1.5rem'}}>
+            <label>PASSWORDS (IF YOU UPLOADED ANY ENCRYPTED DOCUMENTS)</label>
+            <input 
+              name="documents_passwords" 
+              value={formData.documents_passwords} 
+              onChange={handleChange} 
+              placeholder="e.g. Aadhaar: 1234, Bank: 5678"
+              style={{textTransform:'none'}}
+            />
+          </div>
         </div>
       );
       case 6: {
@@ -404,9 +445,9 @@ const Onboarding = ({ isPublic }) => {
                 <div className="bgc-section" style={{marginBottom:'2rem', padding:'1.5rem', background:'rgba(255,255,255,0.02)', borderRadius:'12px', border:'1px solid var(--glass-border)'}}>
                   <h4 style={{fontSize:'0.8rem', color:'#60a5fa', marginBottom:'1rem'}}>IV. NON-FAMILY MEMBER (RELATIVE) VERIFICATION</h4>
                   <div className="form-grid">
-                    <div className="form-group"><label>RELATIVE NAME</label><input value={bgc.relative?.name || ''} onChange={(e) => updateBGC('relative.name', e.target.value)} required /></div>
-                    <div className="form-group"><label>DESIGNATION</label><input value={bgc.relative?.designation || ''} onChange={(e) => updateBGC('relative.designation', e.target.value)} required /></div>
-                    <div className="form-group"><label>CONTACT NO.</label><input value={bgc.relative?.contact || ''} onChange={(e) => updateBGC('relative.contact', e.target.value)} required /></div>
+                    <div className="form-group"><label>RELATIVE NAME <span style={{color:'#ef4444'}}>*</span></label><input value={bgc.relative?.name || ''} onChange={(e) => updateBGC('relative.name', e.target.value)} required /></div>
+                    <div className="form-group"><label>DESIGNATION <span style={{color:'#ef4444'}}>*</span></label><input value={bgc.relative?.designation || ''} onChange={(e) => updateBGC('relative.designation', e.target.value)} required /></div>
+                    <div className="form-group"><label>CONTACT NO. <span style={{color:'#ef4444'}}>*</span></label><input value={bgc.relative?.contact || ''} onChange={(e) => updateBGC('relative.contact', e.target.value)} required /></div>
                   </div>
                 </div>
 
