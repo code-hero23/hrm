@@ -30,12 +30,43 @@ const Onboarding = ({ isPublic }) => {
   const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
 
+  const [isVerifying, setIsVerifying] = useState(isPublic);
+  const [verificationError, setVerificationError] = useState(null);
+  const [onboardingToken, setOnboardingToken] = useState(null);
+
   React.useEffect(() => {
+    // 1. Handle pre-filled name from invitation (Legacy support)
     const nameParam = searchParams.get('name');
     if (nameParam) {
       setFormData(prev => ({ ...prev, full_name: nameParam.toUpperCase() }));
     }
-  }, [searchParams]);
+
+    // 2. Handle One-Time Token Verification
+    const token = searchParams.get('token');
+    if (isPublic) {
+      if (!token) {
+        setVerificationError('Missing invitation token. Please request a new link from HR.');
+        setIsVerifying(false);
+      } else {
+        setOnboardingToken(token);
+        verifyToken(token);
+      }
+    }
+  }, [searchParams, isPublic]);
+
+  const verifyToken = async (token) => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/invitations/verify/${token}`);
+      if (res.data.shared_name) {
+        setFormData(prev => ({ ...prev, full_name: res.data.shared_name.toUpperCase() }));
+      }
+      setIsVerifying(false);
+    } catch (err) {
+      console.error('Token verification failed:', err);
+      setVerificationError(err.response?.data?.error || 'Invalid or expired invitation link.');
+      setIsVerifying(false);
+    }
+  };
   const [docs, setDocs] = useState({
     bank_passbook: null,
     pan_card: null,
@@ -164,12 +195,19 @@ const Onboarding = ({ isPublic }) => {
       if (docs[key]) data.append(key, docs[key]);
     });
 
+    if (onboardingToken) {
+      data.append('onboarding_token', onboardingToken);
+    }
+
     try {
-      await axios.post(`${API_BASE_URL}/api/employees`, data);
+      setIsVerifying(true); // Show loading during submit
+      const res = await axios.post(`${API_BASE_URL}/api/employees`, data);
       setIsSubmitted(true);
+      setIsVerifying(false);
     } catch (err) {
       console.error(err);
-      alert('Error submitting form');
+      alert(err.response?.data?.error || 'Error submitting form');
+      setIsVerifying(false);
     }
   };
 
@@ -564,6 +602,30 @@ const Onboarding = ({ isPublic }) => {
     }
   };
 
+  if (isVerifying) {
+    return (
+      <div className="onboarding-page slide-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+        <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
+          <div className="loader" style={{ marginBottom: '1.5rem' }}></div>
+          <p style={{ fontWeight: 700, color: 'white' }}>VERIFYING INVITATION...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (verificationError) {
+    return (
+      <div className="onboarding-page slide-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+        <div className="card" style={{ maxWidth: '500px', textAlign: 'center', padding: '3rem' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '1rem' }}>Inaccessible Link</h2>
+          <p style={{ color: 'var(--text-dim)', lineHeight: '1.6' }}>{verificationError}</p>
+          <p style={{ color: 'var(--text-dim)', marginTop: '1.5rem', fontSize: '0.875rem' }}>Please contact HR to receive a valid one-time onboarding link.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (isSubmitted) {
     return (
       <div className="card slide-in" style={{ textAlign: 'center', padding: '5rem 2rem', maxWidth: '600px', margin: '4rem auto' }}>
@@ -592,7 +654,7 @@ const Onboarding = ({ isPublic }) => {
           Form Submitted Successfully!
         </h2>
         <p style={{ color: 'var(--text-dim)', fontSize: '1.1rem', lineHeight: '1.6', maxWidth: '400px', margin: '0 auto' }}>
-          Thank you for completing the onboarding process. Your information has been securely received by our HR department.
+          Thank you for completing the onboarding process. Your information has been securely received by our HR department. This unique invitation link is now deactivated.
         </p>
         
         <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--glass-border)' }}>

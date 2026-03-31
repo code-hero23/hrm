@@ -103,6 +103,80 @@ const StatusDropdown = ({ currentStatus, onUpdate }) => {
   );
 };
 
+const PDFPreview = ({ path }) => {
+  const [imgData, setImgData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const renderPDF = async () => {
+      try {
+        // Load pdf.js dynamically if not present
+        if (!window.pdfjsLib) {
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+          script.onload = () => {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            if (isMounted) startRendering();
+          };
+          document.head.appendChild(script);
+        } else {
+          startRendering();
+        }
+      } catch (err) {
+        console.error('PDF JS Load Error:', err);
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    const startRendering = async () => {
+      try {
+        const fullUrl = `${API_BASE_URL || window.location.origin}${path}`;
+        const loadingTask = window.pdfjsLib.getDocument(fullUrl);
+        const pdf = await loadingTask.promise;
+        const page = await pdf.getPage(1);
+        
+        const viewport = page.getViewport({ scale: 1.5 });
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        await page.render({ canvasContext: context, viewport }).promise;
+        if (isMounted) {
+          setImgData(canvas.toDataURL());
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('PDF Render Error:', err);
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    renderPDF();
+    return () => { isMounted = false; };
+  }, [path]);
+
+  if (loading) return <div style={{ fontSize: '8pt', color: '#94a3b8' }}>Rendering PDF Preview...</div>;
+  if (!imgData) return (
+    <div style={{ textAlign: 'center', padding: '5mm', border: '1px dashed #cbd5e1', background: '#f1f5f9', color: '#475569', borderRadius: '4px' }}>
+      <div style={{ fontSize: '24pt', marginBottom: '2mm' }}>📄</div>
+      <p style={{ fontSize: '9pt', fontWeight: 600 }}>PDF Document</p>
+      <p style={{ fontSize: '7pt', marginTop: '1mm' }}>Full content in original attachment.</p>
+    </div>
+  );
+
+  return (
+    <>
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
+      <img src={imgData} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="PDF Preview" />
+    </>
+  );
+};
+
 const EmployeeDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -675,11 +749,7 @@ const EmployeeDetails = () => {
                     <p style={{ fontSize: '8pt', fontWeight: 700, padding: '1mm', marginBottom: '2mm', textAlign:'center', background:'#f8fafc', borderBottom: '1px solid #eee' }}>{doc.label}</p>
                     <div style={{ height: '75mm', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                       {isPdf ? (
-                        <div style={{ textAlign: 'center', padding: '5mm', border: '1px dashed #cbd5e1', background: '#f1f5f9', color: '#475569', borderRadius: '4px' }}>
-                          <div style={{ fontSize: '24pt', marginBottom: '2mm' }}>📄</div>
-                          <p style={{ fontSize: '9pt', fontWeight: 600 }}>PDF Document</p>
-                          <p style={{ fontSize: '7pt', marginTop: '1mm' }}>Please view the original attached file for full content.</p>
-                        </div>
+                        <PDFPreview path={doc.path} />
                       ) : (
                         <img 
                           src={`${API_BASE_URL || window.location.origin}${doc.path}`} 

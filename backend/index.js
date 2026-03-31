@@ -6,6 +6,7 @@ const path = require('path');
 const db = require('./db');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 
 const app = express();
 const port = process.env.PORT || 5018;
@@ -173,11 +174,47 @@ app.post('/api/employees', upload, async (req, res) => {
     data.official_joining_date
   ];
 
-  db.run(query, params, function(err) {
-    if (err) return res.status(500).json({ error: err.message });
-    sendOnboardingEmail({ ...data, id: this.lastID });
-    res.json({ id: this.lastID, ...data, photo_path });
-  });
+  if (data.onboarding_token) {
+    // Single-use link flow
+    db.serialize(() => {
+      db.run('BEGIN TRANSACTION');
+
+      db.get('SELECT id FROM invitations WHERE token = ? AND status = "pending"', [data.onboarding_token], (err, row) => {
+        if (err || !row) {
+          db.run('ROLLBACK');
+          return res.status(403).json({ error: 'Invalid or already used invitation token.' });
+        }
+
+        db.run(query, params, function(err) {
+          if (err) {
+            db.run('ROLLBACK');
+            return res.status(500).json({ error: err.message });
+          }
+          
+          const employeeId = this.lastID;
+          db.run('UPDATE invitations SET status = "used" WHERE id = ?', [row.id], (err) => {
+            if (err) {
+              db.run('ROLLBACK');
+              return res.status(500).json({ error: 'Failed to consume invitation.' });
+            }
+
+            db.run('COMMIT', (err) => {
+              if (err) return res.status(500).json({ error: 'Finalizing record failed.' });
+              sendOnboardingEmail({ ...data, id: employeeId });
+              res.json({ id: employeeId, message: 'Onboarding completed successfully' });
+            });
+          });
+        });
+      });
+    });
+  } else {
+    // Normal Admin direct creation
+    db.run(query, params, function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      sendOnboardingEmail({ ...data, id: this.lastID });
+      res.json({ id: this.lastID, ...data, photo_path });
+    });
+  }
 });
 
 app.post('/api/employees/bulk', async (req, res) => {
@@ -420,6 +457,25 @@ app.delete('/api/bucket/:id', (req, res) => {
   db.run('DELETE FROM resource_bucket WHERE id = ?', [req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Resource deleted successfully' });
+  });
+});
+
+// Invitation APIs
+app.post('/api/invitations', (req, res) => {
+  const { shared_name } = req.body;
+  const token = crypto.randomBytes(32).toString('hex');
+  
+  db.run('INSERT INTO invitations (token, shared_name) VALUES (?, ?)', [token, shared_name], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ token, shared_name });
+  });
+});
+
+app.get('/api/invitations/verify/:token', (req, res) => {
+  db.get('SELECT * FROM invitations WHERE token = ? AND status = "pending"', [req.params.token], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!row) return res.status(404).json({ error: 'Invalid or already used invitation' });
+    res.json(row);
   });
 });
 

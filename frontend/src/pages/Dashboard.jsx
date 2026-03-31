@@ -70,37 +70,37 @@ const Dashboard = () => {
     return matchesStatus && matchesSearch;
   });
 
-  const copyFormLink = () => {
-    let link = `${window.location.origin}/fill-form`;
-    if (shareName) {
-      link += `?name=${encodeURIComponent(shareName)}`;
-    }
-    
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(link).then(() => {
+  const generateOneTimeLink = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.post(`${API_BASE_URL}/api/invitations`, { shared_name: shareName });
+      const { token } = res.data;
+      
+      const link = `${window.location.origin}/fill-form?token=${token}`;
+      
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(link);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-      }).catch(err => {
-        console.error('Failed to copy: ', err);
-      });
-    } else {
-      // Fallback for non-secure contexts (HTTP)
-      const textarea = document.createElement('textarea');
-      textarea.value = link;
-      textarea.style.position = 'fixed';
-      textarea.style.left = '-9999px';
-      textarea.style.top = '0';
-      document.body.appendChild(textarea);
-      textarea.focus();
-      textarea.select();
-      try {
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = link;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
         document.execCommand('copy');
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-      } catch (err) {
-        console.error('Fallback: Oops, unable to copy', err);
+        document.body.removeChild(textarea);
       }
-      document.body.removeChild(textarea);
+    } catch (err) {
+      console.error('Failed to generate link:', err);
+      alert('Error generating invitation link. Please check your connection.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -122,9 +122,9 @@ const Dashboard = () => {
               style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '0.875rem', width: '100%', outline: 'none' }} 
             />
           </div>
-          <button onClick={copyFormLink} className="btn btn-secondary" title="Shares a link pre-filled with the name above">
+          <button onClick={generateOneTimeLink} className="btn btn-secondary" title="Generates a secure ONE-TIME use link" disabled={loading}>
             {copied ? <Check size={18} color="#22c55e" /> : <Share2 size={18} />}
-            {copied ? 'Link Copied!' : 'Generate Link'}
+            {copied ? 'Link Copied!' : 'One-Time Link'}
           </button>
           <Link to="/onboard" className="btn btn-primary">
             <UserCircle size={18} /> Add Employee

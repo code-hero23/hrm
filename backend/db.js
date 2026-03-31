@@ -164,6 +164,16 @@ db.serialize(() => {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS invitations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      token TEXT UNIQUE NOT NULL,
+      shared_name TEXT,
+      status TEXT DEFAULT 'pending', -- 'pending' or 'used'
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // Insert default admin if not exists (username: Admin@cookscape.com, password: Hrmaster@2026)
   const hashedPassword = bcrypt.hashSync('Hrmaster@2026', 10);
   db.run(`INSERT OR IGNORE INTO users (username, password) VALUES ('Admin@cookscape.com', '${hashedPassword}')`);
