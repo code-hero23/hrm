@@ -108,7 +108,7 @@ const Dashboard = () => {
     <div className="slide-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '3rem' }}>
         <div>
-          <h2 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.05em', marginBottom: '0.5rem' }}>Core Database</h2>
+          <h2 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.05em', marginBottom: '0.5rem' }}>Human Resource Management System</h2>
           <p style={{ color: 'var(--text-dim)', fontSize: '1rem' }}>Manage and monitor Orbix Designs workforce.</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
