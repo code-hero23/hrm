@@ -279,6 +279,11 @@ app.post('/api/employees/bulk', async (req, res) => {
         emp.file_no = `HRM/26/${String(nextNum++).padStart(3, '0')}`;
       }
 
+      // Default status to 'New' if missing
+      if (!emp.status || emp.status === '') {
+        emp.status = 'New';
+      }
+
       const keys = Object.keys(emp).filter(k => validKeys.includes(k));
       if (keys.length === 0) {
         processed++;

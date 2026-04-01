@@ -34,19 +34,39 @@ const BulkImport = () => {
                     const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, '_');
                     
                     // Specific mappings
-                    if (normalizedKey === 'full_name' || normalizedKey === 'name' || normalizedKey === 'fullname') newRow.full_name = row[key];
-                    else if (normalizedKey === 'personal_email' || normalizedKey === 'email') newRow.personal_email = row[key];
-                    else if (normalizedKey === 'dept' || normalizedKey === 'department') newRow.department = row[key];
+                    if (normalizedKey.includes('name') || normalizedKey === 'employee' || normalizedKey === 'empname' || normalizedKey === 'full_name') {
+                        newRow.full_name = row[key];
+                    }
+                    else if (normalizedKey.includes('email') || normalizedKey === 'personal_email') {
+                        newRow.personal_email = row[key];
+                    }
+                    else if (normalizedKey.includes('dept') || normalizedKey === 'department') {
+                        newRow.department = row[key];
+                    }
                     else if (normalizedKey === 'status') {
                         let val = row[key]?.toString().trim();
                         if (val?.toLowerCase() === 'working') newRow.status = 'Current Employee';
                         else newRow.status = val;
                     }
-                    else newRow[normalizedKey] = row[key];
+                    else if (normalizedKey.includes('designation') || normalizedKey === 'role' || normalizedKey === 'position') {
+                        newRow.designation = row[key];
+                    }
+                    else if (normalizedKey.includes('id') && !normalizedKey.includes('aadhaar') && !normalizedKey.includes('pan')) {
+                        newRow.employee_id = row[key];
+                    }
+                    else {
+                        newRow[normalizedKey] = row[key];
+                    }
                 });
 
                 // Default status if missing
-                if (!newRow.status) newRow.status = 'Current Employee';
+                if (!newRow.status) newRow.status = 'New';
+
+                // Record validation/completion score
+                const requiredFields = ['full_name', 'department', 'designation', 'employee_id'];
+                const filledFields = requiredFields.filter(f => newRow[f] && newRow[f] !== '');
+                newRow._completionType = filledFields.length === requiredFields.length ? 'COMPLETE' : 'PARTIAL';
+                newRow._score = Math.round((filledFields.length / requiredFields.length) * 100);
                 
                 return newRow;
             });
@@ -172,17 +192,33 @@ const BulkImport = () => {
                                         <th style={{ padding: '1rem', textAlign: 'left' }}>NAME</th>
                                         <th style={{ padding: '1rem', textAlign: 'left' }}>DEPT</th>
                                         <th style={{ padding: '1rem', textAlign: 'left' }}>DESIGNATION</th>
-                                        <th style={{ padding: '1rem', textAlign: 'left' }}>EMAIL</th>
+                                        <th style={{ padding: '1rem', textAlign: 'left' }}>ID</th>
+                                        <th style={{ padding: '1rem', textAlign: 'center' }}>QUALITY</th>
                                         <th style={{ padding: '1rem', textAlign: 'center' }}>ACTION</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {data.map((row, idx) => (
-                                        <tr key={idx} style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                                            <td style={{ padding: '1rem' }}>{row.fullName || row.full_name || row.Name}</td>
-                                            <td style={{ padding: '1rem' }}>{row.department || row.Dept}</td>
-                                            <td style={{ padding: '1rem' }}>{row.designation}</td>
-                                            <td style={{ padding: '1rem' }}>{row.personalEmail || row.email}</td>
+                                        <tr key={idx} style={{ 
+                                            borderBottom: '1px solid var(--glass-border)',
+                                            background: row._completionType === 'PARTIAL' ? 'rgba(234, 179, 8, 0.03)' : 'transparent'
+                                        }}>
+                                            <td style={{ padding: '1rem', fontWeight: 700 }}>{row.full_name || 'N/A'}</td>
+                                            <td style={{ padding: '1rem' }}>{row.department || <span style={{ color: 'var(--text-dim)', fontStyle: 'italic' }}>Missing</span>}</td>
+                                            <td style={{ padding: '1rem' }}>{row.designation || <span style={{ color: 'var(--text-dim)', fontStyle: 'italic' }}>Missing</span>}</td>
+                                            <td style={{ padding: '1rem' }}>{row.employee_id || <span style={{ color: 'var(--text-dim)', fontStyle: 'italic' }}>Pending</span>}</td>
+                                            <td style={{ padding: '1rem', textAlign: 'center' }}>
+                                                <span style={{ 
+                                                    fontSize: '0.6rem', 
+                                                    fontWeight: 900, 
+                                                    padding: '2px 8px', 
+                                                    borderRadius: '4px',
+                                                    background: row._completionType === 'COMPLETE' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(234, 179, 8, 0.2)',
+                                                    color: row._completionType === 'COMPLETE' ? '#4ade80' : '#fbbf24'
+                                                }}>
+                                                    {row._score}% {row._completionType}
+                                                </span>
+                                            </td>
                                             <td style={{ padding: '1rem', textAlign: 'center' }}>
                                                 <button onClick={() => removeRow(idx)} style={{ background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer' }}>
                                                     <Trash2 size={16} />
