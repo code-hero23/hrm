@@ -23,7 +23,7 @@ const Onboarding = ({ isPublic }) => {
     official_email_crm: '', official_email_crm_date: '',
     signature_name: '',
     documents_submitted: JSON.stringify({}),
-    previous_employment: JSON.stringify([]),
+    previous_employment: JSON.stringify([{ company: '', crm: '', designation: '', period: '' }]),
     background_verification: JSON.stringify({ type: '', address: { house_type: '' } }),
     documents_passwords: ''
   });
@@ -342,6 +342,22 @@ const Onboarding = ({ isPublic }) => {
       case 5: return (
         <div>
           <h3 className="section-title">6. PREVIOUS EMPLOYMENT</h3>
+          <div style={{ background: 'rgba(59, 130, 246, 0.05)', color: '#94a3b8', padding: '1.5rem', borderRadius: '12px', fontSize: '0.875rem', marginBottom: '2.5rem', border: '1px solid rgba(59, 130, 246, 0.15)', lineHeight: '1.6' }}>
+            <h4 style={{ color: 'white', marginBottom: '1rem', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#60a5fa' }}></div> 1. Functional Overview
+            </h4>
+            <p style={{ marginBottom: '1rem' }}>This part of the form serves two primary purposes:</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ color: '#60a5fa', fontWeight: 700, minWidth: '160px' }}>Experience Tracking:</div>
+                <div style={{ color: 'var(--text-dim)' }}>Capturing a granular history of the employee's previous professional engagements.</div>
+              </div>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ color: '#60a5fa', fontWeight: 700, minWidth: '160px' }}>Compliance & Verification:</div>
+                <div style={{ color: 'var(--text-dim)' }}>Collecting digital copies of essential identification and financial documents required for HR records.</div>
+              </div>
+            </div>
+          </div>
           {JSON.parse(formData.previous_employment).map((job, idx) => (
             <div key={idx} style={{marginBottom:'1.5rem', padding:'1.5rem', background:'rgba(255,255,255,0.02)', borderRadius:'12px', border:'1px solid var(--glass-border)'}}>
               <div className="form-grid">

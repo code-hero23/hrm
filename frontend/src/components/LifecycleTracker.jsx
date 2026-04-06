@@ -28,7 +28,7 @@ const TOTAL_STEPS = allStepsFlat.length;
 
 const LifecycleTracker = ({ employeeId, initialSteps, doj, onUpdate }) => {
   const [steps, setSteps] = useState([]);
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     if (initialSteps) {
