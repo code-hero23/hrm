@@ -266,8 +266,8 @@ const Onboarding = ({ isPublic }) => {
           <h3 className="section-title">2. EMPLOYMENT DETAILS</h3>
           <div className="form-grid">
             {/* Removed status selector as default is 'Trainee' */}
-            <div className="form-group"><label>DEPARTMENT <span style={{color:'#ef4444'}}>*</span></label><input name="department" value={formData.department} onChange={handleChange} required /></div>
-            <div className="form-group"><label>DESIGNATION <span style={{color:'#ef4444'}}>*</span></label><input name="designation" value={formData.designation} onChange={handleChange} required /></div>
+            <div className="form-group"><label>DEPARTMENT</label><input name="department" value={formData.department} onChange={handleChange} /></div>
+            <div className="form-group"><label>DESIGNATION</label><input name="designation" value={formData.designation} onChange={handleChange} /></div>
             <div className="form-group"><label>DATE OF JOINING <span style={{color:'#ef4444'}}>*</span></label><input type="date" name="date_of_joining" value={formData.date_of_joining} onChange={handleChange} required /></div>
             {!isPublic && (
               <div className="form-group"><label>OFFICIAL JOINING DATE</label><input type="date" name="official_joining_date" value={formData.official_joining_date || ''} onChange={handleChange} /></div>
