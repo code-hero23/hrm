@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
-import { LayoutDashboard, UserPlus, Users, ExternalLink, Briefcase, FileText, FileUp, Database } from 'lucide-react';
+import { LayoutDashboard, UserPlus, Users, ExternalLink, Briefcase, FileText, FileUp, Database, Gift } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import Onboarding from './pages/Onboarding';
 import EmployeeDetails from './pages/EmployeeDetails';
