@@ -7,6 +7,7 @@ import EmployeeDetails from './pages/EmployeeDetails';
 import BulkImport from './pages/BulkImport';
 import EditEmployee from './pages/EditEmployee';
 import Bucket from './pages/Bucket';
+import WishesBucket from './pages/WishesBucket';
 import Login from './pages/Login';
 
 const Layout = ({ children, isPublic, user, onLogout }) => {
@@ -29,6 +30,9 @@ const Layout = ({ children, isPublic, user, onLogout }) => {
           </NavLink>
           <NavLink to="/bucket" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
             <Database size={20} /> <span>Resource Bucket</span>
+          </NavLink>
+          <NavLink to="/wishes" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+            <Gift size={20} /> <span>Wishes Bucket</span>
           </NavLink>
         </div>
         
@@ -64,6 +68,7 @@ function App() {
         <Route path="/employee/:id" element={user ? <Layout user={user} onLogout={handleLogout}><EmployeeDetails /></Layout> : <Login onLogin={setUser} />} />
         <Route path="/edit-employee/:id" element={user ? <Layout user={user} onLogout={handleLogout}><EditEmployee /></Layout> : <Login onLogin={setUser} />} />
         <Route path="/bucket" element={user ? <Layout user={user} onLogout={handleLogout}><Bucket /></Layout> : <Login onLogin={setUser} />} />
+        <Route path="/wishes" element={user ? <Layout user={user} onLogout={handleLogout}><WishesBucket /></Layout> : <Login onLogin={setUser} />} />
         <Route path="/fill-form" element={<Layout isPublic={true}><Onboarding isPublic={true} /></Layout>} />
       </Routes>
     </Router>

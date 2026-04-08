@@ -18,7 +18,7 @@ const Onboarding = ({ isPublic }) => {
     pan_number: '', aadhaar_number: '', other_id: '',
     emergency_contact_name: '', emergency_contact_relationship: '', emergency_contact_number: '', 
     father_husband_number: '', mother_wife_number: '', alternate_number: '',
-    father_name: '', mother_name: '', father_mobile: '', mother_mobile: '',
+    father_name: '', mother_name: '', father_mobile: '', mother_mobile: '', wedding_date: '',
     account_holder_name: '', account_number: '', bank_name: '', ifsc_code: '', branch: '',
     education_qualification: '', year_of_passing: '', institute: '',
     official_email_crm: '', official_email_crm_date: '',
@@ -238,6 +238,7 @@ const Onboarding = ({ isPublic }) => {
             <div className="form-group"><label>FATHER'S NAME <span style={{color:'#ef4444'}}>*</span></label><input name="father_name" value={formData.father_name} onChange={handleChange} required /></div>
             <div className="form-group"><label>MOTHER'S NAME <span style={{color:'#ef4444'}}>*</span></label><input name="mother_name" value={formData.mother_name} onChange={handleChange} required /></div>
             <div className="form-group"><label>DATE OF BIRTH <span style={{color:'#ef4444'}}>*</span></label><input type="date" name="dob" value={formData.dob} onChange={handleChange} required /></div>
+            <div className="form-group"><label>WEDDING DATE (OPTIONAL)</label><input type="date" name="wedding_date" value={formData.wedding_date} onChange={handleChange} /></div>
             <div className="form-group"><label>GENDER <span style={{color:'#ef4444'}}>*</span></label>
               <select name="gender" value={formData.gender} onChange={handleChange} required>
                 <option value="">Select</option>

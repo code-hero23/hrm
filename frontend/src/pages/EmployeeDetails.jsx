@@ -437,6 +437,7 @@ const EmployeeDetails = () => {
           <div className="form-group"><label>Aadhaar</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.aadhaar_number || '—'}</p></div>
           <div className="form-group"><label>Father Name</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.father_name || '—'}</p></div>
           <div className="form-group"><label>Mother Name</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.mother_name || '—'}</p></div>
+          <div className="form-group"><label>Wedding Date</label><p style={{fontSize: '1rem', fontWeight: 500}}>{formatDate(employee.wedding_date) || '—'}</p></div>
         </div>
 
         <div className="section-title">Bank Information</div>
@@ -556,6 +557,7 @@ const EmployeeDetails = () => {
               <p><strong>Father Name:</strong> {employee.father_name || employee.father_mother_name}</p>
               <p><strong>Mother Name:</strong> {employee.mother_name || '—'}</p>
               <p><strong>DOB:</strong> {formatDate(employee.dob)} &nbsp;&nbsp; <strong>Gender:</strong> {employee.gender}</p>
+              {employee.wedding_date && <p><strong>Wedding Date:</strong> {formatDate(employee.wedding_date)}</p>}
               <p><strong>Blood Group:</strong> {employee.blood_group} &nbsp;&nbsp; <strong>Marital Status:</strong> {employee.marital_status}</p>
               <p><strong>Contact No:</strong> {employee.contact_number}</p>
               <p><strong>Personal Email:</strong> {employee.personal_email}</p>

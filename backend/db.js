@@ -223,7 +223,8 @@ db.serialize(() => {
     'father_name': 'TEXT',
     'mother_name': 'TEXT',
     'father_mobile': 'TEXT',
-    'mother_mobile': 'TEXT'
+    'mother_mobile': 'TEXT',
+    'wedding_date': 'TEXT'
   };
 
   Object.entries(potentialMissingColumns).forEach(([name, type]) => {
