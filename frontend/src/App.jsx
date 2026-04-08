@@ -22,12 +22,16 @@ const Layout = ({ children, isPublic, user, onLogout }) => {
           <NavLink to="/" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
             <LayoutDashboard size={20} /> <span>Dashboard</span>
           </NavLink>
-          <NavLink to="/onboard" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-            <UserPlus size={20} /> <span>New Employee</span>
-          </NavLink>
-          <NavLink to="/bulk-import" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-            <FileUp size={20} /> <span>Bulk Import</span>
-          </NavLink>
+          {user.role !== 'viewer' && (
+            <>
+              <NavLink to="/onboard" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+                <UserPlus size={20} /> <span>New Employee</span>
+              </NavLink>
+              <NavLink to="/bulk-import" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+                <FileUp size={20} /> <span>Bulk Import</span>
+              </NavLink>
+            </>
+          )}
           <NavLink to="/bucket" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
             <Database size={20} /> <span>Resource Bucket</span>
           </NavLink>
@@ -62,12 +66,12 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={user ? <NavLink to="/" /> : <Login onLogin={setUser} />} />
-        <Route path="/" element={user ? <Layout user={user} onLogout={handleLogout}><Dashboard /></Layout> : <Login onLogin={setUser} />} />
-        <Route path="/onboard" element={user ? <Layout user={user} onLogout={handleLogout}><Onboarding /></Layout> : <Login onLogin={setUser} />} />
-        <Route path="/bulk-import" element={user ? <Layout user={user} onLogout={handleLogout}><BulkImport /></Layout> : <Login onLogin={setUser} />} />
-        <Route path="/employee/:id" element={user ? <Layout user={user} onLogout={handleLogout}><EmployeeDetails /></Layout> : <Login onLogin={setUser} />} />
-        <Route path="/edit-employee/:id" element={user ? <Layout user={user} onLogout={handleLogout}><EditEmployee /></Layout> : <Login onLogin={setUser} />} />
-        <Route path="/bucket" element={user ? <Layout user={user} onLogout={handleLogout}><Bucket /></Layout> : <Login onLogin={setUser} />} />
+        <Route path="/" element={user ? <Layout user={user} onLogout={handleLogout}><Dashboard user={user} /></Layout> : <Login onLogin={setUser} />} />
+        <Route path="/onboard" element={user ? (user.role === 'viewer' ? <NavLink to="/" /> : <Layout user={user} onLogout={handleLogout}><Onboarding /></Layout>) : <Login onLogin={setUser} />} />
+        <Route path="/bulk-import" element={user ? (user.role === 'viewer' ? <NavLink to="/" /> : <Layout user={user} onLogout={handleLogout}><BulkImport /></Layout>) : <Login onLogin={setUser} />} />
+        <Route path="/employee/:id" element={user ? <Layout user={user} onLogout={handleLogout}><EmployeeDetails user={user} /></Layout> : <Login onLogin={setUser} />} />
+        <Route path="/edit-employee/:id" element={user ? (user.role === 'viewer' ? <NavLink to="/" /> : <Layout user={user} onLogout={handleLogout}><EditEmployee /></Layout>) : <Login onLogin={setUser} />} />
+        <Route path="/bucket" element={user ? <Layout user={user} onLogout={handleLogout}><Bucket user={user} /></Layout> : <Login onLogin={setUser} />} />
         <Route path="/wishes" element={user ? <Layout user={user} onLogout={handleLogout}><WishesBucket /></Layout> : <Login onLogin={setUser} />} />
         <Route path="/fill-form" element={<Layout isPublic={true}><Onboarding isPublic={true} /></Layout>} />
       </Routes>

@@ -156,7 +156,7 @@ const processDocToImage = async (path) => {
   }
 };
 
-const EmployeeDetails = () => {
+const EmployeeDetails = ({ user }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [employee, setEmployee] = useState(null);
@@ -305,20 +305,26 @@ const EmployeeDetails = () => {
           <ArrowLeft size={20} /> <span style={{fontWeight: 700}}>Back to Workforce</span>
         </button>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button onClick={handleDelete} className="btn btn-secondary" style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', background: 'rgba(239, 68, 68, 0.05)' }}>
-            <Trash2 size={18} /> Delete Record
-          </button>
-          <button onClick={() => navigate(`/edit-employee/${id}`)} className="btn btn-primary" style={{ background: 'linear-gradient(135deg, #4f46e5, #4338ca)', border: 'none' }}>
-            <Edit3 size={18} /> Edit Profile
-          </button>
+          {user?.role !== 'viewer' && (
+            <>
+              <button onClick={handleDelete} className="btn btn-secondary" style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', background: 'rgba(239, 68, 68, 0.05)' }}>
+                <Trash2 size={18} /> Delete Record
+              </button>
+              <button onClick={() => navigate(`/edit-employee/${id}`)} className="btn btn-primary" style={{ background: 'linear-gradient(135deg, #4f46e5, #4338ca)', border: 'none' }}>
+                <Edit3 size={18} /> Edit Profile
+              </button>
+            </>
+          )}
           <button onClick={handleDownloadPDF} className="btn btn-secondary">
             <Download size={18} /> Export PDF
           </button>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-             <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>UPDATE STATUS:</span>
-             <StatusDropdown currentStatus={employee.status} onUpdate={updateStatus} />
-          </div>
+          {user?.role !== 'viewer' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+               <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>UPDATE STATUS:</span>
+               <StatusDropdown currentStatus={employee.status} onUpdate={updateStatus} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -358,7 +364,7 @@ const EmployeeDetails = () => {
               <div style={{ padding: '0.5rem', borderRadius: '12px', background: isEditingOJ ? 'rgba(59, 130, 246, 0.1)' : 'transparent', transition: '0.3s' }}>
                 <p style={{ fontSize: '0.625rem', color: '#60a5fa', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   OFFICIAL D.O.J
-                  {!isEditingOJ && <Edit3 size={12} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => setIsEditingOJ(true)} />}
+                  {!isEditingOJ && user?.role !== 'viewer' && <Edit3 size={12} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => setIsEditingOJ(true)} />}
                 </p>
                 {isEditingOJ ? (
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -376,7 +382,7 @@ const EmployeeDetails = () => {
                     />
                   </div>
                 ) : (
-                  <p style={{ fontSize: '1.125rem', fontWeight: 700, color: '#60a5fa', cursor: 'pointer' }} onClick={() => setIsEditingOJ(true)}>
+                  <p style={{ fontSize: '1.125rem', fontWeight: 700, color: '#60a5fa', cursor: user?.role === 'viewer' ? 'default' : 'pointer' }} onClick={() => user?.role !== 'viewer' && setIsEditingOJ(true)}>
                     {formatDate(employee.official_joining_date) || 'N/A'}
                   </p>
                 )}
@@ -425,6 +431,7 @@ const EmployeeDetails = () => {
           initialSteps={employee.lifecycle_steps} 
           doj={employee.date_of_joining} 
           onUpdate={handleLifecycleUpdate} 
+          readOnly={user?.role === 'viewer'}
         />
 
         <div className="section-title">Identity & Contacts</div>

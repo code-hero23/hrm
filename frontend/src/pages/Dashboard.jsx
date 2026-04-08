@@ -14,7 +14,7 @@ const formatDate = (dateString) => {
   return `${day}/${month}/${year}`;
 };
 
-const Dashboard = () => {
+const Dashboard = ({ user }) => {
   const [employees, setEmployees] = useState([]);
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
@@ -111,25 +111,27 @@ const Dashboard = () => {
           <h2 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.05em', marginBottom: '0.5rem' }}>Human Resource Management System</h2>
           <p style={{ color: 'var(--text-dim)', fontSize: '1rem' }}>Manage and monitor Orbix Designs workforce.</p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div className="card" style={{ padding: '0.4rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: '250px' }}>
-            <UserCircle size={18} color="var(--text-dim)" />
-            <input 
-              type="text" 
-              placeholder="Employee Name (for link)..." 
-              value={shareName}
-              onChange={(e) => setShareName(e.target.value)}
-              style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '0.875rem', width: '100%', outline: 'none' }} 
-            />
+        {user?.role !== 'viewer' && (
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <div className="card" style={{ padding: '0.4rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: '250px' }}>
+              <UserCircle size={18} color="var(--text-dim)" />
+              <input 
+                type="text" 
+                placeholder="Employee Name (for link)..." 
+                value={shareName}
+                onChange={(e) => setShareName(e.target.value)}
+                style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '0.875rem', width: '100%', outline: 'none' }} 
+              />
+            </div>
+            <button onClick={generateOneTimeLink} className="btn btn-secondary" title="Generates a secure ONE-TIME use link" disabled={loading}>
+              {copied ? <Check size={18} color="#22c55e" /> : <Share2 size={18} />}
+              {copied ? 'Link Copied!' : 'One-Time Link'}
+            </button>
+            <Link to="/onboard" className="btn btn-primary">
+              <UserCircle size={18} /> Add Employee
+            </Link>
           </div>
-          <button onClick={generateOneTimeLink} className="btn btn-secondary" title="Generates a secure ONE-TIME use link" disabled={loading}>
-            {copied ? <Check size={18} color="#22c55e" /> : <Share2 size={18} />}
-            {copied ? 'Link Copied!' : 'One-Time Link'}
-          </button>
-          <Link to="/onboard" className="btn btn-primary">
-            <UserCircle size={18} /> Add Employee
-          </Link>
-        </div>
+        )}
       </div>
 
       {/* Stats Cards */}

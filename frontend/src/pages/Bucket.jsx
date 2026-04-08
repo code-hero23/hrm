@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import API_BASE_URL from '../config';
 
-const Bucket = () => {
+const Bucket = ({ user }) => {
   const [resources, setResources] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -128,13 +128,15 @@ const Bucket = () => {
             Manage and assign official company {activeTab.toLowerCase()} addresses.
           </p>
         </div>
-        <button 
-          onClick={() => setShowBulkModal(true)}
-          className="btn-primary" 
-          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem 2rem' }}
-        >
-          <Upload size={20} /> Bulk Import
-        </button>
+        {user?.role !== 'viewer' && (
+          <button 
+            onClick={() => setShowBulkModal(true)}
+            className="btn-primary" 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem 2rem' }}
+          >
+            <Upload size={20} /> Bulk Import
+          </button>
+        )}
       </header>
 
       {/* Tabs */}
@@ -276,32 +278,34 @@ const Bucket = () => {
                   )}
                 </td>
                 <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
-                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                    {resource.status === 'Available' ? (
+                  {user?.role !== 'viewer' && (
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                      {resource.status === 'Available' ? (
+                        <button 
+                          onClick={() => setShowAssignModal(resource.id)}
+                          className="btn-primary" 
+                          style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                        >
+                          <UserPlus size={14} /> Assign
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => handleUnassign(resource.id)}
+                          style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                        >
+                          <XCircle size={14} /> Unassign
+                        </button>
+                      )}
                       <button 
-                        onClick={() => setShowAssignModal(resource.id)}
-                        className="btn-primary" 
-                        style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                        onClick={() => handleDelete(resource.id)}
+                        style={{ background: 'rgba(255,255,255,0.05)', color: 'white', border: 'none', borderRadius: '8px', padding: '0.5rem', cursor: 'pointer', transition: '0.2s' }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                       >
-                        <UserPlus size={14} /> Assign
+                        <Trash2 size={14} />
                       </button>
-                    ) : (
-                      <button 
-                        onClick={() => handleUnassign(resource.id)}
-                        style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                      >
-                        <XCircle size={14} /> Unassign
-                      </button>
-                    )}
-                    <button 
-                      onClick={() => handleDelete(resource.id)}
-                      style={{ background: 'rgba(255,255,255,0.05)', color: 'white', border: 'none', borderRadius: '8px', padding: '0.5rem', cursor: 'pointer', transition: '0.2s' }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}

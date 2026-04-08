@@ -148,9 +148,15 @@ db.serialize(() => {
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE,
-      password TEXT
+      password TEXT,
+      role TEXT DEFAULT 'admin'
     )
   `);
+
+  // Migration for existing users table
+  db.run("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'admin'", (err) => {
+    // Ignore error if column already exists
+  });
  
   db.run(`
     CREATE TABLE IF NOT EXISTS resource_bucket (
@@ -175,8 +181,12 @@ db.serialize(() => {
   `);
 
   // Insert default admin if not exists (username: Admin@cookscape.com, password: Hrmaster@2026)
-  const hashedPassword = bcrypt.hashSync('Hrmaster@2026', 10);
-  db.run(`INSERT OR IGNORE INTO users (username, password) VALUES ('Admin@cookscape.com', '${hashedPassword}')`);
+  const hashedAdminPassword = bcrypt.hashSync('Hrmaster@2026', 10);
+  db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('Admin@cookscape.com', '${hashedAdminPassword}', 'admin')`);
+
+  // Insert default viewer if not exists (username: View@cookscape.com, password: View@2026)
+  const hashedViewerPassword = bcrypt.hashSync('View@2026', 10);
+  db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('View@cookscape.com', '${hashedViewerPassword}', 'viewer')`);
 
   console.log('Database initialized');
 
