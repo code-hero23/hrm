@@ -435,6 +435,8 @@ const EmployeeDetails = () => {
           <div className="form-group"><label>Email</label><p style={{fontSize: '1.1rem', fontWeight: 500, textTransform: 'none', color: '#60a5fa'}}>{employee.personal_email || '—'}</p></div>
           <div className="form-group"><label>PAN</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.pan_number || '—'}</p></div>
           <div className="form-group"><label>Aadhaar</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.aadhaar_number || '—'}</p></div>
+          <div className="form-group"><label>Father Name</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.father_name || '—'}</p></div>
+          <div className="form-group"><label>Mother Name</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.mother_name || '—'}</p></div>
         </div>
 
         <div className="section-title">Bank Information</div>
@@ -498,6 +500,8 @@ const EmployeeDetails = () => {
                     <h5 style={{fontSize:'0.75rem', color:'var(--text-dim)', textTransform:'uppercase', marginBottom:'0.5rem'}}>Personal References</h5>
                     <p style={{fontSize:'0.875rem'}}><strong>Friend:</strong> {bgc.friend?.name} ({bgc.friend?.designation}) • {bgc.friend?.contact}</p>
                     <p style={{fontSize:'0.875rem'}}><strong>Relative:</strong> {bgc.relative?.name} ({bgc.relative?.designation}) • {bgc.relative?.contact}</p>
+                    <p style={{fontSize:'0.875rem'}}><strong>Father Mobile:</strong> {employee.father_mobile || employee.father_husband_number || '—'}</p>
+                    <p style={{fontSize:'0.875rem'}}><strong>Mother Mobile:</strong> {employee.mother_mobile || employee.mother_wife_number || '—'}</p>
                   </div>
                 </div>
               </div>
@@ -549,7 +553,8 @@ const EmployeeDetails = () => {
             <div style={{ flex: 1 }}>
               <h3 style={{ borderBottom: '1px solid #ccc', paddingBottom: '1mm', fontSize: '12pt' }}>I. PERSONAL INFORMATION</h3>
               <p><strong>Full Name:</strong> {employee.full_name}</p>
-              <p><strong>Father/Mother Name:</strong> {employee.father_mother_name}</p>
+              <p><strong>Father Name:</strong> {employee.father_name || employee.father_mother_name}</p>
+              <p><strong>Mother Name:</strong> {employee.mother_name || '—'}</p>
               <p><strong>DOB:</strong> {formatDate(employee.dob)} &nbsp;&nbsp; <strong>Gender:</strong> {employee.gender}</p>
               <p><strong>Blood Group:</strong> {employee.blood_group} &nbsp;&nbsp; <strong>Marital Status:</strong> {employee.marital_status}</p>
               <p><strong>Contact No:</strong> {employee.contact_number}</p>
@@ -603,8 +608,8 @@ const EmployeeDetails = () => {
             <div style={{ background: '#f9f9f9', padding: '3mm', border: '1px solid #eee', borderRadius: '4px' }}>
               <p style={{ marginBottom: '1.5mm' }}><strong>Emergency Contact:</strong> {employee.emergency_contact_name} ({employee.emergency_contact_relationship}) - <span style={{ color: '#2563eb' }}>{employee.emergency_contact_number}</span></p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2mm', fontSize: '9pt' }}>
-                <p><strong>Father/Husband No:</strong> {employee.father_husband_number}</p>
-                <p><strong>Mother/Wife No:</strong> {employee.mother_wife_number}</p>
+                <p><strong>Father Mobile:</strong> {employee.father_mobile || employee.father_husband_number}</p>
+                <p><strong>Mother Mobile:</strong> {employee.mother_mobile || employee.mother_wife_number}</p>
                 <p><strong>Alternate No:</strong> {employee.alternate_number}</p>
               </div>
             </div>

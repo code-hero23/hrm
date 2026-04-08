@@ -151,8 +151,8 @@ app.post('/api/employees', upload, async (req, res) => {
       asset_crm, asset_peopledesk, asset_projects, asset_id_card, asset_official_mail, asset_offer_letter,
       check_sim, check_laptop, check_crm, check_peopledesk, check_projects, check_id_card, check_official_mail, check_offer_letter,
       bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, signature_name, background_verification,
-      lifecycle_steps, official_joining_date
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      lifecycle_steps, official_joining_date, father_name, mother_name, father_mobile, mother_mobile
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `;
 
   const params = [
@@ -171,7 +171,8 @@ app.post('/api/employees', upload, async (req, res) => {
     bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name, 
     typeof data.background_verification === 'object' ? JSON.stringify(data.background_verification) : data.background_verification,
     typeof data.lifecycle_steps === 'object' ? JSON.stringify(data.lifecycle_steps) : data.lifecycle_steps,
-    data.official_joining_date
+    data.official_joining_date,
+    data.father_name, data.mother_name, data.father_mobile, data.mother_mobile
   ];
 
   if (data.onboarding_token) {
@@ -266,7 +267,8 @@ app.post('/api/employees/bulk', async (req, res) => {
     "laptop_system", "laptop_system_date", "official_email_crm", "official_email_crm_date", 
     "asset_crm", "asset_peopledesk", "asset_projects", "asset_id_card", "asset_official_mail", "asset_offer_letter",
     "check_sim", "check_laptop", "check_crm", "check_peopledesk", "check_projects", "check_id_card", "check_official_mail", "check_offer_letter",
-    "signature_name", "background_verification", "lifecycle_steps", "official_joining_date"
+    "signature_name", "background_verification", "lifecycle_steps", "official_joining_date",
+    "father_name", "mother_name", "father_mobile", "mother_mobile"
   ];
 
   db.serialize(() => {
@@ -352,7 +354,7 @@ app.put('/api/employees/:id', upload, (req, res) => {
       asset_crm=?, asset_peopledesk=?, asset_projects=?, asset_id_card=?, asset_official_mail=?, asset_offer_letter=?,
       check_sim=?, check_laptop=?, check_crm=?, check_peopledesk=?, check_projects=?, check_id_card=?, check_official_mail=?, check_offer_letter=?,
       bank_passbook_path=?, pan_card_path=?, aadhaar_card_path=?, educational_certificate_path=?, signature_name=?, background_verification=?,
-      lifecycle_steps=?, official_joining_date=?
+      lifecycle_steps=?, official_joining_date=?, father_name=?, mother_name=?, father_mobile=?, mother_mobile=?
     WHERE id = ?
   `;
 
@@ -374,6 +376,7 @@ app.put('/api/employees/:id', upload, (req, res) => {
     typeof data.background_verification === 'object' ? JSON.stringify(data.background_verification) : data.background_verification,
     typeof data.lifecycle_steps === 'object' ? JSON.stringify(data.lifecycle_steps) : data.lifecycle_steps,
     data.official_joining_date,
+    data.father_name, data.mother_name, data.father_mobile, data.mother_mobile,
     req.params.id
   ];
 

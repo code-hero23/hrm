@@ -16,8 +16,9 @@ const Onboarding = ({ isPublic }) => {
     personal_email: '', marital_status: '', present_address: '', permanent_address: '',
     employee_id: '', department: '', designation: '', date_of_joining: '', official_joining_date: '', work_location: 'MTRS', reporting_manager: '', // Set default work_location to MTRS
     pan_number: '', aadhaar_number: '', other_id: '',
-    emergency_contact_name: '', emergency_contact_relationship: '', emergency_contact_number: '',
+    emergency_contact_name: '', emergency_contact_relationship: '', emergency_contact_number: '', 
     father_husband_number: '', mother_wife_number: '', alternate_number: '',
+    father_name: '', mother_name: '', father_mobile: '', mother_mobile: '',
     account_holder_name: '', account_number: '', bank_name: '', ifsc_code: '', branch: '',
     education_qualification: '', year_of_passing: '', institute: '',
     official_email_crm: '', official_email_crm_date: '',
@@ -80,7 +81,8 @@ const Onboarding = ({ isPublic }) => {
     // Numeric only validation
     const numericFields = [
       'contact_number', 'emergency_contact_number', 'father_husband_number', 
-      'mother_wife_number', 'alternate_number', 'account_number', 'aadhaar_number'
+      'mother_wife_number', 'alternate_number', 'account_number', 'aadhaar_number',
+      'father_mobile', 'mother_mobile'
     ];
     if (numericFields.includes(name)) {
       if (value !== '' && !/^\d+$/.test(value)) return;
@@ -128,6 +130,17 @@ const Onboarding = ({ isPublic }) => {
     if (!isValid) {
       alert("Please fill all mandatory fields marked with * before continuing.");
     }
+
+    // Step 5 Mandatory Documents Check
+    if (step === 5 && isValid) {
+      const requiredDocs = ['bank_passbook', 'pan_card', 'aadhaar_card', 'educational_certificate'];
+      const missingDocs = requiredDocs.filter(doc => !docs[doc]);
+      if (missingDocs.length > 0) {
+        alert("Please upload all 4 mandatory documents before continuing:\n- Bank Passbook\n- PAN Card\n- Aadhaar Card\n- Educational Certificate");
+        return false;
+      }
+    }
+
     return isValid;
   };
 
@@ -222,7 +235,8 @@ const Onboarding = ({ isPublic }) => {
               <input name="file_no" value={formData.file_no} onChange={handleChange} placeholder="Assigned automatically if empty" />
             </div>
             <div className="form-group"><label>FULL NAME <span style={{color:'#ef4444'}}>*</span></label><input name="full_name" value={formData.full_name} onChange={handleChange} required /></div>
-            <div className="form-group"><label>FATHER'S / MOTHER'S NAME <span style={{color:'#ef4444'}}>*</span></label><input name="father_mother_name" value={formData.father_mother_name} onChange={handleChange} required /></div>
+            <div className="form-group"><label>FATHER'S NAME <span style={{color:'#ef4444'}}>*</span></label><input name="father_name" value={formData.father_name} onChange={handleChange} required /></div>
+            <div className="form-group"><label>MOTHER'S NAME <span style={{color:'#ef4444'}}>*</span></label><input name="mother_name" value={formData.mother_name} onChange={handleChange} required /></div>
             <div className="form-group"><label>DATE OF BIRTH <span style={{color:'#ef4444'}}>*</span></label><input type="date" name="dob" value={formData.dob} onChange={handleChange} required /></div>
             <div className="form-group"><label>GENDER <span style={{color:'#ef4444'}}>*</span></label>
               <select name="gender" value={formData.gender} onChange={handleChange} required>
@@ -315,8 +329,8 @@ const Onboarding = ({ isPublic }) => {
             <div className="form-group"><label>NAME <span style={{color:'#ef4444'}}>*</span></label><input name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleChange} required /></div>
             <div className="form-group"><label>RELATIONSHIP <span style={{color:'#ef4444'}}>*</span></label><input name="emergency_contact_relationship" value={formData.emergency_contact_relationship} onChange={handleChange} required /></div>
             <div className="form-group"><label>CONTACT NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} required /></div>
-            <div className="form-group"><label>FATHER/HUSBAND NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="father_husband_number" value={formData.father_husband_number} onChange={handleChange} required /></div>
-            <div className="form-group"><label>MOTHER'S / WIFE NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="mother_wife_number" value={formData.mother_wife_number} onChange={handleChange} required /></div>
+            <div className="form-group"><label>FATHER MOBILE NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="father_mobile" value={formData.father_mobile} onChange={handleChange} required /></div>
+            <div className="form-group"><label>MOTHER MOBILE NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="mother_mobile" value={formData.mother_mobile} onChange={handleChange} required /></div>
             <div className="form-group"><label>ALTERNATE NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="alternate_number" value={formData.alternate_number} onChange={handleChange} required /></div>
           </div>
         </div>
@@ -375,23 +389,23 @@ const Onboarding = ({ isPublic }) => {
           </p>
           <div className="form-grid">
             <div className="form-group">
-              <label>BANK PASSBOOK</label>
-              <input type="file" onChange={(e) => handleFileChange(e, 'bank_passbook')} accept="image/*,.pdf" />
+              <label>BANK PASSBOOK <span style={{color:'#ef4444'}}>*</span></label>
+              <input type="file" onChange={(e) => handleFileChange(e, 'bank_passbook')} accept="image/*,.pdf" required />
               {docs.bank_passbook && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.bank_passbook.name}</p>}
             </div>
             <div className="form-group">
-              <label>PAN CARD</label>
-              <input type="file" onChange={(e) => handleFileChange(e, 'pan_card')} accept="image/*,.pdf" />
+              <label>PAN CARD <span style={{color:'#ef4444'}}>*</span></label>
+              <input type="file" onChange={(e) => handleFileChange(e, 'pan_card')} accept="image/*,.pdf" required />
               {docs.pan_card && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.pan_card.name}</p>}
             </div>
             <div className="form-group">
-              <label>AADHAAR CARD</label>
-              <input type="file" onChange={(e) => handleFileChange(e, 'aadhaar_card')} accept="image/*,.pdf" />
+              <label>AADHAAR CARD <span style={{color:'#ef4444'}}>*</span></label>
+              <input type="file" onChange={(e) => handleFileChange(e, 'aadhaar_card')} accept="image/*,.pdf" required />
               {docs.aadhaar_card && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.aadhaar_card.name}</p>}
             </div>
             <div className="form-group">
-              <label>EDUCATIONAL CERTIFICATE</label>
-              <input type="file" onChange={(e) => handleFileChange(e, 'educational_certificate')} accept="image/*,.pdf" />
+              <label>EDUCATIONAL CERTIFICATE <span style={{color:'#ef4444'}}>*</span></label>
+              <input type="file" onChange={(e) => handleFileChange(e, 'educational_certificate')} accept="image/*,.pdf" required />
               {docs.educational_certificate && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.educational_certificate.name}</p>}
             </div>
           </div>

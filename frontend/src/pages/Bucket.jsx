@@ -25,6 +25,7 @@ const Bucket = () => {
   const [bulkData, setBulkData] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('Email');
 
   useEffect(() => {
@@ -312,18 +313,42 @@ const Bucket = () => {
       {showAssignModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div className="card" style={{ width: '500px', padding: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-              <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>Assign Resource</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>Assign to Employee</h2>
               <XCircle size={24} style={{ cursor: 'pointer', color: 'var(--text-dim)' }} onClick={() => setShowAssignModal(null)} />
             </div>
-            <div style={{ maxHeight: '400px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {employees.map(emp => (
+            <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
+              <Search size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+              <input 
+                type="text" 
+                placeholder="Search employee by name or dept..." 
+                value={employeeSearchTerm}
+                onChange={(e) => setEmployeeSearchTerm(e.target.value)}
+                style={{ 
+                  width: '100%', 
+                  background: 'rgba(255,255,255,0.03)', 
+                  border: '1px solid var(--glass-border)', 
+                  borderRadius: '10px', 
+                  padding: '0.6rem 1rem 0.6rem 2.5rem',
+                  color: 'white',
+                  fontSize: '0.875rem'
+                }}
+              />
+            </div>
+            <div style={{ maxHeight: '400px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {employees
+                .filter(emp => 
+                  emp.full_name.toLowerCase().includes(employeeSearchTerm.toLowerCase()) || 
+                  emp.department?.toLowerCase().includes(employeeSearchTerm.toLowerCase()) ||
+                  emp.designation?.toLowerCase().includes(employeeSearchTerm.toLowerCase())
+                )
+                .map(emp => (
                 <div 
                   key={emp.id} 
                   onClick={() => handleAssign(emp.id)}
-                  style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)', cursor: 'pointer', transition: 'all 0.2s' }}
+                  style={{ padding: '0.875rem 1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px solid var(--glass-border)', cursor: 'pointer', transition: 'all 0.2s' }}
                   onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
                 >
                   <p style={{ margin: 0, fontWeight: 700 }}>{emp.full_name}</p>
                   <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-dim)' }}>{emp.designation} • {emp.department}</p>

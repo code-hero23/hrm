@@ -219,7 +219,11 @@ db.serialize(() => {
     'asset_offer_letter': 'TEXT',
     'lifecycle_steps': 'TEXT',
     'official_joining_date': 'TEXT',
-    'documents_passwords': 'TEXT'
+    'documents_passwords': 'TEXT',
+    'father_name': 'TEXT',
+    'mother_name': 'TEXT',
+    'father_mobile': 'TEXT',
+    'mother_mobile': 'TEXT'
   };
 
   Object.entries(potentialMissingColumns).forEach(([name, type]) => {
