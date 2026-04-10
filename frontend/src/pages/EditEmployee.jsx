@@ -25,7 +25,11 @@ const EditEmployee = () => {
     official_email_crm: '', official_email_crm_date: '',
     asset_crm: '', asset_peopledesk: '', asset_projects: '', asset_id_card: '', asset_official_mail: '', asset_offer_letter: '',
     check_sim: 0, check_laptop: 0, check_crm: 0, check_peopledesk: 0, check_projects: 0, check_id_card: 0, check_official_mail: 0, check_offer_letter: 0,
-    bank_passbook_path: '', pan_card_path: '', aadhaar_card_path: '', educational_certificate_path: '',
+    bank_passbook_path: '', bank_passbook_back_path: '',
+    pan_card_path: '', pan_card_back_path: '',
+    aadhaar_card_path: '', aadhaar_card_back_path: '',
+    educational_certificate_path: '', educational_certificate_back_path: '',
+    resume_path: '',
     signature_name: '',
     documents_submitted: JSON.stringify({}),
     previous_employment: JSON.stringify([]),
@@ -36,9 +40,14 @@ const EditEmployee = () => {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [docs, setDocs] = useState({
     bank_passbook: null,
+    bank_passbook_back: null,
     pan_card: null,
+    pan_card_back: null,
     aadhaar_card: null,
-    educational_certificate: null
+    aadhaar_card_back: null,
+    educational_certificate: null,
+    educational_certificate_back: null,
+    resume: null
   });
 
   useEffect(() => {
@@ -117,10 +126,11 @@ const EditEmployee = () => {
     // Step 5 Mandatory Documents Check
     if (step === 5 && isValid) {
       const requiredDocs = [
-        { name: 'bank_passbook', label: 'Bank Passbook', path: formData.bank_passbook_path },
-        { name: 'pan_card', label: 'PAN Card', path: formData.pan_card_path },
-        { name: 'aadhaar_card', label: 'Aadhaar Card', path: formData.aadhaar_card_path },
-        { name: 'educational_certificate', label: 'Educational Certificate', path: formData.educational_certificate_path }
+        { name: 'bank_passbook', label: 'Bank Passbook (Front)', path: formData.bank_passbook_path },
+        { name: 'pan_card', label: 'PAN Card (Front)', path: formData.pan_card_path },
+        { name: 'aadhaar_card', label: 'Aadhaar Card (Front)', path: formData.aadhaar_card_path },
+        { name: 'educational_certificate', label: 'Educational Certificate (Front)', path: formData.educational_certificate_path },
+        { name: 'resume', label: 'Resume/CV', path: formData.resume_path }
       ];
       
       const missingDocs = requiredDocs.filter(doc => !docs[doc.name] && !doc.path);
@@ -598,15 +608,20 @@ const EditEmployee = () => {
           </p>
           <div className="form-grid">
             {[
-              { label: 'BANK PASSBOOK', name: 'bank_passbook', path: formData.bank_passbook_path },
-              { label: 'PAN CARD', name: 'pan_card', path: formData.pan_card_path },
-              { label: 'AADHAAR CARD', name: 'aadhaar_card', path: formData.aadhaar_card_path },
-              { label: 'EDUCATIONAL CERTIFICATE', name: 'educational_certificate', path: formData.educational_certificate_path }
+              { label: 'BANK PASSBOOK (FRONT)', name: 'bank_passbook', path: formData.bank_passbook_path, required: true },
+              { label: 'BANK PASSBOOK (BACK)', name: 'bank_passbook_back', path: formData.bank_passbook_back_path, required: false },
+              { label: 'PAN CARD (FRONT)', name: 'pan_card', path: formData.pan_card_path, required: true },
+              { label: 'PAN CARD (BACK)', name: 'pan_card_back', path: formData.pan_card_back_path, required: false },
+              { label: 'AADHAAR CARD (FRONT)', name: 'aadhaar_card', path: formData.aadhaar_card_path, required: true },
+              { label: 'AADHAAR CARD (BACK)', name: 'aadhaar_card_back', path: formData.aadhaar_card_back_path, required: false },
+              { label: 'EDUCATIONAL CERTIFICATE (FRONT)', name: 'educational_certificate', path: formData.educational_certificate_path, required: true },
+              { label: 'EDUCATIONAL CERTIFICATE (BACK)', name: 'educational_certificate_back', path: formData.educational_certificate_back_path, required: false },
+              { label: 'RESUME / CV', name: 'resume', path: formData.resume_path, required: true }
             ].map(doc => (
               <div className="form-group" key={doc.name}>
-                <label>{doc.label} <span style={{color:'#ef4444'}}>*</span></label>
+                <label>{doc.label} {doc.required ? <span style={{color:'#ef4444'}}>*</span> : <span style={{color:'var(--text-dim)', fontSize:'0.7rem'}}>(OPTIONAL)</span>}</label>
                 <div style={{display:'flex', gap:'1rem', alignItems:'center'}}>
-                  <input type="file" onChange={(e) => handleFileChange(e, doc.name)} accept="image/*,.pdf" style={{fontSize:'0.7rem'}} required={!doc.path} />
+                  <input type="file" onChange={(e) => handleFileChange(e, doc.name)} accept="image/*,.pdf" style={{fontSize:'0.7rem'}} required={doc.required && !doc.path} />
                   {doc.path && !docs[doc.name] && <a href={`${API_BASE_URL}${doc.path}`} target="_blank" rel="noreferrer" style={{fontSize:'0.7rem', color:'#60a5fa'}}>View Existing</a>}
                 </div>
                 {docs[doc.name] && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs[doc.name].name}</p>}

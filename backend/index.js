@@ -79,9 +79,14 @@ const storage = multer.diskStorage({
 const upload = multer({ storage }).fields([
   { name: 'photo', maxCount: 1 },
   { name: 'bank_passbook', maxCount: 1 },
+  { name: 'bank_passbook_back', maxCount: 1 },
   { name: 'pan_card', maxCount: 1 },
+  { name: 'pan_card_back', maxCount: 1 },
   { name: 'aadhaar_card', maxCount: 1 },
-  { name: 'educational_certificate', maxCount: 1 }
+  { name: 'aadhaar_card_back', maxCount: 1 },
+  { name: 'educational_certificate', maxCount: 1 },
+  { name: 'educational_certificate_back', maxCount: 1 },
+  { name: 'resume', maxCount: 1 }
 ]);
 
 // Routes
@@ -115,9 +120,14 @@ app.post('/api/employees', upload, async (req, res) => {
   
   const photo_path = files.photo ? `/uploads/${files.photo[0].filename}` : null;
   const bank_passbook_path = files.bank_passbook ? `/uploads/${files.bank_passbook[0].filename}` : null;
+  const bank_passbook_back_path = files.bank_passbook_back ? `/uploads/${files.bank_passbook_back[0].filename}` : null;
   const pan_card_path = files.pan_card ? `/uploads/${files.pan_card[0].filename}` : null;
+  const pan_card_back_path = files.pan_card_back ? `/uploads/${files.pan_card_back[0].filename}` : null;
   const aadhaar_card_path = files.aadhaar_card ? `/uploads/${files.aadhaar_card[0].filename}` : null;
+  const aadhaar_card_back_path = files.aadhaar_card_back ? `/uploads/${files.aadhaar_card_back[0].filename}` : null;
   const educational_certificate_path = files.educational_certificate ? `/uploads/${files.educational_certificate[0].filename}` : null;
+  const educational_certificate_back_path = files.educational_certificate_back ? `/uploads/${files.educational_certificate_back[0].filename}` : null;
+  const resume_path = files.resume ? `/uploads/${files.resume[0].filename}` : null;
 
   let file_no = data.file_no;
   if (!file_no || file_no === 'undefined' || file_no === '') {
@@ -151,8 +161,9 @@ app.post('/api/employees', upload, async (req, res) => {
       asset_crm, asset_peopledesk, asset_projects, asset_id_card, asset_official_mail, asset_offer_letter,
       check_sim, check_laptop, check_crm, check_peopledesk, check_projects, check_id_card, check_official_mail, check_offer_letter,
       bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, signature_name, background_verification,
-      lifecycle_steps, official_joining_date, father_name, mother_name, father_mobile, mother_mobile, wedding_date
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      lifecycle_steps, official_joining_date, father_name, mother_name, father_mobile, mother_mobile, wedding_date,
+      bank_passbook_back_path, pan_card_back_path, aadhaar_card_back_path, educational_certificate_back_path, resume_path
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `;
 
   const params = [
@@ -172,7 +183,8 @@ app.post('/api/employees', upload, async (req, res) => {
     typeof data.background_verification === 'object' ? JSON.stringify(data.background_verification) : data.background_verification,
     typeof data.lifecycle_steps === 'object' ? JSON.stringify(data.lifecycle_steps) : data.lifecycle_steps,
     data.official_joining_date,
-    data.father_name, data.mother_name, data.father_mobile, data.mother_mobile, data.wedding_date
+    data.father_name, data.mother_name, data.father_mobile, data.mother_mobile, data.wedding_date,
+    bank_passbook_back_path, pan_card_back_path, aadhaar_card_back_path, educational_certificate_back_path, resume_path
   ];
 
   if (data.onboarding_token) {
@@ -268,7 +280,8 @@ app.post('/api/employees/bulk', async (req, res) => {
     "asset_crm", "asset_peopledesk", "asset_projects", "asset_id_card", "asset_official_mail", "asset_offer_letter",
     "check_sim", "check_laptop", "check_crm", "check_peopledesk", "check_projects", "check_id_card", "check_official_mail", "check_offer_letter",
     "signature_name", "background_verification", "lifecycle_steps", "official_joining_date",
-    "father_name", "mother_name", "father_mobile", "mother_mobile", "wedding_date"
+    "father_name", "mother_name", "father_mobile", "mother_mobile", "wedding_date",
+    "bank_passbook_back_path", "pan_card_back_path", "aadhaar_card_back_path", "educational_certificate_back_path", "resume_path"
   ];
 
   db.serialize(() => {
@@ -335,9 +348,14 @@ app.put('/api/employees/:id', upload, (req, res) => {
   
   const photo_path = files.photo ? `/uploads/${files.photo[0].filename}` : data.photo_path;
   const bank_passbook_path = files.bank_passbook ? `/uploads/${files.bank_passbook[0].filename}` : data.bank_passbook_path;
+  const bank_passbook_back_path = files.bank_passbook_back ? `/uploads/${files.bank_passbook_back[0].filename}` : data.bank_passbook_back_path;
   const pan_card_path = files.pan_card ? `/uploads/${files.pan_card[0].filename}` : data.pan_card_path;
+  const pan_card_back_path = files.pan_card_back ? `/uploads/${files.pan_card_back[0].filename}` : data.pan_card_back_path;
   const aadhaar_card_path = files.aadhaar_card ? `/uploads/${files.aadhaar_card[0].filename}` : data.aadhaar_card_path;
+  const aadhaar_card_back_path = files.aadhaar_card_back ? `/uploads/${files.aadhaar_card_back[0].filename}` : data.aadhaar_card_back_path;
   const educational_certificate_path = files.educational_certificate ? `/uploads/${files.educational_certificate[0].filename}` : data.educational_certificate_path;
+  const educational_certificate_back_path = files.educational_certificate_back ? `/uploads/${files.educational_certificate_back[0].filename}` : data.educational_certificate_back_path;
+  const resume_path = files.resume ? `/uploads/${files.resume[0].filename}` : data.resume_path;
 
   const query = `
     UPDATE employees SET 
@@ -354,7 +372,8 @@ app.put('/api/employees/:id', upload, (req, res) => {
       asset_crm=?, asset_peopledesk=?, asset_projects=?, asset_id_card=?, asset_official_mail=?, asset_offer_letter=?,
       check_sim=?, check_laptop=?, check_crm=?, check_peopledesk=?, check_projects=?, check_id_card=?, check_official_mail=?, check_offer_letter=?,
       bank_passbook_path=?, pan_card_path=?, aadhaar_card_path=?, educational_certificate_path=?, signature_name=?, background_verification=?,
-      lifecycle_steps=?, official_joining_date=?, father_name=?, mother_name=?, father_mobile=?, mother_mobile=?, wedding_date=?
+      lifecycle_steps=?, official_joining_date=?, father_name=?, mother_name=?, father_mobile=?, mother_mobile=?, wedding_date=?,
+      bank_passbook_back_path=?, pan_card_back_path=?, aadhaar_card_back_path=?, educational_certificate_back_path=?, resume_path=?
     WHERE id = ?
   `;
 
@@ -377,6 +396,7 @@ app.put('/api/employees/:id', upload, (req, res) => {
     typeof data.lifecycle_steps === 'object' ? JSON.stringify(data.lifecycle_steps) : data.lifecycle_steps,
     data.official_joining_date,
     data.father_name, data.mother_name, data.father_mobile, data.mother_mobile, data.wedding_date,
+    bank_passbook_back_path, pan_card_back_path, aadhaar_card_back_path, educational_certificate_back_path, resume_path,
     req.params.id
   ];
 

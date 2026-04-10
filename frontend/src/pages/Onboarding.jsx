@@ -70,9 +70,14 @@ const Onboarding = ({ isPublic }) => {
   };
   const [docs, setDocs] = useState({
     bank_passbook: null,
+    bank_passbook_back: null,
     pan_card: null,
+    pan_card_back: null,
     aadhaar_card: null,
-    educational_certificate: null
+    aadhaar_card_back: null,
+    educational_certificate: null,
+    educational_certificate_back: null,
+    resume: null
   });
 
   const handleChange = (e) => {
@@ -133,10 +138,17 @@ const Onboarding = ({ isPublic }) => {
 
     // Step 5 Mandatory Documents Check
     if (step === 5 && isValid) {
-      const requiredDocs = ['bank_passbook', 'pan_card', 'aadhaar_card', 'educational_certificate'];
+      const requiredDocs = ['bank_passbook', 'pan_card', 'aadhaar_card', 'educational_certificate', 'resume'];
       const missingDocs = requiredDocs.filter(doc => !docs[doc]);
       if (missingDocs.length > 0) {
-        alert("Please upload all 4 mandatory documents before continuing:\n- Bank Passbook\n- PAN Card\n- Aadhaar Card\n- Educational Certificate");
+        const labels = {
+          bank_passbook: 'Bank Passbook (Front)',
+          pan_card: 'PAN Card (Front)',
+          aadhaar_card: 'Aadhaar Card (Front)',
+          educational_certificate: 'Educational Certificate (Front)',
+          resume: 'Resume/CV'
+        };
+        alert("Please upload the following mandatory documents before continuing:\n" + missingDocs.map(d => `- ${labels[d]}`).join('\n'));
         return false;
       }
     }
@@ -389,25 +401,59 @@ const Onboarding = ({ isPublic }) => {
             <strong>NOTE:</strong> Please ensure all uploaded documents are <strong>neat and clear</strong> (PDFs or Images).
           </p>
           <div className="form-grid">
+            {/* Bank Passbook */}
             <div className="form-group">
-              <label>BANK PASSBOOK <span style={{color:'#ef4444'}}>*</span></label>
+              <label>BANK PASSBOOK (FRONT) <span style={{color:'#ef4444'}}>*</span></label>
               <input type="file" onChange={(e) => handleFileChange(e, 'bank_passbook')} accept="image/*,.pdf" required />
               {docs.bank_passbook && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.bank_passbook.name}</p>}
             </div>
             <div className="form-group">
-              <label>PAN CARD <span style={{color:'#ef4444'}}>*</span></label>
+              <label>BANK PASSBOOK (BACK) <span style={{color:'var(--text-dim)', fontSize:'0.7rem'}}>(OPTIONAL)</span></label>
+              <input type="file" onChange={(e) => handleFileChange(e, 'bank_passbook_back')} accept="image/*,.pdf" />
+              {docs.bank_passbook_back && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.bank_passbook_back.name}</p>}
+            </div>
+
+            {/* PAN Card */}
+            <div className="form-group">
+              <label>PAN CARD (FRONT) <span style={{color:'#ef4444'}}>*</span></label>
               <input type="file" onChange={(e) => handleFileChange(e, 'pan_card')} accept="image/*,.pdf" required />
               {docs.pan_card && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.pan_card.name}</p>}
             </div>
             <div className="form-group">
-              <label>AADHAAR CARD <span style={{color:'#ef4444'}}>*</span></label>
+              <label>PAN CARD (BACK) <span style={{color:'var(--text-dim)', fontSize:'0.7rem'}}>(OPTIONAL)</span></label>
+              <input type="file" onChange={(e) => handleFileChange(e, 'pan_card_back')} accept="image/*,.pdf" />
+              {docs.pan_card_back && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.pan_card_back.name}</p>}
+            </div>
+
+            {/* Aadhaar Card */}
+            <div className="form-group">
+              <label>AADHAAR CARD (FRONT) <span style={{color:'#ef4444'}}>*</span></label>
               <input type="file" onChange={(e) => handleFileChange(e, 'aadhaar_card')} accept="image/*,.pdf" required />
               {docs.aadhaar_card && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.aadhaar_card.name}</p>}
             </div>
             <div className="form-group">
-              <label>EDUCATIONAL CERTIFICATE <span style={{color:'#ef4444'}}>*</span></label>
+              <label>AADHAAR CARD (BACK) <span style={{color:'var(--text-dim)', fontSize:'0.7rem'}}>(OPTIONAL)</span></label>
+              <input type="file" onChange={(e) => handleFileChange(e, 'aadhaar_card_back')} accept="image/*,.pdf" />
+              {docs.aadhaar_card_back && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.aadhaar_card_back.name}</p>}
+            </div>
+
+            {/* Educational Certificate */}
+            <div className="form-group">
+              <label>EDUCATIONAL CERTIFICATE (FRONT) <span style={{color:'#ef4444'}}>*</span></label>
               <input type="file" onChange={(e) => handleFileChange(e, 'educational_certificate')} accept="image/*,.pdf" required />
               {docs.educational_certificate && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.educational_certificate.name}</p>}
+            </div>
+            <div className="form-group">
+              <label>EDUCATIONAL CERTIFICATE (BACK) <span style={{color:'var(--text-dim)', fontSize:'0.7rem'}}>(OPTIONAL)</span></label>
+              <input type="file" onChange={(e) => handleFileChange(e, 'educational_certificate_back')} accept="image/*,.pdf" />
+              {docs.educational_certificate_back && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.educational_certificate_back.name}</p>}
+            </div>
+
+            {/* Resume / CV */}
+            <div className="form-group">
+              <label>RESUME / CV <span style={{color:'#ef4444'}}>*</span></label>
+              <input type="file" onChange={(e) => handleFileChange(e, 'resume')} accept="image/*,.pdf" required />
+              {docs.resume && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.resume.name}</p>}
             </div>
           </div>
           <div className="form-group" style={{marginTop:'1.5rem'}}>

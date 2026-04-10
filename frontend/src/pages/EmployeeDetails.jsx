@@ -244,10 +244,15 @@ const EmployeeDetails = ({ user }) => {
 
       // 2. Append all Document Proofs (Full-page sequential append)
       const docsToAppend = [
-        { label: 'PAN CARD', path: employee.pan_card_path },
-        { label: 'AADHAAR CARD', path: employee.aadhaar_card_path },
-        { label: 'BANK PASSBOOK', path: employee.bank_passbook_path },
-        { label: 'EDUCATIONAL CERTIFICATE', path: employee.educational_certificate_path }
+        { label: 'PAN CARD (FRONT)', path: employee.pan_card_path },
+        { label: 'PAN CARD (BACK)', path: employee.pan_card_back_path },
+        { label: 'AADHAAR CARD (FRONT)', path: employee.aadhaar_card_path },
+        { label: 'AADHAAR CARD (BACK)', path: employee.aadhaar_card_back_path },
+        { label: 'BANK PASSBOOK (FRONT)', path: employee.bank_passbook_path },
+        { label: 'BANK PASSBOOK (BACK)', path: employee.bank_passbook_back_path },
+        { label: 'EDUCATIONAL CERTIFICATE (FRONT)', path: employee.educational_certificate_path },
+        { label: 'EDUCATIONAL CERTIFICATE (BACK)', path: employee.educational_certificate_back_path },
+        { label: 'RESUME / CV', path: employee.resume_path }
       ].filter(d => d.path);
 
       for (const doc of docsToAppend) {
@@ -521,19 +526,35 @@ const EmployeeDetails = ({ user }) => {
         <div className="form-grid">
           <div className="form-group">
             <label>Bank Passbook</label>
-            {employee.bank_passbook_path ? <a href={`${API_BASE_URL}${employee.bank_passbook_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee">View Document</a> : <p>—</p>}
+            <div style={{display:'flex', gap:'0.5rem', flexWrap:'wrap'}}>
+              {employee.bank_passbook_path ? <a href={`${API_BASE_URL}${employee.bank_passbook_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee">Front</a> : <p>—</p>}
+              {employee.bank_passbook_back_path && <a href={`${API_BASE_URL}${employee.bank_passbook_back_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee" style={{background:'rgba(59, 130, 246, 0.1)', color:'#60a5fa'}}>Back</a>}
+            </div>
           </div>
           <div className="form-group">
             <label>PAN Card</label>
-            {employee.pan_card_path ? <a href={`${API_BASE_URL}${employee.pan_card_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee">View Document</a> : <p>—</p>}
+            <div style={{display:'flex', gap:'0.5rem', flexWrap:'wrap'}}>
+              {employee.pan_card_path ? <a href={`${API_BASE_URL}${employee.pan_card_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee">Front</a> : <p>—</p>}
+              {employee.pan_card_back_path && <a href={`${API_BASE_URL}${employee.pan_card_back_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee" style={{background:'rgba(59, 130, 246, 0.1)', color:'#60a5fa'}}>Back</a>}
+            </div>
           </div>
           <div className="form-group">
             <label>Aadhaar Card</label>
-            {employee.aadhaar_card_path ? <a href={`${API_BASE_URL}${employee.aadhaar_card_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee">View Document</a> : <p>—</p>}
+            <div style={{display:'flex', gap:'0.5rem', flexWrap:'wrap'}}>
+              {employee.aadhaar_card_path ? <a href={`${API_BASE_URL}${employee.aadhaar_card_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee">Front</a> : <p>—</p>}
+              {employee.aadhaar_card_back_path && <a href={`${API_BASE_URL}${employee.aadhaar_card_back_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee" style={{background:'rgba(59, 130, 246, 0.1)', color:'#60a5fa'}}>Back</a>}
+            </div>
           </div>
           <div className="form-group">
             <label>Educational Certificate</label>
-            {employee.educational_certificate_path ? <a href={`${API_BASE_URL}${employee.educational_certificate_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee">View Document</a> : <p>—</p>}
+            <div style={{display:'flex', gap:'0.5rem', flexWrap:'wrap'}}>
+              {employee.educational_certificate_path ? <a href={`${API_BASE_URL}${employee.educational_certificate_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee">Front</a> : <p>—</p>}
+              {employee.educational_certificate_back_path && <a href={`${API_BASE_URL}${employee.educational_certificate_back_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee" style={{background:'rgba(59, 130, 246, 0.1)', color:'#60a5fa'}}>Back</a>}
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Resume / CV</label>
+            {employee.resume_path ? <a href={`${API_BASE_URL}${employee.resume_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee" style={{background:'linear-gradient(135deg, #8b5cf6, #7c3aed)'}}>View Resume</a> : <p>—</p>}
           </div>
         </div>
 

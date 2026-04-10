@@ -234,7 +234,12 @@ db.serialize(() => {
     'mother_name': 'TEXT',
     'father_mobile': 'TEXT',
     'mother_mobile': 'TEXT',
-    'wedding_date': 'TEXT'
+    'wedding_date': 'TEXT',
+    'bank_passbook_back_path': 'TEXT',
+    'pan_card_back_path': 'TEXT',
+    'aadhaar_card_back_path': 'TEXT',
+    'educational_certificate_back_path': 'TEXT',
+    'resume_path': 'TEXT'
   };
 
   Object.entries(potentialMissingColumns).forEach(([name, type]) => {
