@@ -478,18 +478,9 @@ const EmployeeDetails = ({ user }) => {
             const bgc = JSON.parse(employee.background_verification);
             return (
               <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
-                <p style={{fontSize:'0.9rem', color:'#60a5fa', marginBottom:'1rem', fontWeight:700}}>TYPE: {bgc.type || 'N/A'}</p>
-                
-                {bgc.type === 'FRESHER' && bgc.educational && (
-                  <div style={{marginBottom:'1rem'}}>
-                    <h5 style={{fontSize:'0.75rem', color:'var(--text-dim)', textTransform:'uppercase', marginBottom:'0.5rem'}}>Educational Verification</h5>
-                    <p style={{fontSize:'0.875rem'}}><strong>College:</strong> {bgc.educational.college}</p>
-                    <p style={{fontSize:'0.875rem'}}><strong>HOD/Lecturer:</strong> {bgc.educational.hod} ({bgc.educational.mobile})</p>
-                    <p style={{fontSize:'0.875rem'}}><strong>Email:</strong> {bgc.educational.email}</p>
-                  </div>
-                )}
+                <p style={{fontSize:'0.9rem', color:'#60a5fa', marginBottom:'1rem', fontWeight:700}}>TYPE: {bgc.has_experience ? 'EXPERIENCED' : 'FRESHER'}</p>
 
-                {bgc.type === 'EXPERIENCED' && bgc.company && (
+                {bgc.has_experience && bgc.company && (
                   <div style={{marginBottom:'1rem'}}>
                     <h5 style={{fontSize:'0.75rem', color:'var(--text-dim)', textTransform:'uppercase', marginBottom:'0.5rem'}}>Previous Company Verification</h5>
                     {bgc.company.manager_name && (
@@ -503,16 +494,10 @@ const EmployeeDetails = ({ user }) => {
 
                 <div className="form-grid" style={{marginTop:'1.5rem'}}>
                   <div>
-                    <h5 style={{fontSize:'0.75rem', color:'var(--text-dim)', textTransform:'uppercase', marginBottom:'0.5rem'}}>House Verification ({bgc.address?.house_type})</h5>
-                    {bgc.address?.house_type === 'OWN' && <p style={{fontSize:'0.875rem'}}><strong>Neighbour:</strong> {bgc.address.neighbour_name} ({bgc.address.neighbour_contact})</p>}
-                    {bgc.address?.house_type === 'RENT' && <p style={{fontSize:'0.875rem'}}><strong>Owner:</strong> {bgc.address.owner_name} ({bgc.address.owner_contact})</p>}
-                    {bgc.address?.house_type === 'PG' && <p style={{fontSize:'0.875rem'}}><strong>PG Manager:</strong> {bgc.address.pg_manager} ({bgc.address.pg_contact})</p>}
-                    <p style={{fontSize:'0.875rem', marginTop:'0.5rem'}}><strong>Current Address Verified:</strong> {bgc.address?.current_address}</p>
-                  </div>
-                  <div>
                     <h5 style={{fontSize:'0.75rem', color:'var(--text-dim)', textTransform:'uppercase', marginBottom:'0.5rem'}}>Personal References</h5>
-                    <p style={{fontSize:'0.875rem'}}><strong>Friend:</strong> {bgc.friend?.name} ({bgc.friend?.designation}) • {bgc.friend?.contact}</p>
-                    <p style={{fontSize:'0.875rem'}}><strong>Relative:</strong> {bgc.relative?.name} ({bgc.relative?.designation}) • {bgc.relative?.contact}</p>
+                    {bgc.references?.map((ref, idx) => (
+                      <p key={idx} style={{fontSize:'0.875rem'}}><strong>Reference {idx + 1}:</strong> {ref?.name} ({ref?.designation}) • {ref?.contact}</p>
+                    ))}
                     <p style={{fontSize:'0.875rem'}}><strong>Father Mobile:</strong> {employee.father_mobile || employee.father_husband_number || '—'}</p>
                     <p style={{fontSize:'0.875rem'}}><strong>Mother Mobile:</strong> {employee.mother_mobile || employee.mother_wife_number || '—'}</p>
                   </div>
@@ -718,26 +703,19 @@ const EmployeeDetails = ({ user }) => {
             {(() => {
               try {
                 const bgc = JSON.parse(employee.background_verification || '{}');
-                if (!bgc.type) return <p>No background verification details provided.</p>;
                 return (
                   <div style={{ fontSize: '9pt' }}>
-                    <p><strong>Verification Type:</strong> {bgc.type}</p>
-                    {bgc.type === 'FRESHER' && bgc.educational && (
-                      <p><strong>Educational Reference:</strong> {bgc.educational.college} (HOD: {bgc.educational.hod}, {bgc.educational.mobile}, {bgc.educational.email})</p>
-                    )}
-                    {bgc.type === 'EXPERIENCED' && bgc.company && (
+                    <p><strong>Verification Type:</strong> {bgc.has_experience ? 'EXPERIENCED' : 'FRESHER'}</p>
+                    {bgc.has_experience && bgc.company && (
                       <div>
                         {bgc.company.manager_name && <p><strong>Reporting Manager:</strong> {bgc.company.manager_name} ({bgc.company.manager_contact}, {bgc.company.manager_email})</p>}
                         {bgc.company.hr_name && <p><strong>HR:</strong> {bgc.company.hr_name} ({bgc.company.hr_contact}, {bgc.company.hr_email})</p>}
                       </div>
                     )}
-                    <p><strong>House Type:</strong> {bgc.address?.house_type}</p>
-                    {bgc.address?.neighbour_name && <p><strong>Neighbour:</strong> {bgc.address.neighbour_name} ({bgc.address.neighbour_contact})</p>}
-                    {bgc.address?.owner_name && <p><strong>Owner:</strong> {bgc.address.owner_name} ({bgc.address.owner_contact})</p>}
-                    {bgc.address?.pg_manager && <p><strong>PG Manager:</strong> {bgc.address.pg_manager} ({bgc.address.pg_contact})</p>}
-                    <p><strong>Verified Address:</strong> {bgc.address?.current_address}</p>
-                    <p style={{marginTop:'2mm'}}><strong>CLOSE FRIEND:</strong> {bgc.friend?.name} ({bgc.friend?.designation}) • {bgc.friend?.contact} • {bgc.friend?.email}</p>
-                    <p><strong>RELATIVE:</strong> {bgc.relative?.name} ({bgc.relative?.designation}) • {bgc.relative?.contact}</p>
+
+                    {bgc.references?.map((ref, idx) => (
+                      <p key={idx} style={{marginTop: idx === 0 ? '2mm' : '0'}}><strong>REFERENCE {idx + 1}:</strong> {ref?.name} ({ref?.designation}) • {ref?.contact}</p>
+                    ))}
                     <p style={{ fontSize: '8pt', fontStyle: 'italic', marginTop: '1mm', color: '#555' }}>"Authorized company to contact references for verification purposes."</p>
                   </div>
                 );

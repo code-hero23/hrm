@@ -33,7 +33,7 @@ const EditEmployee = () => {
     signature_name: '',
     documents_submitted: JSON.stringify({}),
     previous_employment: JSON.stringify([]),
-    background_verification: JSON.stringify({ type: '', address: { house_type: '' } }),
+    background_verification: JSON.stringify({ has_experience: false, references: [{ name: '', designation: '', contact: '' }, { name: '', designation: '', contact: '' }] }),
     documents_passwords: ''
   });
   const [photo, setPhoto] = useState(null);
@@ -181,7 +181,7 @@ const EditEmployee = () => {
         if (!current[parts[i]]) current[parts[i]] = {};
         current = current[parts[i]];
     }
-    current[parts[parts.length - 1]] = value.toUpperCase();
+    current[parts[parts.length - 1]] = typeof value === 'string' ? value.toUpperCase() : value;
     setFormData(prev => ({ ...prev, background_verification: JSON.stringify(bgc) }));
   };
 
@@ -493,98 +493,52 @@ const EditEmployee = () => {
           <div>
             <h3 className="section-title">9. BACKGROUND VERIFICATION</h3>
             <div className="form-group" style={{marginBottom:'2rem'}}>
-              <label>ARE YOU A FRESHER OR EXPERIENCED?</label>
-              <select 
-                value={bgc.type || ''} 
-                onChange={(e) => updateBGC('type', e.target.value)}
-                required
-              >
-                <option value="">Select Type</option>
-                <option value="FRESHER">FRESHER</option>
-                <option value="EXPERIENCED">EXPERIENCED</option>
-              </select>
+              <label style={{display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer'}}>
+                <input 
+                  type="checkbox" 
+                  checked={bgc.has_experience || false} 
+                  onChange={(e) => updateBGC('has_experience', e.target.checked)}
+                  style={{width:'auto'}}
+                />
+                TICK BOX IF YOU HAVE PREVIOUS EXPERIENCE
+              </label>
             </div>
 
-            {bgc.type === 'FRESHER' && (
+            {bgc.has_experience && (
               <div className="bgc-section slide-in" style={{marginBottom:'2rem', padding:'1.5rem', background:'rgba(59, 130, 246, 0.05)', borderRadius:'12px', border:'1px solid rgba(59, 130, 246, 0.1)'}}>
-                <h4 style={{fontSize:'0.8rem', color:'#60a5fa', marginBottom:'1rem'}}>I. EDUCATIONAL VERIFICATION (FRESHER)</h4>
+                <h4 style={{fontSize:'0.8rem', color:'#60a5fa', marginBottom:'1rem'}}>I. PREVIOUS COMPANY VERIFICATION</h4>
                 <div className="form-grid">
-                  <div className="form-group"><label>COLLEGE NAME</label><input value={bgc.educational?.college || ''} onChange={(e) => updateBGC('educational.college', e.target.value)} required /></div>
-                  <div className="form-group"><label>HOD / LECTURER NAME</label><input value={bgc.educational?.hod || ''} onChange={(e) => updateBGC('educational.hod', e.target.value)} required /></div>
-                  <div className="form-group"><label>HOD / LECTURER MOBILE NO.</label><input value={bgc.educational?.mobile || ''} onChange={(e) => updateBGC('educational.mobile', e.target.value)} required /></div>
-                  <div className="form-group"><label>HOD / LECTURER EMAIL ID</label><input type="email" style={{textTransform:'none'}} value={bgc.educational?.email || ''} onChange={(e) => updateBGC('educational.email', e.target.value)} required /></div>
+                  <div className="form-group"><label>REPORTING MANAGER NAME</label><input value={bgc.company?.manager_name || ''} onChange={(e) => updateBGC('company.manager_name', e.target.value)} required /></div>
+                  <div className="form-group"><label>MANAGER CONTACT NO.</label><input value={bgc.company?.manager_contact || ''} onChange={(e) => updateBGC('company.manager_contact', e.target.value)} required /></div>
+                  <div className="form-group"><label>MANAGER EMAIL ID</label><input type="email" style={{textTransform:'none'}} value={bgc.company?.manager_email || ''} onChange={(e) => updateBGC('company.manager_email', e.target.value)} required /></div>
+                  <div className="form-group"><label>HR NAME</label><input value={bgc.company?.hr_name || ''} onChange={(e) => updateBGC('company.hr_name', e.target.value)} required /></div>
+                  <div className="form-group"><label>HR CONTACT NO.</label><input value={bgc.company?.hr_contact || ''} onChange={(e) => updateBGC('company.hr_contact', e.target.value)} required /></div>
+                  <div className="form-group"><label>HR EMAIL ID</label><input type="email" style={{textTransform:'none'}} value={bgc.company?.hr_email || ''} onChange={(e) => updateBGC('company.hr_email', e.target.value)} required /></div>
                 </div>
               </div>
             )}
 
-            {bgc.type === 'EXPERIENCED' && (
-              <div className="bgc-section slide-in" style={{marginBottom:'2rem', padding:'1.5rem', background:'rgba(59, 130, 246, 0.05)', borderRadius:'12px', border:'1px solid rgba(59, 130, 246, 0.1)'}}>
-                <h4 style={{fontSize:'0.8rem', color:'#60a5fa', marginBottom:'1rem'}}>I. PREVIOUS COMPANY VERIFICATION (EXPERIENCED)</h4>
+            <div className="slide-in">
+              <div className="bgc-section" style={{marginBottom:'2rem', padding:'1.5rem', background:'rgba(255,255,255,0.02)', borderRadius:'12px', border:'1px solid var(--glass-border)'}}>
+                <h4 style={{fontSize:'0.8rem', color:'#60a5fa', marginBottom:'1rem'}}>II. PERSONAL REFERENCES</h4>
+                
+                {/* Reference 1 */}
+                <h5 style={{fontSize:'0.75rem', color:'var(--text-dim)', marginBottom:'1rem'}}>REFERENCE 1 <span style={{color:'#ef4444'}}>*</span></h5>
+                <div className="form-grid" style={{marginBottom:'1.5rem'}}>
+                  <div className="form-group"><label>NAME</label><input value={bgc.references?.[0]?.name || ''} onChange={(e) => updateBGC('references.0.name', e.target.value)} required /></div>
+                  <div className="form-group"><label>DESIGNATION</label><input value={bgc.references?.[0]?.designation || ''} onChange={(e) => updateBGC('references.0.designation', e.target.value)} required /></div>
+                  <div className="form-group"><label>CONTACT NO.</label><input value={bgc.references?.[0]?.contact || ''} onChange={(e) => updateBGC('references.0.contact', e.target.value)} required /></div>
+                </div>
+
+                {/* Reference 2 */}
+                <h5 style={{fontSize:'0.75rem', color:'var(--text-dim)', marginBottom:'1rem', borderTop:'1px solid var(--glass-border)', paddingTop:'1rem'}}>REFERENCE 2 <span style={{color:'#ef4444'}}>*</span></h5>
                 <div className="form-grid">
-                  <div className="form-group"><label>REPORTING MANAGER NAME</label><input value={bgc.company?.manager_name || ''} onChange={(e) => updateBGC('company.manager_name', e.target.value)} /></div>
-                  <div className="form-group"><label>MANAGER CONTACT NO.</label><input value={bgc.company?.manager_contact || ''} onChange={(e) => updateBGC('company.manager_contact', e.target.value)} /></div>
-                  <div className="form-group"><label>MANAGER EMAIL ID</label><input type="email" style={{textTransform:'none'}} value={bgc.company?.manager_email || ''} onChange={(e) => updateBGC('company.manager_email', e.target.value)} /></div>
-                  <div className="form-group"><label>HR NAME</label><input value={bgc.company?.hr_name || ''} onChange={(e) => updateBGC('company.hr_name', e.target.value)} /></div>
-                  <div className="form-group"><label>HR CONTACT NO.</label><input value={bgc.company?.hr_contact || ''} onChange={(e) => updateBGC('company.hr_contact', e.target.value)} /></div>
-                  <div className="form-group"><label>HR EMAIL ID</label><input type="email" style={{textTransform:'none'}} value={bgc.company?.hr_email || ''} onChange={(e) => updateBGC('company.hr_email', e.target.value)} /></div>
+                  <div className="form-group"><label>NAME</label><input value={bgc.references?.[1]?.name || ''} onChange={(e) => updateBGC('references.1.name', e.target.value)} required /></div>
+                  <div className="form-group"><label>DESIGNATION</label><input value={bgc.references?.[1]?.designation || ''} onChange={(e) => updateBGC('references.1.designation', e.target.value)} required /></div>
+                  <div className="form-group"><label>CONTACT NO.</label><input value={bgc.references?.[1]?.contact || ''} onChange={(e) => updateBGC('references.1.contact', e.target.value)} required /></div>
                 </div>
               </div>
-            )}
-
-            {bgc.type && (
-              <div className="slide-in">
-                <div className="bgc-section" style={{marginBottom:'2rem', padding:'1.5rem', background:'rgba(255,255,255,0.02)', borderRadius:'12px', border:'1px solid var(--glass-border)'}}>
-                  <h4 style={{fontSize:'0.8rem', color:'#60a5fa', marginBottom:'1rem'}}>II. ADDRESS VERIFICATION</h4>
-                  <div className="form-group" style={{marginBottom:'1rem'}}>
-                    <label>HOUSE TYPE</label>
-                    <select value={bgc.address?.house_type || ''} onChange={(e) => updateBGC('address.house_type', e.target.value)} required>
-                      <option value="">Select</option>
-                      <option value="OWN">OWN</option>
-                      <option value="RENT">RENT</option>
-                      <option value="PG">PG</option>
-                    </select>
-                  </div>
-                  {bgc.address?.house_type === 'OWN' && (
-                    <div className="form-grid">
-                      <div className="form-group"><label>NEIGHBOUR NAME</label><input value={bgc.address?.neighbour_name || ''} onChange={(e) => updateBGC('address.neighbour_name', e.target.value)} required /></div>
-                      <div className="form-group"><label>NEIGHBOUR CONTACT NO.</label><input value={bgc.address?.neighbour_contact || ''} onChange={(e) => updateBGC('address.neighbour_contact', e.target.value)} required /></div>
-                    </div>
-                  )}
-                  {bgc.address?.house_type === 'RENT' && (
-                    <div className="form-grid">
-                      <div className="form-group"><label>HOUSE OWNER NAME</label><input value={bgc.address?.owner_name || ''} onChange={(e) => updateBGC('address.owner_name', e.target.value)} required /></div>
-                      <div className="form-group"><label>OWNER CONTACT NO.</label><input value={bgc.address?.owner_contact || ''} onChange={(e) => updateBGC('address.owner_contact', e.target.value)} required /></div>
-                    </div>
-                  )}
-                  {bgc.address?.house_type === 'PG' && (
-                    <div className="form-grid">
-                      <div className="form-group"><label>PG OWNER/MANAGER NAME</label><input value={bgc.address?.pg_manager || ''} onChange={(e) => updateBGC('address.pg_manager', e.target.value)} required /></div>
-                      <div className="form-group"><label>CONTACT NO.</label><input value={bgc.address?.pg_contact || ''} onChange={(e) => updateBGC('address.pg_contact', e.target.value)} required /></div>
-                    </div>
-                  )}
-                  <div className="form-group" style={{marginTop:'1rem'}}><label>CURRENT ADDRESS (ONCE MORE)</label><textarea value={bgc.address?.current_address || ''} onChange={(e) => updateBGC('address.current_address', e.target.value)} required></textarea></div>
-                </div>
-
-                <div className="bgc-section" style={{marginBottom:'2rem', padding:'1.5rem', background:'rgba(255,255,255,0.02)', borderRadius:'12px', border:'1px solid var(--glass-border)'}}>
-                  <h4 style={{fontSize:'0.8rem', color:'#60a5fa', marginBottom:'1rem'}}>III. CLOSE FRIEND VERIFICATION</h4>
-                  <div className="form-grid">
-                    <div className="form-group"><label>CLOSE FRIEND NAME</label><input value={bgc.friend?.name || ''} onChange={(e) => updateBGC('friend.name', e.target.value)} required /></div>
-                    <div className="form-group"><label>DESIGNATION</label><input value={bgc.friend?.designation || ''} onChange={(e) => updateBGC('friend.designation', e.target.value)} required /></div>
-                    <div className="form-group"><label>CONTACT NO.</label><input value={bgc.friend?.contact || ''} onChange={(e) => updateBGC('friend.contact', e.target.value)} required /></div>
-                    <div className="form-group"><label>EMAIL ID</label><input type="email" style={{textTransform:'none'}} value={bgc.friend?.email || ''} onChange={(e) => updateBGC('friend.email', e.target.value)} required /></div>
-                  </div>
-                </div>
-
-                <div className="bgc-section" style={{marginBottom:'2rem', padding:'1.5rem', background:'rgba(255,255,255,0.02)', borderRadius:'12px', border:'1px solid var(--glass-border)'}}>
-                  <h4 style={{fontSize:'0.8rem', color:'#60a5fa', marginBottom:'1rem'}}>IV. NON-FAMILY MEMBER (RELATIVE) VERIFICATION</h4>
-                  <div className="form-grid">
-                    <div className="form-group"><label>RELATIVE NAME <span style={{color:'#ef4444'}}>*</span></label><input value={bgc.relative?.name || ''} onChange={(e) => updateBGC('relative.name', e.target.value)} required /></div>
-                    <div className="form-group"><label>DESIGNATION <span style={{color:'#ef4444'}}>*</span></label><input value={bgc.relative?.designation || ''} onChange={(e) => updateBGC('relative.designation', e.target.value)} required /></div>
-                    <div className="form-group"><label>CONTACT NO. <span style={{color:'#ef4444'}}>*</span></label><input value={bgc.relative?.contact || ''} onChange={(e) => updateBGC('relative.contact', e.target.value)} required /></div>
-                  </div>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         );
       }
