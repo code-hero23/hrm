@@ -344,7 +344,86 @@ const EmployeeDetails = ({ user }) => {
             </div>
           )}
         </div>
-      </div>      <div className="card" style={{ padding: '0', background: 'transparent', border: 'none', boxShadow: 'none' }}>
+      </div>
+
+      <div className="card" style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', gap: '3rem', alignItems: 'flex-start' }}>
+          <div style={{ width: '180px', height: '220px', borderRadius: '20px', background: 'rgba(255,255,255,0.02)', overflow: 'hidden', border: '1px solid var(--glass-border)', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+            {employee.photo_path ? (
+              <img src={`${API_BASE_URL}${employee.photo_path}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' }}>
+                <UserCircle size={64} />
+              </div>
+            )}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <h2 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.04em' }}>{employee.full_name}</h2>
+                <p style={{ fontSize: '1.25rem', color: 'var(--text-dim)', fontWeight: 500, marginTop: '0.25rem' }}>{employee.designation} • {employee.department}</p>
+              </div>
+              <span className={`badge badge-${employee.status.toLowerCase().replace(/ /g, '-')}`} style={{ fontSize: '0.875rem' }}>{employee.status}</span>
+            </div>
+            
+            <div style={{ marginTop: '2.5rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+              <div>
+                <p style={{ fontSize: '0.625rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>EMPLOYEE ID</p>
+                <p style={{ fontSize: '1.125rem', fontWeight: 700 }}>{employee.employee_id || 'PENDING'}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.625rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>FILE NO.</p>
+                <p style={{ fontSize: '1.125rem', fontWeight: 700 }}>{employee.file_no || '—'}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.625rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>D.O.J</p>
+                <p style={{ fontSize: '1.125rem', fontWeight: 700 }}>{formatDate(employee.date_of_joining) || '—'}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.625rem', color: '#60a5fa', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>OFFICIAL D.O.J</p>
+                <p style={{ fontSize: '1.125rem', fontWeight: 700, color: '#60a5fa' }}>{formatDate(employee.official_joining_date) || '—'}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {(() => {
+          const steps = employee.lifecycle_steps ? (typeof employee.lifecycle_steps === 'string' ? JSON.parse(employee.lifecycle_steps) : employee.lifecycle_steps) : [];
+          const total = steps.length || 20;
+          const done = steps.filter(s => s.done).length;
+          const progress = Math.round((done / total) * 100);
+          const risk = progress < 40 && total > 0;
+          
+          return (
+            <div style={{ marginTop: '2.5rem', animation: 'fadeIn 0.8s ease-out' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: progress === 100 ? '#22c55e' : (risk ? '#ef4444' : '#3b82f6'), boxShadow: `0 0 10px ${progress === 100 ? '#22c55e' : (risk ? '#ef4444' : '#3b82f6')}` }} />
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                    Onboarding Completion
+                  </span>
+                </div>
+                <span style={{ fontSize: '1.25rem', fontWeight: 900, color: progress === 100 ? '#4ade80' : 'white' }}>
+                  {progress}<span style={{ fontSize: '0.75rem', opacity: 0.5, marginLeft: '2px' }}>%</span>
+                </span>
+              </div>
+              <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.03)' }}>
+                <div style={{ 
+                  width: `${progress}%`, 
+                  height: '100%', 
+                  background: progress === 100 
+                    ? 'linear-gradient(90deg, #22c55e, #4ade80)' 
+                    : risk ? 'linear-gradient(90deg, #ef4444, #f87171)' : 'linear-gradient(90deg, #3b82f6, #60a5fa)',
+                  transition: 'width 1s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  boxShadow: progress > 0 ? `0 0 15px ${risk ? 'rgba(239, 68, 68, 0.3)' : 'rgba(59, 130, 246, 0.3)'}` : 'none'
+                }} />
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+
+      <div className="card" style={{ padding: '0', background: 'transparent', border: 'none', boxShadow: 'none' }}>
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
           {[
             { id: 'personal', label: 'Personal & Career', icon: <UserCircle size={18} /> },
