@@ -124,16 +124,20 @@ const processDocToImage = async (path) => {
 
       const loadingTask = window.pdfjsLib.getDocument(fullUrl);
       const pdf = await loadingTask.promise;
-      const page = await pdf.getPage(1);
-      
-      const viewport = page.getViewport({ scale: 2.0 }); // High res
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
+      const pages = [];
 
-      await page.render({ canvasContext: context, viewport }).promise;
-      return { data: canvas.toDataURL('image/jpeg', 0.9), type: 'JPEG' };
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 2.0 }); // High res
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        await page.render({ canvasContext: context, viewport }).promise;
+        pages.push({ data: canvas.toDataURL('image/jpeg', 0.9), type: 'JPEG' });
+      }
+      return pages;
     } else {
       const img = new Image();
       img.crossOrigin = "anonymous";
@@ -148,7 +152,7 @@ const processDocToImage = async (path) => {
       canvas.height = img.height;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0);
-      return { data: canvas.toDataURL('image/jpeg', 0.9), type: 'JPEG' };
+      return [{ data: canvas.toDataURL('image/jpeg', 0.9), type: 'JPEG' }];
     }
   } catch (err) {
     console.error('Error processing document:', path, err);
@@ -161,6 +165,7 @@ const EmployeeDetails = ({ user }) => {
   const navigate = useNavigate();
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const [isEditingOJ, setIsEditingOJ] = useState(false);
   const printRef = useRef();
 
@@ -212,6 +217,8 @@ const EmployeeDetails = ({ user }) => {
   };
 
   const handleDownloadPDF = async () => {
+    if (generatingPdf) return;
+    setGeneratingPdf(true);
     try {
       const element = printRef.current;
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -256,25 +263,28 @@ const EmployeeDetails = ({ user }) => {
       ].filter(d => d.path);
 
       for (const doc of docsToAppend) {
-        const processed = await processDocToImage(doc.path);
-        if (processed) {
-          pdf.addPage();
-          // Title for the document page
-          pdf.setFontSize(14);
-          pdf.setFont("helvetica", "bold");
-          pdf.text(`DOCUMENT PROOF: ${doc.label}`, 10, 15);
-          pdf.setDrawColor(200, 200, 200);
-          pdf.line(10, 18, 200, 18);
+        const pages = await processDocToImage(doc.path);
+        if (pages && Array.isArray(pages)) {
+          pages.forEach((pageData, index) => {
+            pdf.addPage();
+            // Title for the document page
+            pdf.setFontSize(14);
+            pdf.setFont("helvetica", "bold");
+            const title = pages.length > 1 ? `DOCUMENT PROOF: ${doc.label} (Page ${index + 1})` : `DOCUMENT PROOF: ${doc.label}`;
+            pdf.text(title, 10, 15);
+            pdf.setDrawColor(200, 200, 200);
+            pdf.line(10, 18, 200, 18);
 
-          // Add the image (maintaining aspect ratio, fitting centered)
-          const imgProps = pdf.getImageProperties(processed.data);
-          const ratio = Math.min((pdfWidth - 20) / imgProps.width, (pdfHeight - 40) / imgProps.height);
-          const dw = imgProps.width * ratio;
-          const dh = imgProps.height * ratio;
-          const dx = (pdfWidth - dw) / 2;
-          const dy = 30; // Start below title
+            // Add the image (maintaining aspect ratio, fitting centered)
+            const imgProps = pdf.getImageProperties(pageData.data);
+            const ratio = Math.min((pdfWidth - 20) / imgProps.width, (pdfHeight - 40) / imgProps.height);
+            const dw = imgProps.width * ratio;
+            const dh = imgProps.height * ratio;
+            const dx = (pdfWidth - dw) / 2;
+            const dy = 30; // Start below title
 
-          pdf.addImage(processed.data, processed.type, dx, dy, dw, dh);
+            pdf.addImage(pageData.data, pageData.type, dx, dy, dw, dh);
+          });
         }
       }
       
@@ -282,6 +292,8 @@ const EmployeeDetails = ({ user }) => {
     } catch (err) {
       console.error('PDF Generation failed:', err);
       alert('Error creating PDF report. Please try again.');
+    } finally {
+      setGeneratingPdf(false);
     }
   };
 
@@ -320,8 +332,8 @@ const EmployeeDetails = ({ user }) => {
               </button>
             </>
           )}
-          <button onClick={handleDownloadPDF} className="btn btn-secondary">
-            <Download size={18} /> Export PDF
+          <button onClick={handleDownloadPDF} className="btn btn-secondary" disabled={generatingPdf}>
+            <Download size={18} className={generatingPdf ? 'spin' : ''} /> {generatingPdf ? 'Generating...' : 'Export PDF'}
           </button>
           
           {user?.role !== 'viewer' && (

@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronRight, ChevronLeft, Save, Upload, ArrowLeft, UserCircle } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Save, Upload, ArrowLeft, UserCircle, Download } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import API_BASE_URL from '../config';
 import logo from '../assets/logo.jpg';
 
@@ -10,7 +12,10 @@ const EditEmployee = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [updatedEmployee, setUpdatedEmployee] = useState(null);
+  const printRef = useRef();
   const [formData, setFormData] = useState({
     status: 'Onboard',
     file_no: '', full_name: '', father_mother_name: '', dob: '', gender: '', contact_number: '', blood_group: '', 
@@ -210,11 +215,150 @@ const EditEmployee = () => {
     });
 
     try {
-      await axios.put(`${API_BASE_URL}/api/employees/${id}`, data);
+      setLoading(true);
+      const res = await axios.put(`${API_BASE_URL}/api/employees/${id}`, data);
+      
+      // Fetch latest data for PDF generation (to get new file paths)
+      const latest = await axios.get(`${API_BASE_URL}/api/employees/${id}`);
+      setUpdatedEmployee(latest.data);
+      
       setIsSubmitted(true);
+      setLoading(false);
     } catch (err) {
       console.error(err);
-      alert('Error updating employee');
+      alert(err.response?.data?.error || 'Error updating employee record');
+      setLoading(false);
+    }
+  };
+
+  // PDF Export Logic
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('en-GB', {
+      day: '2-digit', month: '2-digit', year: 'numeric'
+    });
+  };
+
+  const isNA = (val) => !val || val === 'N/A' || val === 'undefined';
+
+  const processDocToImage = async (path) => {
+    const fullUrl = `${API_BASE_URL || window.location.origin}${path}`;
+    const isPdf = path.toLowerCase().endsWith('.pdf');
+
+    try {
+      if (isPdf) {
+        if (!window.pdfjsLib) {
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+          document.head.appendChild(script);
+          await new Promise(resolve => {
+            script.onload = () => {
+              window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+              resolve();
+            };
+          });
+        }
+
+        const loadingTask = window.pdfjsLib.getDocument(fullUrl);
+        const pdfDoc = await loadingTask.promise;
+        const pages = [];
+
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+          const page = await pdfDoc.getPage(i);
+          const viewport = page.getViewport({ scale: 2.0 });
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          await page.render({ canvasContext: context, viewport }).promise;
+          pages.push({ data: canvas.toDataURL('image/jpeg', 0.9), type: 'JPEG' });
+        }
+        return pages;
+      } else {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = fullUrl;
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        return [{ data: canvas.toDataURL('image/jpeg', 0.9), type: 'JPEG' }];
+      }
+    } catch (err) {
+      console.error('Error processing document:', path, err);
+      return null;
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (generatingPdf) return;
+    setGeneratingPdf(true);
+    try {
+      const element = printRef.current;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const imgData = canvas.toDataURL('image/jpeg', 0.9);
+      const imgHeightInPdf = (canvas.height * pdfWidth) / canvas.width;
+      
+      let heightLeft = imgHeightInPdf;
+      let position = 0;
+      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeightInPdf);
+      heightLeft -= pdfHeight;
+      
+      while (heightLeft > 0) {
+        position -= pdfHeight; 
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeightInPdf);
+        heightLeft -= pdfHeight;
+      }
+
+      const docsToAppend = [
+        { label: 'PAN CARD (FRONT)', path: updatedEmployee.pan_card_path },
+        { label: 'PAN CARD (BACK)', path: updatedEmployee.pan_card_back_path },
+        { label: 'AADHAAR CARD (FRONT)', path: updatedEmployee.aadhaar_card_path },
+        { label: 'AADHAAR CARD (BACK)', path: updatedEmployee.aadhaar_card_back_path },
+        { label: 'BANK PASSBOOK (FRONT)', path: updatedEmployee.bank_passbook_path },
+        { label: 'BANK PASSBOOK (BACK)', path: updatedEmployee.bank_passbook_back_path },
+        { label: 'EDUCATIONAL CERTIFICATE (FRONT)', path: updatedEmployee.educational_certificate_path },
+        { label: 'EDUCATIONAL CERTIFICATE (BACK)', path: updatedEmployee.educational_certificate_back_path },
+        { label: 'RESUME / CV', path: updatedEmployee.resume_path }
+      ].filter(d => d.path);
+
+      for (const doc of docsToAppend) {
+        const pages = await processDocToImage(doc.path);
+        if (pages) {
+          pages.forEach((pageData, idx) => {
+            pdf.addPage();
+            pdf.setFontSize(14);
+            pdf.setFont("helvetica", "bold");
+            pdf.text(pages.length > 1 ? `DOCUMENT PROOF: ${doc.label} (Page ${idx+1})` : `DOCUMENT PROOF: ${doc.label}`, 10, 15);
+            pdf.setDrawColor(200, 200, 200);
+            pdf.line(10, 18, 200, 18);
+
+            const imgProps = pdf.getImageProperties(pageData.data);
+            const ratio = Math.min((pdfWidth - 20) / imgProps.width, (pdfHeight - 40) / imgProps.height);
+            const dw = imgProps.width * ratio;
+            const dh = imgProps.height * ratio;
+            pdf.addImage(pageData.data, pageData.type, (pdfWidth - dw)/2, 30, dw, dh);
+          });
+        }
+      }
+      pdf.save(`Employee_Report_${updatedEmployee.full_name.replace(/\s+/g, '_')}.pdf`);
+    } catch (err) {
+      console.error('PDF Generation failed:', err);
+      alert('Error creating PDF report.');
+    } finally {
+      setGeneratingPdf(false);
     }
   };
 
@@ -252,14 +396,127 @@ const EditEmployee = () => {
         </p>
         
         <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--glass-border)' }}>
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => navigate(`/employee/${id}`)} className="btn btn-primary">
               View Profile
+            </button>
+            <button onClick={handleDownloadPDF} className="btn btn-secondary" disabled={generatingPdf}>
+              <Download size={18} className={generatingPdf ? 'spin' : ''} /> {generatingPdf ? 'Generating...' : 'Export PDF'}
             </button>
             <button onClick={() => navigate('/')} className="btn btn-secondary">
               Back to Dashboard
             </button>
           </div>
+        </div>
+
+        {/* Hidden PDF content */}
+        <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+          {updatedEmployee && (
+            <div ref={printRef} style={{ width: '210mm', padding: '15mm', background: 'white', color: 'black', fontFamily: 'serif', fontSize: '10pt' }}>
+              <div style={{ textAlign: 'center', marginBottom: '8mm', borderBottom: '2px solid black', paddingBottom: '4mm' }}>
+                <h1 style={{ fontSize: '22pt', margin: 0 }}>ORBIX DESIGNS PRIVATE LIMITED</h1>
+                <h2 style={{ fontSize: '14pt', marginTop: '2mm', letterSpacing: '2px' }}>OFFICIAL EMPLOYEE RECORD</h2>
+                <p style={{ fontSize: '8pt', marginTop: '2mm', color: '#666' }}>DB Record ID: {updatedEmployee.id} | System Entry: {new Date(updatedEmployee.created_at).toLocaleString()}</p>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '10mm', marginBottom: '8mm' }}>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ borderBottom: '1px solid #ccc', paddingBottom: '1mm', fontSize: '12pt' }}>I. PERSONAL INFORMATION</h3>
+                  <p><strong>Full Name:</strong> {updatedEmployee.full_name}</p>
+                  <p><strong>Father Name:</strong> {updatedEmployee.father_name || updatedEmployee.father_mother_name}</p>
+                  <p><strong>Mother Name:</strong> {updatedEmployee.mother_name || '—'}</p>
+                  <p><strong>DOB:</strong> {formatDate(updatedEmployee.dob)} &nbsp;&nbsp; <strong>Gender:</strong> {updatedEmployee.gender}</p>
+                  {updatedEmployee.wedding_date && <p><strong>Wedding Date:</strong> {formatDate(updatedEmployee.wedding_date)}</p>}
+                  <p><strong>Blood Group:</strong> {updatedEmployee.blood_group} &nbsp;&nbsp; <strong>Marital Status:</strong> {updatedEmployee.marital_status}</p>
+                  <p><strong>Contact No:</strong> {updatedEmployee.contact_number}</p>
+                  <p><strong>Personal Email:</strong> {updatedEmployee.personal_email}</p>
+                  <p><strong>Present Address:</strong> {updatedEmployee.present_address}</p>
+                  <p><strong>Permanent Address:</strong> {updatedEmployee.permanent_address}</p>
+                </div>
+                  <div style={{ width: '40mm', textAlign: 'right' }}>
+                   {updatedEmployee.photo_path ? (
+                     <img src={`${API_BASE_URL || window.location.origin}${updatedEmployee.photo_path}`} crossOrigin="anonymous" style={{ width: '35mm', height: '45mm', border: '1px solid black', objectFit: 'cover' }} />
+                   ) : (
+                     <div style={{ width: '35mm', height: '45mm', border: '1px solid black', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8pt' }}>NO PHOTO</div>
+                   )}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '6mm' }}>
+                <h3 style={{ borderBottom: '1px solid #ccc', paddingBottom: '1mm', fontSize: '12pt' }}>II. EMPLOYMENT DETAILS</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10pt' }}>
+                  <tbody>
+                    <tr>
+                      <td style={{ padding: '1.5mm 0', width: '50%' }}><strong>Employee ID:</strong> {updatedEmployee.employee_id || '—'}</td>
+                      <td style={{ padding: '1.5mm 0', width: '50%' }}><strong>File No:</strong> {updatedEmployee.file_no || '—'}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '1.5mm 0' }}><strong>Status:</strong> {updatedEmployee.status}</td>
+                      <td style={{ padding: '1.5mm 0' }}><strong>Department:</strong> {updatedEmployee.department}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '1.5mm 0' }}><strong>Designation:</strong> {updatedEmployee.designation}</td>
+                      <td style={{ padding: '1.5mm 0' }}><strong>Work Location:</strong> {updatedEmployee.work_location}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '1.5mm 0' }}><strong>Date of Joining:</strong> {formatDate(updatedEmployee.date_of_joining)}</td>
+                      <td style={{ padding: '1.5mm 0' }}><strong>Official Join Date:</strong> {formatDate(updatedEmployee.official_joining_date) || '—'}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div style={{ marginBottom: '6mm' }}>
+                <h3 style={{ borderBottom: '1px solid #ccc', paddingBottom: '1mm', fontSize: '12pt' }}>III. IDENTIFICATION & EMERGENCY CONTACT</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2mm', marginBottom: '2mm' }}>
+                  <p><strong>PAN Number:</strong> {updatedEmployee.pan_number}</p>
+                  <p><strong>Aadhaar Number:</strong> {updatedEmployee.aadhaar_number}</p>
+                  <p><strong>Other ID:</strong> {updatedEmployee.other_id || '—'}</p>
+                </div>
+                <div style={{ background: '#f9f9f9', padding: '3mm', border: '1px solid #eee', borderRadius: '4px' }}>
+                  <p style={{ marginBottom: '1.5mm' }}><strong>Emergency Contact:</strong> {updatedEmployee.emergency_contact_name} ({updatedEmployee.emergency_contact_relationship}) - {updatedEmployee.emergency_contact_number}</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2mm', fontSize: '9pt' }}>
+                    <p><strong>Father Mobile:</strong> {updatedEmployee.father_mobile || updatedEmployee.father_husband_number}</p>
+                    <p><strong>Mother Mobile:</strong> {updatedEmployee.mother_mobile || updatedEmployee.mother_wife_number}</p>
+                    <p><strong>Alternate No:</strong> {updatedEmployee.alternate_number}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '6mm' }}>
+                <h3 style={{ borderBottom: '1px solid #ccc', paddingBottom: '1mm', fontSize: '12pt' }}>IV. BANK & EDUCATION</h3>
+                <p><strong>Bank Name:</strong> {updatedEmployee.bank_name} &nbsp;&nbsp; <strong>Branch:</strong> {updatedEmployee.branch}</p>
+                <p><strong>A/C Holder:</strong> {updatedEmployee.account_holder_name} &nbsp;&nbsp; <strong>A/C No:</strong> {updatedEmployee.account_number} &nbsp;&nbsp; <strong>IFSC:</strong> {updatedEmployee.ifsc_code}</p>
+                <p style={{ marginTop: '2mm' }}><strong>Education:</strong> {updatedEmployee.education_qualification} ({updatedEmployee.year_of_passing}) - {updatedEmployee.institute}</p>
+              </div>
+
+              <div style={{ marginBottom: '6mm' }}>
+                <h3 style={{ borderBottom: '1px solid #ccc', paddingBottom: '1mm', fontSize: '12pt' }}>V. ASSETS & SYSTEMS</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '2mm' }}>
+                  {!isNA(updatedEmployee.office_sim) && <p>{updatedEmployee.check_sim === 1 ? '✓ ' : '☐ '}SIM: {updatedEmployee.office_sim}</p>}
+                  {!isNA(updatedEmployee.laptop_system) && <p>{updatedEmployee.check_laptop === 1 ? '✓ ' : '☐ '}Laptop: {updatedEmployee.laptop_system}</p>}
+                  {!isNA(updatedEmployee.official_email_crm) && <p>Email: {updatedEmployee.official_email_crm}</p>}
+                  {!isNA(updatedEmployee.asset_id_card) && <p>{updatedEmployee.check_id_card === 1 ? '✓ ' : '☐ '}ID Card: {updatedEmployee.asset_id_card}</p>}
+                </div>
+              </div>
+
+              <div style={{ pageBreakBefore: 'always', marginTop: '10mm' }}>
+                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '2mm', fontSize: '14pt', margin: '10mm 0 5mm' }}>VI. DECLARATION</h3>
+                <div style={{ fontSize: '8pt', textAlign: 'justify', lineHeight: '1.4' }}>
+                  <p>I hereby declare that all the information provided in this record is true and correct to the best of my knowledge.</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10mm' }}>
+                     <div style={{ textAlign: 'center' }}>
+                       <p style={{ margin: 0, borderBottom: '1px solid black', minWidth: '40mm' }}>{updatedEmployee.signature_name || updatedEmployee.full_name}</p>
+                       <p style={{ fontSize: '7pt', marginTop: '1mm' }}>Employee Digital Signature</p>
+                     </div>
+                     <div style={{ textAlign: 'right' }}>
+                       <p>Date: {new Date().toLocaleDateString()}</p>
+                     </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <style>{`
