@@ -106,68 +106,50 @@ const Dashboard = ({ user }) => {
 
   return (
     <div className="slide-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '3rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4rem' }}>
         <div>
-          <h2 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.05em', marginBottom: '0.5rem' }}>Human Resource Management System</h2>
-          <p style={{ color: 'var(--text-dim)', fontSize: '1rem' }}>Manage and monitor Orbix Designs workforce.</p>
+          <h2 style={{ fontSize: '2.75rem', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: '0.5rem', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Workforce Overview</h2>
+          <p style={{ color: 'var(--text-dim)', fontSize: '1.125rem', fontWeight: 500 }}>Monitor and manage the Orbix Designs ecosystem.</p>
         </div>
         {user?.role !== 'viewer' && (
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <div className="card" style={{ padding: '0.4rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: '250px' }}>
-              <UserCircle size={18} color="var(--text-dim)" />
+          <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+            <div className="card" style={{ padding: '0.6rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', minWidth: '280px', background: 'rgba(255,255,255,0.03)' }}>
+              <UserCircle size={20} color="var(--accent)" />
               <input 
                 type="text" 
-                placeholder="Employee Name (for link)..." 
+                placeholder="Share invitation name..." 
                 value={shareName}
                 onChange={(e) => setShareName(e.target.value)}
-                style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '0.875rem', width: '100%', outline: 'none' }} 
+                style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '0.9375rem', width: '100%', outline: 'none' }} 
               />
             </div>
-            <button onClick={generateOneTimeLink} className="btn btn-secondary" title="Generates a secure ONE-TIME use link" disabled={loading}>
-              {copied ? <Check size={18} color="#22c55e" /> : <Share2 size={18} />}
+            <button onClick={generateOneTimeLink} className="btn btn-secondary" title="Generates a secure ONE-TIME use link" disabled={loading} style={{ height: '48px' }}>
+              {copied ? <Check size={20} color="#4ade80" /> : <Share2 size={20} className="text-accent" />}
               {copied ? 'Link Copied!' : 'One-Time Link'}
             </button>
-            <Link to="/onboard" className="btn btn-primary">
-              <UserCircle size={18} /> Add Employee
+            <Link to="/onboard" className="btn btn-primary" style={{ height: '48px' }}>
+              <UserCircle size={20} /> Add Employee
             </Link>
           </div>
         )}
       </div>
 
-      {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem', marginBottom: '3rem' }}>
-        <div className="card" style={{ padding: '1.25rem' }}>
-          <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Workforce</p>
-          <h4 style={{ fontSize: '1.5rem', fontWeight: 900, marginTop: '0.5rem' }}>{stats.total}</h4>
-        </div>
-        <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #22d3ee' }}>
-          <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>New joining</p>
-          <h4 style={{ fontSize: '1.5rem', fontWeight: 900, marginTop: '0.5rem', color: '#22d3ee' }}>{stats.new}</h4>
-        </div>
-        <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #3b82f6' }}>
-          <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Trainee</p>
-          <h4 style={{ fontSize: '1.5rem', fontWeight: 900, marginTop: '0.5rem', color: '#60a5fa' }}>{stats.trainee}</h4>
-        </div>
-        <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #eab308' }}>
-          <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Onboarding</p>
-          <h4 style={{ fontSize: '1.5rem', fontWeight: 900, marginTop: '0.5rem', color: '#fbbf24' }}>{stats.onboard}</h4>
-        </div>
-        <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #22c55e' }}>
-          <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Current</p>
-          <h4 style={{ fontSize: '1.5rem', fontWeight: 900, marginTop: '0.5rem', color: '#4ade80' }}>{stats.current}</h4>
-        </div>
-        <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #8b5cf6' }}>
-          <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Bix Emp</p>
-          <h4 style={{ fontSize: '1.5rem', fontWeight: 900, marginTop: '0.5rem', color: '#a78bfa' }}>{stats.bix}</h4>
-        </div>
-        <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #f97316' }}>
-          <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Bench/NP</p>
-          <h4 style={{ fontSize: '1.5rem', fontWeight: 900, marginTop: '0.5rem', color: '#fb923c' }}>{stats.bench}</h4>
-        </div>
-        <div className="card" style={{ padding: '1.25rem', borderLeft: '4px solid #ef4444' }}>
-          <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Resigned</p>
-          <h4 style={{ fontSize: '1.5rem', fontWeight: 900, marginTop: '0.5rem', color: '#f87171' }}>{stats.resigned}</h4>
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '4rem' }}>
+        {[
+          { label: 'Total Workforce', value: stats.total, color: 'var(--text)', border: 'rgba(255,255,255,0.1)' },
+          { label: 'New Joining', value: stats.new, color: '#22d3ee', border: '#22d3ee' },
+          { label: 'Trainees', value: stats.trainee, color: '#60a5fa', border: '#3b82f6' },
+          { label: 'Onboarding', value: stats.onboard, color: '#fbbf24', border: '#eab308' },
+          { label: 'Current Staff', value: stats.current, color: '#4ade80', border: '#22c55e' },
+          { label: 'Bix Employees', value: stats.bix, color: '#a78bfa', border: '#8b5cf6' },
+          { label: 'Bench / NP', value: stats.bench, color: '#fb923c', border: '#f97316' },
+          { label: 'Resigned', value: stats.resigned, color: '#f87171', border: '#ef4444' },
+        ].map((stat, i) => (
+          <div key={i} className="card stat-card" style={{ padding: '1.75rem', borderLeft: `4px solid ${stat.border}`, background: 'rgba(255,255,255,0.02)' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>{stat.label}</p>
+            <h4 style={{ fontSize: '2rem', fontWeight: 800, color: stat.color, margin: 0 }}>{stat.value}</h4>
+          </div>
+        ))}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '2rem', marginBottom: '3rem' }}>

@@ -167,6 +167,7 @@ const EmployeeDetails = ({ user }) => {
   const [loading, setLoading] = useState(true);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [isEditingOJ, setIsEditingOJ] = useState(false);
+  const [activeTab, setActiveTab] = useState('personal');
   const printRef = useRef();
 
   useEffect(() => {
@@ -343,224 +344,200 @@ const EmployeeDetails = ({ user }) => {
             </div>
           )}
         </div>
-      </div>
+      </div>      <div className="card" style={{ padding: '0', background: 'transparent', border: 'none', boxShadow: 'none' }}>
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+          {[
+            { id: 'personal', label: 'Personal & Career', icon: <UserCircle size={18} /> },
+            { id: 'documents', label: 'Proof Documents', icon: <FileText size={18} /> },
+            { id: 'onboarding', label: 'Onboarding Lifecycle', icon: <LayoutDashboard size={18} /> },
+            { id: 'bank', label: 'Bank & Compliance', icon: <Database size={18} /> }
+          ].map(tab => (
+            <button 
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`btn ${activeTab === tab.id ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '0.75rem 1.25rem', whiteSpace: 'nowrap' }}
+            >
+              {tab.icon} {tab.label}
+            </button>
+          ))}
+        </div>
 
-      <div className="card" style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', gap: '3rem', alignItems: 'flex-start' }}>
-          <div style={{ width: '180px', height: '220px', borderRadius: '20px', background: 'rgba(255,255,255,0.02)', overflow: 'hidden', border: '1px solid var(--glass-border)', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
-            {employee.photo_path ? (
-              <img src={`${API_BASE_URL}${employee.photo_path}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-            ) : (
-              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' }}>
-                <UserCircle size={64} />
+        {activeTab === 'personal' && (
+          <div className="slide-in">
+            <div className="card" style={{ marginBottom: '2rem' }}>
+              <h3 className="section-title">Career & Background</h3>
+              <div className="form-grid">
+                <div className="form-group"><label>Date of Joining</label><p style={{fontSize: '1.1rem', fontWeight: 600}}>{formatDate(employee.date_of_joining)}</p></div>
+                <div className="form-group"><label>Official D.O.J</label>
+                  <p style={{fontSize: '1.1rem', fontWeight: 600, color: '#60a5fa'}}>
+                    {formatDate(employee.official_joining_date) || '—'}
+                  </p>
+                </div>
+                <div className="form-group"><label>Reporting Manager</label><p style={{fontSize: '1.1rem', fontWeight: 600}}>{employee.reporting_manager || '—'}</p></div>
+                <div className="form-group"><label>Work Location</label><p style={{fontSize: '1.1rem', fontWeight: 600}}>{employee.work_location}</p></div>
+                <div className="form-group"><label>Marital Status</label><p style={{fontSize: '1.1rem', fontWeight: 600}}>{employee.marital_status}</p></div>
+                <div className="form-group"><label>Wedding Date</label><p style={{fontSize: '1.1rem', fontWeight: 600}}>{formatDate(employee.wedding_date) || '—'}</p></div>
               </div>
-            )}
+            </div>
+
+            <div className="form-grid" style={{ gap: '2rem' }}>
+              <div className="card">
+                <h3 className="section-title">Personal Details</h3>
+                <div style={{ display: 'grid', gap: '1.5rem' }}>
+                  <div className="form-group"><label>Full Name</label><p style={{fontWeight: 600}}>{employee.full_name}</p></div>
+                  <div className="form-group"><label>Father's Name</label><p style={{fontWeight: 600}}>{employee.father_name || employee.father_mother_name}</p></div>
+                  <div className="form-group"><label>Mother's Name</label><p style={{fontWeight: 600}}>{employee.mother_name || '—'}</p></div>
+                  <div className="form-group"><label>Date of Birth</label><p style={{fontWeight: 600}}>{formatDate(employee.dob)}</p></div>
+                  <div className="form-group"><label>Gender</label><p style={{fontWeight: 600}}>{employee.gender || '—'}</p></div>
+                </div>
+              </div>
+              <div className="card">
+                <h3 className="section-title">Contact & Addresses</h3>
+                <div style={{ display: 'grid', gap: '1.5rem' }}>
+                  <div className="form-group"><label>Primary Contact</label><p style={{fontWeight: 600}}>{employee.contact_number}</p></div>
+                  <div className="form-group"><label>Email Address</label><p style={{fontWeight: 600, color: '#60a5fa'}}>{employee.personal_email}</p></div>
+                  <div className="form-group"><label>Present Address</label><p style={{fontSize: '0.9rem', color: 'var(--text-dim)'}}>{employee.present_address}</p></div>
+                  <div className="form-group"><label>Permanent Address</label><p style={{fontSize: '0.9rem', color: 'var(--text-dim)'}}>{employee.permanent_address}</p></div>
+                  <div className="form-group"><label>Blood Group</label><p style={{fontWeight: 600}}>{employee.blood_group}</p></div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <h2 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.04em' }}>{employee.full_name}</h2>
-                <p style={{ fontSize: '1.25rem', color: 'var(--text-dim)', fontWeight: 500, marginTop: '0.25rem' }}>{employee.designation} • {employee.department}</p>
+        )}
+
+        {activeTab === 'documents' && (
+          <div className="slide-in">
+            <div className="card">
+              <h3 className="section-title">Official Document Vault</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
+                {[
+                  { label: 'PAN Card (Front)', path: employee.pan_card_path },
+                  { label: 'PAN Card (Back)', path: employee.pan_card_back_path },
+                  { label: 'Aadhaar (Front)', path: employee.aadhaar_card_path },
+                  { label: 'Aadhaar (Back)', path: employee.aadhaar_card_back_path },
+                  { label: 'Passbook (Front)', path: employee.bank_passbook_path },
+                  { label: 'Passbook (Back)', path: employee.bank_passbook_back_path },
+                  { label: 'Education (Front)', path: employee.educational_certificate_path },
+                  { label: 'Education (Back)', path: employee.educational_certificate_back_path },
+                ].map(doc => (
+                  <div key={doc.label} className="form-group" style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+                    <label style={{ marginBottom: '1rem', display: 'block' }}>{doc.label}</label>
+                    {doc.path ? (
+                      <a href={`${API_BASE_URL}${doc.path}`} target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ width: '100%' }}>
+                        <ExternalLink size={16} /> View Document
+                      </a>
+                    ) : (
+                      <p style={{ color: 'var(--text-dim)', fontStyle: 'italic', fontSize: '0.875rem' }}>No document uploaded</p>
+                    )}
+                  </div>
+                ))}
               </div>
-              <span className={`badge badge-${employee.status.toLowerCase().replace(/ /g, '-')}`} style={{ fontSize: '0.875rem' }}>{employee.status}</span>
+              <div className="form-group" style={{ marginTop: '2.5rem', padding: '1.5rem', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '16px', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+                <label>Resume / Professional CV</label>
+                {employee.resume_path ? (
+                  <a href={`${API_BASE_URL}${employee.resume_path}`} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ marginTop: '1rem', background: 'var(--accent)' }}>
+                    <FileUp size={18} /> Open Resume
+                  </a>
+                ) : <p style={{ color: 'var(--text-dim)', marginTop: '0.5rem' }}>No resume found in system.</p>}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'onboarding' && (
+          <div className="slide-in">
+            <div className="card">
+              <h3 className="section-title">Lifecycle & Compliance Tracker</h3>
+              <LifecycleTracker 
+                employeeId={id} 
+                initialSteps={employee.lifecycle_steps} 
+                doj={employee.date_of_joining} 
+                onUpdate={handleLifecycleUpdate} 
+                readOnly={user?.role === 'viewer'}
+              />
+            </div>
+
+            <div className="card" style={{ marginTop: '2rem' }}>
+              <h3 className="section-title">Office Assets & IT Systems</h3>
+              <div className="form-grid">
+                <div className="form-group"><label>{employee.check_sim === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Office SIM</label><p>{employee.office_sim || '—'} {employee.office_sim_date && `(${formatDate(employee.office_sim_date)})`}</p></div>
+                <div className="form-group"><label>{employee.check_laptop === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Laptop/System</label><p>{employee.laptop_system || '—'} {employee.laptop_system_date && `(${formatDate(employee.laptop_system_date)})`}</p></div>
+                <div className="form-group"><label>{employee.check_official_mail === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Official Mail</label><p style={{textTransform:'none', color:'#60a5fa'}}>{employee.asset_official_mail || '—'}</p></div>
+                <div className="form-group"><label>{employee.check_crm === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}CRM Access</label><p>{employee.asset_crm || '—'}</p></div>
+                <div className="form-group"><label>{employee.check_peopledesk === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Peopledesk</label><p>{employee.asset_peopledesk || '—'}</p></div>
+                <div className="form-group"><label>{employee.check_projects === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Projects</label><p>{employee.asset_projects || '—'}</p></div>
+                <div className="form-group"><label>{employee.check_id_card === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}ID Card</label><p>{employee.asset_id_card || '—'}</p></div>
+                <div className="form-group"><label>{employee.check_offer_letter === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Offer Letter</label><p>{employee.asset_offer_letter || '—'}</p></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'bank' && (
+          <div className="slide-in">
+            <div className="card" style={{ marginBottom: '2rem' }}>
+              <h3 className="section-title">Financial Information</h3>
+              <div className="form-grid">
+                <div className="form-group"><label>Bank Name</label><p style={{fontSize: '1.1rem', fontWeight: 600}}>{employee.bank_name}</p></div>
+                <div className="form-group"><label>Account Number</label><p style={{fontSize: '1.1rem', fontWeight: 600}}>{employee.account_number}</p></div>
+                <div className="form-group"><label>IFSC Code</label><p style={{fontSize: '1.1rem', fontWeight: 600}}>{employee.ifsc_code}</p></div>
+                <div className="form-group"><label>Branch</label><p style={{fontSize: '1.1rem', fontWeight: 600}}>{employee.branch}</p></div>
+                <div className="form-group"><label>Account Holder</label><p style={{fontSize: '1.1rem', fontWeight: 600}}>{employee.account_holder_name}</p></div>
+              </div>
             </div>
             
-            <div style={{ marginTop: '2.5rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
-              <div>
-                <p style={{ fontSize: '0.625rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>EMPLOYEE ID</p>
-                <p style={{ fontSize: '1.125rem', fontWeight: 700 }}>{employee.employee_id || 'PENDING'}</p>
+            <div className="card">
+              <h3 className="section-title">Identification & Verification</h3>
+              <div className="form-grid">
+                <div className="form-group"><label>PAN Number</label><p style={{fontWeight: 700, color: 'var(--accent)'}}>{employee.pan_number}</p></div>
+                <div className="form-group"><label>Aadhaar Number</label><p style={{fontWeight: 700}}>{employee.aadhaar_number}</p></div>
+                <div className="form-group"><label>Other ID</label><p>{employee.other_id || '—'}</p></div>
               </div>
-              <div>
-                <p style={{ fontSize: '0.625rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>FILE NO.</p>
-                <p style={{ fontSize: '1.125rem', fontWeight: 700 }}>{employee.file_no || 'N/A'}</p>
+              
+              <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid var(--glass-border)' }}>
+                <h4 style={{fontSize: '0.875rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--text-dim)'}}>BACKGROUND VERIFICATION</h4>
+                {employee.background_verification ? (() => {
+                  try {
+                    const bgc = JSON.parse(employee.background_verification);
+                    return (
+                      <div style={{ display: 'grid', gap: '1.5rem' }}>
+                        <div style={{ padding: '1.25rem', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+                           <p style={{fontSize:'0.8125rem', color:'#60a5fa', fontWeight:800, marginBottom: '0.5rem'}}>STATUS: {bgc.has_experience ? 'EXPERIENCED' : 'FRESHER'}</p>
+                           {bgc.has_experience && bgc.company && (
+                             <div style={{marginTop:'0.5rem'}}>
+                               <p style={{fontSize:'0.875rem'}}><strong>Manager:</strong> {bgc.company.manager_name} ({bgc.company.manager_contact})</p>
+                               <p style={{fontSize:'0.875rem'}}><strong>HR:</strong> {bgc.company.hr_name} ({bgc.company.hr_contact})</p>
+                             </div>
+                           )}
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                          {bgc.references?.map((ref, idx) => (
+                            <div key={idx} style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                              <p style={{fontSize:'0.75rem', fontWeight: 800, color: 'var(--text-dim)', marginBottom: '0.25rem'}}>REF {idx+1}</p>
+                              <p style={{fontSize:'0.875rem', fontWeight: 600}}>{ref?.name}</p>
+                              <p style={{fontSize:'0.75rem', color: 'var(--accent)'}}>{ref?.contact}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  } catch(e) { return <p>Data parsing error</p>; }
+                })() : <p style={{color: 'var(--text-dim)'}}>No verification data found.</p>}
               </div>
-              <div>
-                <p style={{ fontSize: '0.625rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>D.O.J</p>
-                <p style={{ fontSize: '1.125rem', fontWeight: 700 }}>{formatDate(employee.date_of_joining) || 'N/A'}</p>
-              </div>
-              <div style={{ padding: '0.5rem', borderRadius: '12px', background: isEditingOJ ? 'rgba(59, 130, 246, 0.1)' : 'transparent', transition: '0.3s' }}>
-                <p style={{ fontSize: '0.625rem', color: '#60a5fa', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  OFFICIAL D.O.J
-                  {!isEditingOJ && user?.role !== 'viewer' && <Edit3 size={12} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => setIsEditingOJ(true)} />}
-                </p>
-                {isEditingOJ ? (
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <input 
-                      type="date" 
-                      defaultValue={employee.official_joining_date || ''} 
-                      className="form-group input" 
-                      style={{ padding: '4px 8px', fontSize: '0.875rem', width: 'auto' }}
-                      onBlur={(e) => updateOfficialJoiningDate(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') updateOfficialJoiningDate(e.target.value);
-                        if (e.key === 'Escape') setIsEditingOJ(false);
-                      }}
-                      autoFocus
-                    />
+
+              <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid var(--glass-border)' }}>
+                 <div className="form-group">
+                    <label>Emergency Contact</label>
+                    <p style={{fontWeight: 600}}>{employee.emergency_contact_name} ({employee.emergency_contact_relationship})</p>
+                    <p style={{fontSize: '1.1rem', fontWeight: 700, color: 'var(--accent)', marginTop: '0.5rem'}}>{employee.emergency_contact_number}</p>
+                    <div style={{display: 'flex', gap: '1rem', marginTop: '0.5rem', fontSize: '0.875rem', color: 'var(--text-dim)'}}>
+                      <span>F: {employee.father_mobile || '—'}</span>
+                      <span>M: {employee.mother_mobile || '—'}</span>
+                    </div>
                   </div>
-                ) : (
-                  <p style={{ fontSize: '1.125rem', fontWeight: 700, color: '#60a5fa', cursor: user?.role === 'viewer' ? 'default' : 'pointer' }} onClick={() => user?.role !== 'viewer' && setIsEditingOJ(true)}>
-                    {formatDate(employee.official_joining_date) || 'N/A'}
-                  </p>
-                )}
               </div>
             </div>
-          </div>
-        </div>
-
-        {(() => {
-          const steps = employee.lifecycle_steps ? (typeof employee.lifecycle_steps === 'string' ? JSON.parse(employee.lifecycle_steps) : employee.lifecycle_steps) : [];
-          const total = steps.length || 20;
-          const done = steps.filter(s => s.done).length;
-          const progress = Math.round((done / total) * 100);
-          const risk = progress < 40 && total > 0;
-          
-          return (
-            <div style={{ marginBottom: '2.5rem', animation: 'fadeIn 0.8s ease-out' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '0.75rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: progress === 100 ? '#22c55e' : (risk ? '#ef4444' : '#3b82f6'), boxShadow: `0 0 10px ${progress === 100 ? '#22c55e' : (risk ? '#ef4444' : '#3b82f6')}` }} />
-                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
-                    Onboarding Completion
-                  </span>
-                </div>
-                <span style={{ fontSize: '1.25rem', fontWeight: 900, color: progress === 100 ? '#4ade80' : 'white' }}>
-                  {progress}<span style={{ fontSize: '0.75rem', opacity: 0.5, marginLeft: '2px' }}>%</span>
-                </span>
-              </div>
-              <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.03)' }}>
-                <div style={{ 
-                  width: `${progress}%`, 
-                  height: '100%', 
-                  background: progress === 100 
-                    ? 'linear-gradient(90deg, #22c55e, #4ade80)' 
-                    : risk ? 'linear-gradient(90deg, #ef4444, #f87171)' : 'linear-gradient(90deg, #3b82f6, #60a5fa)',
-                  transition: 'width 1s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                  boxShadow: progress > 0 ? `0 0 15px ${risk ? 'rgba(239, 68, 68, 0.3)' : 'rgba(59, 130, 246, 0.3)'}` : 'none'
-                }} />
-              </div>
-            </div>
-          );
-        })()}
-
-        <LifecycleTracker 
-          employeeId={id} 
-          initialSteps={employee.lifecycle_steps} 
-          doj={employee.date_of_joining} 
-          onUpdate={handleLifecycleUpdate} 
-          readOnly={user?.role === 'viewer'}
-        />
-
-        <div className="section-title">Identity & Contacts</div>
-        <div className="form-grid">
-          <div className="form-group"><label>Date of Birth</label><p style={{fontSize: '1rem', fontWeight: 500}}>{formatDate(employee.dob) || '—'}</p></div>
-          <div className="form-group"><label>Gender</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.gender || '—'}</p></div>
-          <div className="form-group"><label>Contact</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.contact_number || '—'}</p></div>
-          <div className="form-group"><label>Email</label><p style={{fontSize: '1.1rem', fontWeight: 500, textTransform: 'none', color: '#60a5fa'}}>{employee.personal_email || '—'}</p></div>
-          <div className="form-group"><label>PAN</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.pan_number || '—'}</p></div>
-          <div className="form-group"><label>Aadhaar</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.aadhaar_number || '—'}</p></div>
-          <div className="form-group"><label>Father Name</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.father_name || '—'}</p></div>
-          <div className="form-group"><label>Mother Name</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.mother_name || '—'}</p></div>
-          <div className="form-group"><label>Wedding Date</label><p style={{fontSize: '1rem', fontWeight: 500}}>{formatDate(employee.wedding_date) || '—'}</p></div>
-        </div>
-
-        <div className="section-title">Bank Information</div>
-        <div className="form-grid">
-          <div className="form-group"><label>A/C Holder</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.account_holder_name || '—'}</p></div>
-          <div className="form-group"><label>A/C Number</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.account_number || '—'}</p></div>
-          <div className="form-group"><label>IFSC Code</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.ifsc_code || '—'}</p></div>
-          <div className="form-group"><label>Bank & Branch</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.bank_name ? `${employee.bank_name} - ${employee.branch}` : '—'}</p></div>
-        </div>
-
-        <div className="section-title">Office Assets & Systems (Optional)</div>
-        <div className="form-grid">
-          <div className="form-group"><label>{employee.check_sim === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Office SIM (Optional)</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.office_sim || '—'} {employee.office_sim_date && `(Allocated: ${formatDate(employee.office_sim_date)})`}</p></div>
-          <div className="form-group"><label>{employee.check_laptop === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Laptop/System (Optional)</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.laptop_system || '—'} {employee.laptop_system_date && `(Allocated: ${formatDate(employee.laptop_system_date)})`}</p></div>
-          <div className="form-group"><label>{employee.check_official_mail === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Official Mail ID</label><p style={{fontSize: '1rem', fontWeight: 500, textTransform:'none'}}>{employee.asset_official_mail || '—'}</p></div>
-          <div className="form-group"><label>{employee.check_crm === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}CRM (Asset)</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.asset_crm || '—'}</p></div>
-          <div className="form-group"><label>{employee.check_peopledesk === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Peopledesk</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.asset_peopledesk || '—'}</p></div>
-          <div className="form-group"><label>{employee.check_projects === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Projects</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.asset_projects || '—'}</p></div>
-          <div className="form-group"><label>{employee.check_id_card === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}ID Card</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.asset_id_card || '—'}</p></div>
-          <div className="form-group"><label>{employee.check_offer_letter === 1 && <span style={{color:'#22c55e', marginRight:'5px'}}>✓</span>}Offer Letter</label><p style={{fontSize: '1rem', fontWeight: 500}}>{employee.asset_offer_letter || '—'}</p></div>
-        </div>
-
-        <div className="section-title">Background Verification Details</div>
-        {employee.background_verification ? (() => {
-          try {
-            const bgc = JSON.parse(employee.background_verification);
-            return (
-              <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
-                <p style={{fontSize:'0.9rem', color:'#60a5fa', marginBottom:'1rem', fontWeight:700}}>TYPE: {bgc.has_experience ? 'EXPERIENCED' : 'FRESHER'}</p>
-
-                {bgc.has_experience && bgc.company && (
-                  <div style={{marginBottom:'1rem'}}>
-                    <h5 style={{fontSize:'0.75rem', color:'var(--text-dim)', textTransform:'uppercase', marginBottom:'0.5rem'}}>Previous Company Verification</h5>
-                    {bgc.company.manager_name && (
-                      <p style={{fontSize:'0.875rem'}}><strong>Manager:</strong> {bgc.company.manager_name} ({bgc.company.manager_contact}) • {bgc.company.manager_email}</p>
-                    )}
-                    {bgc.company.hr_name && (
-                      <p style={{fontSize:'0.875rem'}}><strong>HR:</strong> {bgc.company.hr_name} ({bgc.company.hr_contact}) • {bgc.company.hr_email}</p>
-                    )}
-                  </div>
-                )}
-
-                <div className="form-grid" style={{marginTop:'1.5rem'}}>
-                  <div>
-                    <h5 style={{fontSize:'0.75rem', color:'var(--text-dim)', textTransform:'uppercase', marginBottom:'0.5rem'}}>Personal References</h5>
-                    {bgc.references?.map((ref, idx) => (
-                      <p key={idx} style={{fontSize:'0.875rem'}}><strong>Reference {idx + 1}:</strong> {ref?.name} ({ref?.designation}) • {ref?.contact}</p>
-                    ))}
-                    <p style={{fontSize:'0.875rem'}}><strong>Father Mobile:</strong> {employee.father_mobile || employee.father_husband_number || '—'}</p>
-                    <p style={{fontSize:'0.875rem'}}><strong>Mother Mobile:</strong> {employee.mother_mobile || employee.mother_wife_number || '—'}</p>
-                  </div>
-                </div>
-              </div>
-            );
-          } catch(e) { return <p>Error parsing verification data</p>; }
-        })() : <p style={{padding:'1rem', color:'var(--text-dim)'}}>No background verification data available.</p>}
-
-        <div className="section-title">Supporting Documents</div>
-        <div className="form-grid">
-          <div className="form-group">
-            <label>Bank Passbook</label>
-            <div style={{display:'flex', gap:'0.5rem', flexWrap:'wrap'}}>
-              {employee.bank_passbook_path ? <a href={`${API_BASE_URL}${employee.bank_passbook_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee">Front</a> : <p>—</p>}
-              {employee.bank_passbook_back_path && <a href={`${API_BASE_URL}${employee.bank_passbook_back_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee" style={{background:'rgba(59, 130, 246, 0.1)', color:'#60a5fa'}}>Back</a>}
-            </div>
-          </div>
-          <div className="form-group">
-            <label>PAN Card</label>
-            <div style={{display:'flex', gap:'0.5rem', flexWrap:'wrap'}}>
-              {employee.pan_card_path ? <a href={`${API_BASE_URL}${employee.pan_card_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee">Front</a> : <p>—</p>}
-              {employee.pan_card_back_path && <a href={`${API_BASE_URL}${employee.pan_card_back_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee" style={{background:'rgba(59, 130, 246, 0.1)', color:'#60a5fa'}}>Back</a>}
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Aadhaar Card</label>
-            <div style={{display:'flex', gap:'0.5rem', flexWrap:'wrap'}}>
-              {employee.aadhaar_card_path ? <a href={`${API_BASE_URL}${employee.aadhaar_card_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee">Front</a> : <p>—</p>}
-              {employee.aadhaar_card_back_path && <a href={`${API_BASE_URL}${employee.aadhaar_card_back_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee" style={{background:'rgba(59, 130, 246, 0.1)', color:'#60a5fa'}}>Back</a>}
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Educational Certificate</label>
-            <div style={{display:'flex', gap:'0.5rem', flexWrap:'wrap'}}>
-              {employee.educational_certificate_path ? <a href={`${API_BASE_URL}${employee.educational_certificate_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee">Front</a> : <p>—</p>}
-              {employee.educational_certificate_back_path && <a href={`${API_BASE_URL}${employee.educational_certificate_back_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee" style={{background:'rgba(59, 130, 246, 0.1)', color:'#60a5fa'}}>Back</a>}
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Resume / CV</label>
-            {employee.resume_path ? <a href={`${API_BASE_URL}${employee.resume_path}`} target="_blank" rel="noreferrer" className="badge badge-current-employee" style={{background:'linear-gradient(135deg, #8b5cf6, #7c3aed)'}}>View Resume</a> : <p>—</p>}
-          </div>
-        </div>
-
-        {employee.documents_passwords && (
-          <div className="form-group" style={{marginTop:'1.5rem'}}>
-            <label>Document Passwords</label>
-            <p style={{fontSize:'0.9rem', color:'#60a5fa', background:'rgba(59, 130, 246, 0.1)', padding:'1rem', borderRadius:'8px', border:'1px solid rgba(59, 130, 246, 0.2)'}}>
-              {employee.documents_passwords}
-            </p>
           </div>
         )}
       </div>

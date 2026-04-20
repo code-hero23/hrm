@@ -40,9 +40,12 @@ const Layout = ({ children, isPublic, user, onLogout }) => {
           </NavLink>
         </div>
         
-        <div className="external-links nav-links" style={{ marginTop: 'auto', borderTop: '1px solid var(--glass-border)', paddingTop: '1.5rem' }}>
-          <div className="nav-link" style={{ cursor: 'default', color: '#64748b', fontSize: '0.75rem' }}>ADMIN: {user.username}</div>
-          <button onClick={onLogout} className="nav-link" style={{ background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
+        <div className="external-links nav-links" style={{ marginTop: 'auto', borderTop: '1px solid var(--glass-border)', paddingTop: '2rem' }}>
+          <div className="nav-link" style={{ cursor: 'default', color: 'var(--text-dim)', fontSize: '0.8125rem', fontWeight: 600 }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', marginRight: '0.5rem' }}></div>
+            {user.username.toUpperCase()}
+          </div>
+          <button onClick={onLogout} className="nav-link" style={{ background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', marginTop: '0.5rem' }}>
             <ExternalLink size={18} /> <span>Sign Out</span>
           </button>
         </div>
