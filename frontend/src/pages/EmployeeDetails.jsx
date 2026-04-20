@@ -379,9 +379,31 @@ const EmployeeDetails = ({ user }) => {
                 <p style={{ fontSize: '0.625rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>D.O.J</p>
                 <p style={{ fontSize: '1.125rem', fontWeight: 700 }}>{formatDate(employee.date_of_joining) || '—'}</p>
               </div>
-              <div>
-                <p style={{ fontSize: '0.625rem', color: '#60a5fa', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>OFFICIAL D.O.J</p>
-                <p style={{ fontSize: '1.125rem', fontWeight: 700, color: '#60a5fa' }}>{formatDate(employee.official_joining_date) || '—'}</p>
+              <div style={{ padding: '0.5rem', borderRadius: '12px', background: isEditingOJ ? 'rgba(59, 130, 246, 0.1)' : 'transparent', transition: '0.3s' }}>
+                <p style={{ fontSize: '0.625rem', color: '#60a5fa', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  OFFICIAL D.O.J
+                  {!isEditingOJ && user?.role !== 'viewer' && <Edit3 size={12} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => setIsEditingOJ(true)} />}
+                </p>
+                {isEditingOJ ? (
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <input 
+                      type="date" 
+                      defaultValue={employee.official_joining_date || ''} 
+                      className="form-group input" 
+                      style={{ padding: '4px 8px', fontSize: '0.875rem', width: 'auto' }}
+                      onBlur={(e) => updateOfficialJoiningDate(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') updateOfficialJoiningDate(e.target.value);
+                        if (e.key === 'Escape') setIsEditingOJ(false);
+                      }}
+                      autoFocus
+                    />
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '1.125rem', fontWeight: 700, color: '#60a5fa', cursor: user?.role === 'viewer' ? 'default' : 'pointer' }} onClick={() => user?.role !== 'viewer' && setIsEditingOJ(true)}>
+                    {formatDate(employee.official_joining_date) || '—'}
+                  </p>
+                )}
               </div>
             </div>
           </div>
