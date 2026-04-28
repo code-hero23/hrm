@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { Search, UserCircle, Filter, Share2, Copy, Check } from 'lucide-react';
+import { Search, UserCircle, Filter, Share2, Copy, Check, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import API_BASE_URL from '../config';
 
 const formatDate = (dateString) => {
@@ -104,6 +105,28 @@ const Dashboard = ({ user }) => {
     }
   };
 
+  const downloadEmployeeData = () => {
+    const dataToExport = filteredEmployees.map(emp => ({
+      'Employee ID': emp.employee_id || 'PENDING',
+      'Full Name': emp.full_name,
+      'Status': emp.status,
+      'Designation': emp.designation || 'N/A',
+      'Department': emp.department || 'N/A',
+      'Date of Joining': formatDate(emp.date_of_joining),
+      'Official Joining Date': formatDate(emp.official_joining_date),
+      'Email': emp.official_email || emp.personal_email || 'N/A',
+      'Contact': emp.contact_number || 'N/A'
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Employees');
+    
+    // Generate filename with current date
+    const date = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `Employee_List_${date}.xlsx`);
+  };
+
   return (
     <div className="slide-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4rem' }}>
@@ -126,6 +149,10 @@ const Dashboard = ({ user }) => {
             <button onClick={generateOneTimeLink} className="btn btn-secondary" title="Generates a secure ONE-TIME use link" disabled={loading} style={{ height: '48px' }}>
               {copied ? <Check size={20} color="#4ade80" /> : <Share2 size={20} className="text-accent" />}
               {copied ? 'Link Copied!' : 'One-Time Link'}
+            </button>
+            <button onClick={downloadEmployeeData} className="btn btn-secondary" style={{ height: '48px', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <Download size={20} className="text-accent" />
+              Download List
             </button>
             <Link to="/onboard" className="btn btn-primary" style={{ height: '48px' }}>
               <UserCircle size={20} /> Add Employee
