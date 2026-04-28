@@ -107,15 +107,13 @@ const Dashboard = ({ user }) => {
 
   const downloadEmployeeData = () => {
     const dataToExport = filteredEmployees.map(emp => ({
-      'Employee ID': emp.employee_id || 'PENDING',
-      'Full Name': emp.full_name,
-      'Status': emp.status,
+      'Name': emp.full_name,
+      'Contact Number': emp.contact_number || 'N/A',
       'Designation': emp.designation || 'N/A',
       'Department': emp.department || 'N/A',
       'Date of Joining': formatDate(emp.date_of_joining),
       'Official Joining Date': formatDate(emp.official_joining_date),
-      'Email': emp.official_email || emp.personal_email || 'N/A',
-      'Contact': emp.contact_number || 'N/A'
+      'Status': emp.status
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
