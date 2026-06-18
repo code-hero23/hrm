@@ -128,6 +128,13 @@ const EditEmployee = () => {
       alert("Please fill all mandatory fields marked with * before continuing.");
     }
 
+    if (step === 1 && isValid) {
+      if (!photo && !formData.photo_path) {
+        alert("Please upload a passport-size photo before continuing.");
+        return false;
+      }
+    }
+
     // Step 5 Mandatory Documents Check
     if (step === 5 && isValid) {
       const requiredDocs = [
@@ -571,7 +578,7 @@ const EditEmployee = () => {
           <div className="form-group" style={{marginTop:'1.5rem'}}><label>PRESENT ADDRESS <span style={{color:'#ef4444'}}>*</span></label><textarea name="present_address" value={formData.present_address} onChange={handleChange} required></textarea></div>
           <div className="form-group" style={{marginTop:'1.5rem'}}><label>PERMANENT ADDRESS <span style={{color:'#ef4444'}}>*</span></label><textarea name="permanent_address" value={formData.permanent_address} onChange={handleChange} required></textarea></div>
           <div className="form-group" style={{marginTop:'1.5rem'}}>
-            <label>PHOTO (PASSPORT SIZE)</label>
+            <label>PHOTO (PASSPORT SIZE) <span style={{color:'#ef4444'}}>*</span></label>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <div style={{ width: '120px', height: '140px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
                   {photoPreview ? <img src={photoPreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : (formData.photo_path ? <img src={`${API_BASE_URL}${formData.photo_path}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : <div style={{width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', color:'#444'}}><UserCircle size={48} /></div>)}

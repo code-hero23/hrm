@@ -136,6 +136,13 @@ const Onboarding = ({ isPublic }) => {
       alert("Please fill all mandatory fields marked with * before continuing.");
     }
 
+    if (step === 1 && isValid) {
+      if (!photo) {
+        alert("Please upload a passport-size photo before continuing.");
+        return false;
+      }
+    }
+
     // Step 5 Mandatory Documents Check
     if (step === 5 && isValid) {
       const requiredDocs = ['bank_passbook', 'pan_card', 'aadhaar_card', 'educational_certificate', 'resume'];
@@ -274,7 +281,7 @@ const Onboarding = ({ isPublic }) => {
           <div className="form-group" style={{marginTop:'1.5rem'}}><label>PRESENT ADDRESS <span style={{color:'#ef4444'}}>*</span></label><textarea name="present_address" value={formData.present_address} onChange={handleChange} required></textarea></div>
           <div className="form-group" style={{marginTop:'1.5rem'}}><label>PERMANENT ADDRESS <span style={{color:'#ef4444'}}>*</span></label><textarea name="permanent_address" value={formData.permanent_address} onChange={handleChange} required></textarea></div>
           <div className="form-group" style={{marginTop:'1.5rem'}}>
-            <label>PHOTO (PASSPORT SIZE)</label>
+            <label>PHOTO (PASSPORT SIZE) <span style={{color:'#ef4444'}}>*</span></label>
             <p style={{background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '1rem', borderRadius: '12px', fontSize: '0.85rem', marginBottom: '1.5rem', border: '1px solid rgba(59, 130, 246, 0.2)'}}>
               <strong>PRO TIP:</strong> Please upload a <strong>neat and clear</strong> professional passport-size photo. This will be used for your official ID card.
             </p>
