@@ -1,20 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, Save, Upload, ArrowLeft, UserCircle, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import API_BASE_URL from '../config';
 import logo from '../assets/logo.jpg';
 
-const EditEmployee = () => {
+const EditEmployee = ({ isPublicEdit = false }) => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [updatedEmployee, setUpdatedEmployee] = useState(null);
+  const [verificationError, setVerificationError] = useState(null);
+  const [editToken, setEditToken] = useState(null);
   const printRef = useRef();
   const [formData, setFormData] = useState({
     status: 'Onboard',
@@ -58,19 +61,39 @@ const EditEmployee = () => {
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}/api/employees/${id}`);
-        setFormData(res.data);
-        if (res.data.photo_path) {
-          setPhotoPreview(`${API_BASE_URL}${res.data.photo_path}`);
+        if (isPublicEdit) {
+          const token = searchParams.get('token');
+          if (!token) {
+            setVerificationError('Missing employee edit token. Please request a new link from HR.');
+            setLoading(false);
+            return;
+          }
+
+          setEditToken(token);
+          const res = await axios.get(`${API_BASE_URL}/api/employee-edit-invitations/verify/${token}`);
+          setFormData(res.data.employee);
+          if (res.data.employee.photo_path) {
+            setPhotoPreview(`${API_BASE_URL}${res.data.employee.photo_path}`);
+          }
+        } else {
+          const res = await axios.get(`${API_BASE_URL}/api/employees/${id}`);
+          setFormData(res.data);
+          if (res.data.photo_path) {
+            setPhotoPreview(`${API_BASE_URL}${res.data.photo_path}`);
+          }
         }
       } catch (err) {
         console.error(err);
-        alert('Error fetching employee data');
+        if (isPublicEdit) {
+          setVerificationError(err.response?.data?.error || 'Invalid or already used employee edit link.');
+        } else {
+          alert('Error fetching employee data');
+        }
       }
       setLoading(false);
     };
     fetchEmployee();
-  }, [id]);
+  }, [id, isPublicEdit, searchParams]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -223,11 +246,16 @@ const EditEmployee = () => {
 
     try {
       setLoading(true);
-      const res = await axios.put(`${API_BASE_URL}/api/employees/${id}`, data);
-      
-      // Fetch latest data for PDF generation (to get new file paths)
-      const latest = await axios.get(`${API_BASE_URL}/api/employees/${id}`);
-      setUpdatedEmployee(latest.data);
+      if (isPublicEdit) {
+        const res = await axios.put(`${API_BASE_URL}/api/employee-edit-invitations/${editToken}`, data);
+        setUpdatedEmployee(res.data.employee);
+      } else {
+        await axios.put(`${API_BASE_URL}/api/employees/${id}`, data);
+        
+        // Fetch latest data for PDF generation (to get new file paths)
+        const latest = await axios.get(`${API_BASE_URL}/api/employees/${id}`);
+        setUpdatedEmployee(latest.data);
+      }
       
       setIsSubmitted(true);
       setLoading(false);
@@ -369,7 +397,20 @@ const EditEmployee = () => {
     }
   };
 
-  if (loading) return <div className="loading">Loading employee data...</div>;
+  if (loading) return <div className="loading">{isPublicEdit ? 'Verifying employee edit link...' : 'Loading employee data...'}</div>;
+
+  if (verificationError) {
+    return (
+      <div className="slide-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+        <div className="card" style={{ maxWidth: '500px', textAlign: 'center', padding: '3rem' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>!</div>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '1rem' }}>Inaccessible Edit Link</h2>
+          <p style={{ color: 'var(--text-dim)', lineHeight: '1.6' }}>{verificationError}</p>
+          <p style={{ color: 'var(--text-dim)', marginTop: '1.5rem', fontSize: '0.875rem' }}>Please contact HR to receive a valid one-time employee edit link.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isSubmitted) {
     return (
@@ -396,13 +437,16 @@ const EditEmployee = () => {
         </div>
 
         <h2 style={{ fontSize: '2.25rem', fontWeight: 900, marginBottom: '1rem', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          Updated Successfully!
+          {isPublicEdit ? 'Details Submitted Successfully!' : 'Updated Successfully!'}
         </h2>
         <p style={{ color: 'var(--text-dim)', fontSize: '1.1rem', lineHeight: '1.6', maxWidth: '400px', margin: '0 auto' }}>
-          The employee record for <strong>{formData.full_name}</strong> has been successfully updated.
+          {isPublicEdit
+            ? <>Thank you, <strong>{formData.full_name}</strong>. Your updated information has been securely received by HR. This edit link is now deactivated.</>
+            : <>The employee record for <strong>{formData.full_name}</strong> has been successfully updated.</>
+          }
         </p>
         
-        <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--glass-border)' }}>
+        {!isPublicEdit && <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--glass-border)' }}>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => navigate(`/employee/${id}`)} className="btn btn-primary">
               View Profile
@@ -414,7 +458,7 @@ const EditEmployee = () => {
               Back to Dashboard
             </button>
           </div>
-        </div>
+        </div>}
 
         {/* Hidden PDF content */}
         <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
@@ -873,16 +917,18 @@ const EditEmployee = () => {
 
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-      <button onClick={() => navigate(-1)} className="btn btn-secondary" style={{ marginBottom: '2rem', border: 'none', background: 'transparent' }}>
+      {!isPublicEdit && <button onClick={() => navigate(-1)} className="btn btn-secondary" style={{ marginBottom: '2rem', border: 'none', background: 'transparent' }}>
         <ArrowLeft size={18} /> Back
-      </button>
+      </button>}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
         <div>
           <h2 style={{ fontSize: '1.75rem', fontWeight: 800, background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'flex', alignItems: 'center', gap: '1rem' }}>
             {logo && <img src={logo} alt="Orbix" style={{ height: '40px', width: 'auto' }} />}
-            Edit Profile: {formData.full_name}
+            {isPublicEdit ? `Review & Update Details: ${formData.full_name}` : `Edit Profile: ${formData.full_name}`}
           </h2>
-          <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', marginTop: '0.25rem' }}>Updating employee ID #{formData.id}</p>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+            {isPublicEdit ? 'Please review the pre-filled information, make required corrections, and submit once.' : `Updating employee ID #${formData.id}`}
+          </p>
         </div>
         <div className="badge" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
           Step {step} of 6
@@ -906,7 +952,7 @@ const EditEmployee = () => {
               </button>
             ) : (
               <button type="submit" className="btn btn-primary" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)', border: 'none' }}>
-                <Save size={18} /> Save Changes
+                <Save size={18} /> {isPublicEdit ? 'Submit Updates' : 'Save Changes'}
               </button>
             )}
           </div>

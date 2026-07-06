@@ -175,10 +175,31 @@ db.serialize(() => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       token TEXT UNIQUE NOT NULL,
       shared_name TEXT,
+      type TEXT DEFAULT 'onboarding',
+      employee_id INTEGER,
       status TEXT DEFAULT 'pending', -- 'pending' or 'used'
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      used_at DATETIME
     )
   `);
+
+  db.run("ALTER TABLE invitations ADD COLUMN type TEXT DEFAULT 'onboarding'", (err) => {
+    if (err && !err.message.includes('duplicate column name')) {
+      console.error('Error adding invitation column type:', err.message);
+    }
+  });
+
+  db.run("ALTER TABLE invitations ADD COLUMN employee_id INTEGER", (err) => {
+    if (err && !err.message.includes('duplicate column name')) {
+      console.error('Error adding invitation column employee_id:', err.message);
+    }
+  });
+
+  db.run("ALTER TABLE invitations ADD COLUMN used_at DATETIME", (err) => {
+    if (err && !err.message.includes('duplicate column name')) {
+      console.error('Error adding invitation column used_at:', err.message);
+    }
+  });
 
   // Insert default admin if not exists (username: Admin@cookscape.com, password: Hrmaster@2026)
   const hashedAdminPassword = bcrypt.hashSync('Hrmaster@2026', 10);

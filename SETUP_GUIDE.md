@@ -1,127 +1,291 @@
 # 🛠 Setup & Installation Guide
 
-This guide provides detailed instructions to set up the Master Employee Database (PeopleDesk) for development or production environments.
+# PeopleDesk HRM - Master Employee Database
 
-## 📋 Prerequisites
+[![Status](https://img.shields.io/badge/Status-Active-success.svg)]
+[![Frontend](https://img.shields.io/badge/Frontend-React%20(Vite)-61DAFB.svg)]
+[![Backend](https://img.shields.io/badge/Backend-Node.js%20%26%20Express-339933.svg)]
+[![Database](https://img.shields.io/badge/Database-SQLite-003B57.svg)]
 
-- **Node.js**: v18.0.0 or higher (LTS recommended)
-- **NPM**: v9.0.0 or higher
-- **Git**: (Optional) For cloning the repository
-- **Docker**: (Optional) For containerized deployment
+PeopleDesk HRM is a comprehensive Human Resource Management (HRM) system that manages the complete employee lifecycle—from onboarding to resignation.
+
+The application centralizes employee information, stores official documents, tracks important dates, manages company resources, and provides HR teams with a single source of truth for employee records.
 
 ---
 
-## 🚀 Standard Installation
+# Features
 
-### 1. Clone the Project
-```bash
-git clone <repository-url>
-cd master-employee-database
+## Employee Lifecycle Management
+
+- Complete employee onboarding workflow
+- Employee profile management
+- Employment history
+- Department & designation management
+- Employee status tracking
+- Resignation management
+- Exit record maintenance
+
+---
+
+## Employee Information
+
+Maintain complete employee information including:
+
+- Personal Details
+- Contact Information
+- Emergency Contacts
+- Address
+- Educational Details
+- Previous Employment
+- Salary Information
+- Bank Details
+- Government IDs
+- Passport Details
+- Family Information
+
+---
+
+## Document Management
+
+Securely upload and manage employee documents.
+
+Supported documents include:
+
+- Resume
+- Offer Letter
+- Aadhaar
+- PAN
+- Passport
+- Educational Certificates
+- Experience Certificates
+- Relieving Letters
+- Salary Slips
+- Employee Photo
+- Other Company Documents
+
+---
+
+## Resource Bucket
+
+Track company resources assigned to employees.
+
+Examples:
+
+- Company Email
+- WhatsApp Business Number
+- Laptop
+- Desktop
+- Mobile Phone
+- SIM Card
+- Software Licenses
+- Office Assets
+- Access Credentials
+
+This helps HR know exactly which company resources are assigned to each employee.
+
+---
+
+## Important Date Tracking
+
+Never miss employee events.
+
+Track:
+
+- Birthday
+- Wedding Anniversary
+- Date of Joining
+- Probation End Date
+- Confirmation Date
+- Exit Date
+
+---
+
+## Bulk Employee Import
+
+Import employee records using Excel or CSV.
+
+Features include:
+
+- Intelligent field mapping
+- Validation
+- Duplicate detection
+- Import summary
+- Error reporting
+
+---
+
+## Authentication & Authorization
+
+- Secure Login
+- Password Encryption
+- Role Based Access Control
+- Admin Access
+- Viewer Access
+
+---
+
+## Notifications
+
+- Email notifications for onboarding
+- Employee updates
+- HR alerts
+
+---
+
+# Tech Stack
+
+| Layer | Technology |
+|---------|------------|
+| Frontend | React 19 + Vite |
+| Backend | Node.js + Express |
+| Database | SQLite3 |
+| Storage | Multer |
+| File Processing | XLSX |
+| PDF Reports | jsPDF |
+
+---
+
+# Project Structure
+
+```
+PeopleDesk-HRM/
+│
+├── backend/
+│   ├── data/
+│   ├── uploads/
+│   ├── routes/
+│   ├── middleware/
+│   ├── utils/
+│   ├── index.js
+│   └── package.json
+│
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── hooks/
+│   │   ├── services/
+│   │   ├── utils/
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   └── package.json
+│
+├── API_DOCS.md
+├── ARCHITECTURE.md
+├── bulk_import_sample.xlsx
+├── bulk_import_sample.csv
+└── README.md
 ```
 
-### 2. Backend Configuration
-Navigate to the `backend` directory and install dependencies:
+---
+
+# Installation
+
+## Backend
+
 ```bash
 cd backend
 npm install
+npm run dev
 ```
 
-**Environment Variables**:
-Create a `.env` file in the `backend` directory based on `.env.example`:
-```env
-PORT=5018
-NODE_ENV=development
-# SMTP Settings (Optional for emails)
-# WHATSAPP_ACCESS_TOKEN= (Optional)
+Backend runs on:
+
+```
+http://localhost:5018
 ```
 
-**Storage Setup**:
-Ensure the `uploads` and `data` directories exist:
+---
+
+## Frontend
+
 ```bash
-mkdir uploads data
-```
-
-### 3. Frontend Configuration
-Navigate to the `frontend` directory and install dependencies:
-```bash
-cd ../frontend
+cd frontend
 npm install
-```
-
----
-
-## 🏃 Running the Application
-
-### Development Mode (Full HMR)
-Open two terminal windows/tabs:
-
-**Terminal 1 (Backend)**:
-```bash
-cd backend
 npm run dev
 ```
 
-**Terminal 2 (Frontend)**:
-```bash
-cd frontend
-npm run dev
+Frontend runs on:
+
 ```
-The application will be accessible at:
-- **Frontend**: `http://localhost:5173`
-- **Backend API**: `http://localhost:5018`
+http://localhost:5173
+```
 
 ---
 
-## 🐳 Docker Deployment
-
-To run the application using Docker Compose (simplest method):
+# Docker
 
 ```bash
-docker-compose up --build -d
+docker-compose up --build
 ```
-The system will be available at:
-- **Web UI**: `http://localhost:8080`
-- **API**: `http://localhost:5018`
 
 ---
 
-## 🔧 Troubleshooting Dependency Issues
+# Default Login
 
-### SQLite3 Build Failures
-The `sqlite3` package occasionally fails to install on Windows due to missing build tools.
-- **Solution**: Install Windows Build Tools via PowerShell as Administrator:
-  ```powershell
-  npm install --global --production windows-build-tools
-  ```
-- **Alternative**: Use a pre-built binary:
-  ```bash
-  npm install sqlite3 --build-from-source --sqlite=/usr/local
-  ```
-
-### Shared Dependency Conflicts (peerDependencies)
-If you encounter `ERR! code ERESOLVE` during `npm install`:
-- **Fix**: Use the legacy-peer-deps flag:
-  ```bash
-  npm install --legacy-peer-deps
-  ```
-
-### Backend Not Connecting
-- Check if port `5018` is already in use by another service.
-- Ensure `backend/data/database.sqlite` has write permissions for the user running the process.
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | Admin@cookscape.com | Hrmaster@2026 |
+| Viewer | View@cookscape.com | View@2026 |
 
 ---
 
-## 📦 Production Build
+# Main Modules
 
-**Frontend**:
-```bash
-cd frontend
-npm run build
-```
-This generates a `dist` folder. In production, these static files are typically served via Nginx (config available in `frontend/nginx.conf`).
+- Dashboard
+- Employee Management
+- Employee Onboarding
+- Employee Exit
+- Document Management
+- Resource Bucket
+- Birthday Tracker
+- Wedding Anniversary Tracker
+- Bulk Import
+- Reports
+- Authentication
+- User Management
+- Settings
 
-**Backend**:
-Set `NODE_ENV=production` in your `.env` and use a process manager like PM2:
-```bash
-pm2 start index.js --name "hrm-backend"
+---
+
+# API Documentation
+
+See:
+
 ```
+API_DOCS.md
+```
+
+---
+
+# Architecture
+
+See:
+
+```
+ARCHITECTURE.md
+```
+
+---
+
+# Future Improvements
+
+- Attendance Management
+- Leave Management
+- Payroll
+- Performance Reviews
+- Holiday Calendar
+- Shift Management
+- Recruitment Module
+- Mobile Application
+- Cloud Storage Integration
+
+---
+
+# License
+
+This project is intended for internal company HR operations.
+
+© 2026 PeopleDesk HRM

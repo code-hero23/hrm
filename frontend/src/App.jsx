@@ -77,6 +77,7 @@ function App() {
         <Route path="/bucket" element={user ? <Layout user={user} onLogout={handleLogout}><Bucket user={user} /></Layout> : <Login onLogin={setUser} />} />
         <Route path="/wishes" element={user ? <Layout user={user} onLogout={handleLogout}><WishesBucket /></Layout> : <Login onLogin={setUser} />} />
         <Route path="/fill-form" element={<Layout isPublic={true}><Onboarding isPublic={true} /></Layout>} />
+        <Route path="/edit-form" element={<Layout isPublic={true}><EditEmployee isPublicEdit={true} /></Layout>} />
       </Routes>
     </Router>
   );

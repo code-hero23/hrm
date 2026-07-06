@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Printer, Download, ArrowLeft, Trash2, CheckCircle, UserCircle, Edit3, ChevronRight, FileText, LayoutDashboard, Database, ExternalLink, FileUp } from 'lucide-react';
+import { Printer, Download, ArrowLeft, Trash2, CheckCircle, UserCircle, Edit3, ChevronRight, FileText, LayoutDashboard, Database, ExternalLink, FileUp, Share2, Check } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import API_BASE_URL from '../config';
@@ -168,6 +168,7 @@ const EmployeeDetails = ({ user }) => {
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [isEditingOJ, setIsEditingOJ] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
+  const [editLinkCopied, setEditLinkCopied] = useState(false);
   const printRef = useRef();
 
   useEffect(() => {
@@ -214,6 +215,36 @@ const EmployeeDetails = ({ user }) => {
         console.error(err);
         alert('Error deleting employee record');
       }
+    }
+  };
+
+  const generateEmployeeEditLink = async () => {
+    try {
+      const res = await axios.post(`${API_BASE_URL}/api/employees/${id}/edit-invitations`, {
+        shared_name: employee?.full_name
+      });
+      const link = `${window.location.origin}/edit-form?token=${res.data.token}`;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(link);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = link;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+
+      setEditLinkCopied(true);
+      setTimeout(() => setEditLinkCopied(false), 2500);
+    } catch (err) {
+      console.error('Failed to generate employee edit link:', err);
+      alert(err.response?.data?.error || 'Error generating employee edit link');
     }
   };
 
@@ -327,6 +358,10 @@ const EmployeeDetails = ({ user }) => {
             <>
               <button onClick={handleDelete} className="btn btn-secondary" style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)', background: 'rgba(239, 68, 68, 0.05)' }}>
                 <Trash2 size={18} /> Delete Record
+              </button>
+              <button onClick={generateEmployeeEditLink} className="btn btn-secondary" style={{ borderColor: 'rgba(59, 130, 246, 0.25)', background: 'rgba(59, 130, 246, 0.08)' }}>
+                {editLinkCopied ? <Check size={18} color="#4ade80" /> : <Share2 size={18} />}
+                {editLinkCopied ? 'Edit Link Copied!' : 'One-Time Edit Link'}
               </button>
               <button onClick={() => navigate(`/edit-employee/${id}`)} className="btn btn-primary" style={{ background: 'linear-gradient(135deg, #4f46e5, #4338ca)', border: 'none' }}>
                 <Edit3 size={18} /> Edit Profile

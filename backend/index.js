@@ -16,8 +16,8 @@ const transporter = nodemailer.createTransport({
   host: 'smtp.ethereal.email',
   port: 587,
   auth: {
-      user: 'trey.schulist@ethereal.email',
-      pass: 'P8W4K5J9V7Y2N1X6'
+    user: 'trey.schulist@ethereal.email',
+    pass: 'P8W4K5J9V7Y2N1X6'
   }
 });
 
@@ -57,7 +57,7 @@ app.post('/api/login', (req, res) => {
   db.get('SELECT * FROM users WHERE username = ?', [username], async (err, user) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
-    
+
     const match = await bcrypt.compare(password, user.password);
     if (match) {
       res.json({ id: user.id, username: user.username, role: user.role });
@@ -89,6 +89,64 @@ const upload = multer({ storage }).fields([
   { name: 'resume', maxCount: 1 }
 ]);
 
+const buildEmployeeUpdate = (data, files, employeeId) => {
+  const photo_path = files.photo ? `/uploads/${files.photo[0].filename}` : data.photo_path;
+  const bank_passbook_path = files.bank_passbook ? `/uploads/${files.bank_passbook[0].filename}` : data.bank_passbook_path;
+  const bank_passbook_back_path = files.bank_passbook_back ? `/uploads/${files.bank_passbook_back[0].filename}` : data.bank_passbook_back_path;
+  const pan_card_path = files.pan_card ? `/uploads/${files.pan_card[0].filename}` : data.pan_card_path;
+  const pan_card_back_path = files.pan_card_back ? `/uploads/${files.pan_card_back[0].filename}` : data.pan_card_back_path;
+  const aadhaar_card_path = files.aadhaar_card ? `/uploads/${files.aadhaar_card[0].filename}` : data.aadhaar_card_path;
+  const aadhaar_card_back_path = files.aadhaar_card_back ? `/uploads/${files.aadhaar_card_back[0].filename}` : data.aadhaar_card_back_path;
+  const educational_certificate_path = files.educational_certificate ? `/uploads/${files.educational_certificate[0].filename}` : data.educational_certificate_path;
+  const educational_certificate_back_path = files.educational_certificate_back ? `/uploads/${files.educational_certificate_back[0].filename}` : data.educational_certificate_back_path;
+  const resume_path = files.resume ? `/uploads/${files.resume[0].filename}` : data.resume_path;
+
+  const query = `
+    UPDATE employees SET 
+      status=?, file_no=?, full_name=?, father_mother_name=?, dob=?, gender=?, contact_number=?, blood_group=?, 
+      personal_email=?, marital_status=?, present_address=?, permanent_address=?, photo_path=?,
+      employee_id=?, department=?, designation=?, date_of_joining=?, work_location=?, reporting_manager=?,
+      pan_number=?, aadhaar_number=?, other_id=?,
+      emergency_contact_name=?, emergency_contact_relationship=?, emergency_contact_number=?, 
+      father_husband_number=?, mother_wife_number=?, alternate_number=?,
+      account_holder_name=?, account_number=?, bank_name=?, ifsc_code=?, branch=?,
+      documents_submitted=?, education_qualification=?, year_of_passing=?, institute=?,
+      previous_employment=?, office_sim=?, office_sim_date=?, laptop_system=?, 
+      laptop_system_date=?, official_email_crm=?, official_email_crm_date=?,
+      asset_crm=?, asset_peopledesk=?, asset_projects=?, asset_id_card=?, asset_official_mail=?, asset_offer_letter=?,
+      check_sim=?, check_laptop=?, check_crm=?, check_peopledesk=?, check_projects=?, check_id_card=?, check_official_mail=?, check_offer_letter=?,
+      bank_passbook_path=?, pan_card_path=?, aadhaar_card_path=?, educational_certificate_path=?, signature_name=?, background_verification=?,
+      lifecycle_steps=?, official_joining_date=?, father_name=?, mother_name=?, father_mobile=?, mother_mobile=?, wedding_date=?,
+      bank_passbook_back_path=?, pan_card_back_path=?, aadhaar_card_back_path=?, educational_certificate_back_path=?, resume_path=?
+    WHERE id = ?
+  `;
+
+  const params = [
+    data.status, data.file_no, data.full_name, data.father_mother_name, data.dob, data.gender, data.contact_number, data.blood_group,
+    data.personal_email, data.marital_status, data.present_address, data.permanent_address, photo_path,
+    data.employee_id, data.department, data.designation, data.date_of_joining, data.work_location, data.reporting_manager,
+    data.pan_number, data.aadhaar_number, data.other_id,
+    data.emergency_contact_name, data.emergency_contact_relationship, data.emergency_contact_number,
+    data.father_husband_number, data.mother_wife_number, data.alternate_number,
+    data.account_holder_name, data.account_number, data.bank_name, data.ifsc_code, data.branch,
+    data.documents_submitted, data.education_qualification, data.year_of_passing, data.institute,
+    typeof data.previous_employment === 'object' ? JSON.stringify(data.previous_employment) : data.previous_employment,
+    data.office_sim, data.office_sim_date, data.laptop_system,
+    data.laptop_system_date, data.official_email_crm, data.official_email_crm_date,
+    data.asset_crm, data.asset_peopledesk, data.asset_projects, data.asset_id_card, data.asset_official_mail, data.asset_offer_letter,
+    data.check_sim || 0, data.check_laptop || 0, data.check_crm || 0, data.check_peopledesk || 0, data.check_projects || 0, data.check_id_card || 0, data.check_official_mail || 0, data.check_offer_letter || 0,
+    bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name,
+    typeof data.background_verification === 'object' ? JSON.stringify(data.background_verification) : data.background_verification,
+    typeof data.lifecycle_steps === 'object' ? JSON.stringify(data.lifecycle_steps) : data.lifecycle_steps,
+    data.official_joining_date,
+    data.father_name, data.mother_name, data.father_mobile, data.mother_mobile, data.wedding_date,
+    bank_passbook_back_path, pan_card_back_path, aadhaar_card_back_path, educational_certificate_back_path, resume_path,
+    employeeId
+  ];
+
+  return { query, params };
+};
+
 // Routes
 app.get('/api/employees', (req, res) => {
   const { status } = req.query;
@@ -117,7 +175,7 @@ app.get('/api/employees/:id', (req, res) => {
 app.post('/api/employees', upload, async (req, res) => {
   const data = req.body;
   const files = req.files || {};
-  
+
   const photo_path = files.photo ? `/uploads/${files.photo[0].filename}` : null;
   const bank_passbook_path = files.bank_passbook ? `/uploads/${files.bank_passbook[0].filename}` : null;
   const bank_passbook_back_path = files.bank_passbook_back ? `/uploads/${files.bank_passbook_back[0].filename}` : null;
@@ -174,12 +232,12 @@ app.post('/api/employees', upload, async (req, res) => {
     data.emergency_contact_name, data.emergency_contact_relationship, data.emergency_contact_number,
     data.father_husband_number, data.mother_wife_number, data.alternate_number,
     data.account_holder_name, data.account_number, data.bank_name, data.ifsc_code, data.branch,
-    data.documents_submitted, data.education_qualification, data.year_of_passing, data.institute, 
+    data.documents_submitted, data.education_qualification, data.year_of_passing, data.institute,
     typeof data.previous_employment === 'object' ? JSON.stringify(data.previous_employment) : data.previous_employment,
     data.office_sim, data.office_sim_date, data.laptop_system, data.laptop_system_date, data.official_email_crm, data.official_email_crm_date,
     data.asset_crm, data.asset_peopledesk, data.asset_projects, data.asset_id_card, data.asset_official_mail, data.asset_offer_letter,
     data.check_sim || 0, data.check_laptop || 0, data.check_crm || 0, data.check_peopledesk || 0, data.check_projects || 0, data.check_id_card || 0, data.check_official_mail || 0, data.check_offer_letter || 0,
-    bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name, 
+    bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name,
     typeof data.background_verification === 'object' ? JSON.stringify(data.background_verification) : data.background_verification,
     typeof data.lifecycle_steps === 'object' ? JSON.stringify(data.lifecycle_steps) : data.lifecycle_steps,
     data.official_joining_date,
@@ -192,20 +250,20 @@ app.post('/api/employees', upload, async (req, res) => {
     db.serialize(() => {
       db.run('BEGIN TRANSACTION');
 
-      db.get('SELECT id FROM invitations WHERE token = ? AND status = "pending"', [data.onboarding_token], (err, row) => {
+      db.get('SELECT id FROM invitations WHERE token = ? AND status = "pending" AND (type IS NULL OR type = "onboarding")', [data.onboarding_token], (err, row) => {
         if (err || !row) {
           db.run('ROLLBACK');
           return res.status(403).json({ error: 'Invalid or already used invitation token.' });
         }
 
-        db.run(query, params, function(err) {
+        db.run(query, params, function (err) {
           if (err) {
             db.run('ROLLBACK');
             return res.status(500).json({ error: err.message });
           }
-          
+
           const employeeId = this.lastID;
-          db.run('UPDATE invitations SET status = "used" WHERE id = ?', [row.id], (err) => {
+          db.run('UPDATE invitations SET status = "used", used_at = CURRENT_TIMESTAMP WHERE id = ?', [row.id], (err) => {
             if (err) {
               db.run('ROLLBACK');
               return res.status(500).json({ error: 'Failed to consume invitation.' });
@@ -222,7 +280,7 @@ app.post('/api/employees', upload, async (req, res) => {
     });
   } else {
     // Normal Admin direct creation
-    db.run(query, params, function(err) {
+    db.run(query, params, function (err) {
       if (err) return res.status(500).json({ error: err.message });
       sendOnboardingEmail({ ...data, id: this.lastID });
       res.json({ id: this.lastID, ...data, photo_path });
@@ -269,14 +327,14 @@ app.post('/api/employees/bulk', async (req, res) => {
   let nextNum = await getNextFileNo();
 
   const validKeys = [
-    "status", "file_no", "full_name", "father_mother_name", "dob", "gender", "contact_number", "blood_group", 
-    "personal_email", "marital_status", "present_address", "permanent_address", "employee_id", "department", 
-    "designation", "date_of_joining", "work_location", "reporting_manager", "pan_number", "aadhaar_number", 
-    "other_id", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number", 
-    "father_husband_number", "mother_wife_number", "alternate_number", "account_holder_name", 
-    "account_number", "bank_name", "ifsc_code", "branch", "documents_submitted", "education_qualification", 
-    "year_of_passing", "institute", "previous_employment", "office_sim", "office_sim_date", 
-    "laptop_system", "laptop_system_date", "official_email_crm", "official_email_crm_date", 
+    "status", "file_no", "full_name", "father_mother_name", "dob", "gender", "contact_number", "blood_group",
+    "personal_email", "marital_status", "present_address", "permanent_address", "employee_id", "department",
+    "designation", "date_of_joining", "work_location", "reporting_manager", "pan_number", "aadhaar_number",
+    "other_id", "emergency_contact_name", "emergency_contact_relationship", "emergency_contact_number",
+    "father_husband_number", "mother_wife_number", "alternate_number", "account_holder_name",
+    "account_number", "bank_name", "ifsc_code", "branch", "documents_submitted", "education_qualification",
+    "year_of_passing", "institute", "previous_employment", "office_sim", "office_sim_date",
+    "laptop_system", "laptop_system_date", "official_email_crm", "official_email_crm_date",
     "asset_crm", "asset_peopledesk", "asset_projects", "asset_id_card", "asset_official_mail", "asset_offer_letter",
     "check_sim", "check_laptop", "check_crm", "check_peopledesk", "check_projects", "check_id_card", "check_official_mail", "check_offer_letter",
     "signature_name", "background_verification", "lifecycle_steps", "official_joining_date",
@@ -286,7 +344,7 @@ app.post('/api/employees/bulk', async (req, res) => {
 
   db.serialize(() => {
     db.run('BEGIN TRANSACTION');
-    
+
     let processed = 0;
     filteredEmployees.forEach(emp => {
       // Auto-generate file_no if missing
@@ -313,9 +371,9 @@ app.post('/api/employees/bulk', async (req, res) => {
         if (typeof val === 'object') return JSON.stringify(val);
         return val;
       });
-      
+
       const query = `INSERT INTO employees (${keys.join(',')}) VALUES (${placeholders})`;
-      db.run(query, values, function(err) {
+      db.run(query, values, function (err) {
         if (err) {
           console.error('Bulk Insert Error:', err.message);
           errorMessages.push(`Row ${processed + 1}: ${err.message}`);
@@ -330,10 +388,10 @@ app.post('/api/employees/bulk', async (req, res) => {
     function finish() {
       db.run('COMMIT', (err) => {
         if (err) return res.status(500).json({ error: 'Transaction commit failed: ' + err.message });
-        res.json({ 
-          message: 'Bulk import completed', 
-          total: filteredEmployees.length, 
-          success: successCount, 
+        res.json({
+          message: 'Bulk import completed',
+          total: filteredEmployees.length,
+          success: successCount,
           errors: errorMessages.length,
           errorDetails: errorMessages.slice(0, 5) // Send first 5 errors for debugging
         });
@@ -345,62 +403,9 @@ app.post('/api/employees/bulk', async (req, res) => {
 app.put('/api/employees/:id', upload, (req, res) => {
   const data = req.body;
   const files = req.files || {};
-  
-  const photo_path = files.photo ? `/uploads/${files.photo[0].filename}` : data.photo_path;
-  const bank_passbook_path = files.bank_passbook ? `/uploads/${files.bank_passbook[0].filename}` : data.bank_passbook_path;
-  const bank_passbook_back_path = files.bank_passbook_back ? `/uploads/${files.bank_passbook_back[0].filename}` : data.bank_passbook_back_path;
-  const pan_card_path = files.pan_card ? `/uploads/${files.pan_card[0].filename}` : data.pan_card_path;
-  const pan_card_back_path = files.pan_card_back ? `/uploads/${files.pan_card_back[0].filename}` : data.pan_card_back_path;
-  const aadhaar_card_path = files.aadhaar_card ? `/uploads/${files.aadhaar_card[0].filename}` : data.aadhaar_card_path;
-  const aadhaar_card_back_path = files.aadhaar_card_back ? `/uploads/${files.aadhaar_card_back[0].filename}` : data.aadhaar_card_back_path;
-  const educational_certificate_path = files.educational_certificate ? `/uploads/${files.educational_certificate[0].filename}` : data.educational_certificate_path;
-  const educational_certificate_back_path = files.educational_certificate_back ? `/uploads/${files.educational_certificate_back[0].filename}` : data.educational_certificate_back_path;
-  const resume_path = files.resume ? `/uploads/${files.resume[0].filename}` : data.resume_path;
+  const { query, params } = buildEmployeeUpdate(data, files, req.params.id);
 
-  const query = `
-    UPDATE employees SET 
-      status=?, file_no=?, full_name=?, father_mother_name=?, dob=?, gender=?, contact_number=?, blood_group=?, 
-      personal_email=?, marital_status=?, present_address=?, permanent_address=?, photo_path=?,
-      employee_id=?, department=?, designation=?, date_of_joining=?, work_location=?, reporting_manager=?,
-      pan_number=?, aadhaar_number=?, other_id=?,
-      emergency_contact_name=?, emergency_contact_relationship=?, emergency_contact_number=?, 
-      father_husband_number=?, mother_wife_number=?, alternate_number=?,
-      account_holder_name=?, account_number=?, bank_name=?, ifsc_code=?, branch=?,
-      documents_submitted=?, education_qualification=?, year_of_passing=?, institute=?,
-      previous_employment=?, office_sim=?, office_sim_date=?, laptop_system=?, 
-      laptop_system_date=?, official_email_crm=?, official_email_crm_date=?,
-      asset_crm=?, asset_peopledesk=?, asset_projects=?, asset_id_card=?, asset_official_mail=?, asset_offer_letter=?,
-      check_sim=?, check_laptop=?, check_crm=?, check_peopledesk=?, check_projects=?, check_id_card=?, check_official_mail=?, check_offer_letter=?,
-      bank_passbook_path=?, pan_card_path=?, aadhaar_card_path=?, educational_certificate_path=?, signature_name=?, background_verification=?,
-      lifecycle_steps=?, official_joining_date=?, father_name=?, mother_name=?, father_mobile=?, mother_mobile=?, wedding_date=?,
-      bank_passbook_back_path=?, pan_card_back_path=?, aadhaar_card_back_path=?, educational_certificate_back_path=?, resume_path=?
-    WHERE id = ?
-  `;
-
-  const params = [
-    data.status, data.file_no, data.full_name, data.father_mother_name, data.dob, data.gender, data.contact_number, data.blood_group,
-    data.personal_email, data.marital_status, data.present_address, data.permanent_address, photo_path,
-    data.employee_id, data.department, data.designation, data.date_of_joining, data.work_location, data.reporting_manager,
-    data.pan_number, data.aadhaar_number, data.other_id,
-    data.emergency_contact_name, data.emergency_contact_relationship, data.emergency_contact_number,
-    data.father_husband_number, data.mother_wife_number, data.alternate_number,
-    data.account_holder_name, data.account_number, data.bank_name, data.ifsc_code, data.branch,
-    data.documents_submitted, data.education_qualification, data.year_of_passing, data.institute,
-    typeof data.previous_employment === 'object' ? JSON.stringify(data.previous_employment) : data.previous_employment,
-    data.office_sim, data.office_sim_date, data.laptop_system, 
-    data.laptop_system_date, data.official_email_crm, data.official_email_crm_date,
-    data.asset_crm, data.asset_peopledesk, data.asset_projects, data.asset_id_card, data.asset_official_mail, data.asset_offer_letter,
-    data.check_sim || 0, data.check_laptop || 0, data.check_crm || 0, data.check_peopledesk || 0, data.check_projects || 0, data.check_id_card || 0, data.check_official_mail || 0, data.check_offer_letter || 0,
-    bank_passbook_path, pan_card_path, aadhaar_card_path, educational_certificate_path, data.signature_name, 
-    typeof data.background_verification === 'object' ? JSON.stringify(data.background_verification) : data.background_verification,
-    typeof data.lifecycle_steps === 'object' ? JSON.stringify(data.lifecycle_steps) : data.lifecycle_steps,
-    data.official_joining_date,
-    data.father_name, data.mother_name, data.father_mobile, data.mother_mobile, data.wedding_date,
-    bank_passbook_back_path, pan_card_back_path, aadhaar_card_back_path, educational_certificate_back_path, resume_path,
-    req.params.id
-  ];
-
-  db.run(query, params, function(err) {
+  db.run(query, params, function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Employee updated successfully' });
   });
@@ -420,19 +425,19 @@ app.patch('/api/employees/:id', (req, res) => {
   values.push(req.params.id);
 
   const query = `UPDATE employees SET ${sets} WHERE id = ?`;
-  db.run(query, values, function(err) {
+  db.run(query, values, function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Employee updated successfully' });
   });
 });
 
 app.delete('/api/employees/:id', (req, res) => {
-  db.run('DELETE FROM employees WHERE id = ?', [req.params.id], function(err) {
+  db.run('DELETE FROM employees WHERE id = ?', [req.params.id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Employee deleted successfully' });
   });
 });
- 
+
 // Resource Bucket API
 app.get('/api/bucket', (req, res) => {
   const query = `
@@ -446,11 +451,11 @@ app.get('/api/bucket', (req, res) => {
     res.json(rows);
   });
 });
- 
+
 app.post('/api/bucket/bulk', (req, res) => {
   const services = req.body; // Array of { type, value }
   if (!Array.isArray(services)) return res.status(400).json({ error: 'Data must be an array' });
- 
+
   const stmt = db.prepare('INSERT OR IGNORE INTO resource_bucket (type, value) VALUES (?, ?)');
   services.forEach(item => {
     stmt.run(item.type, item.value);
@@ -460,29 +465,29 @@ app.post('/api/bucket/bulk', (req, res) => {
     res.json({ message: 'Resources imported successfully' });
   });
 });
- 
+
 app.patch('/api/bucket/:id/assign', (req, res) => {
   const { assigned_to } = req.body;
   if (!assigned_to) return res.status(400).json({ error: 'assigned_to is required' });
- 
+
   const date = new Date().toISOString().split('T')[0];
   const query = 'UPDATE resource_bucket SET assigned_to = ?, status = "Assigned", assigned_date = ? WHERE id = ?';
-  db.run(query, [assigned_to, date, req.params.id], function(err) {
+  db.run(query, [assigned_to, date, req.params.id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Resource assigned successfully' });
   });
 });
- 
+
 app.patch('/api/bucket/:id/unassign', (req, res) => {
   const query = 'UPDATE resource_bucket SET assigned_to = NULL, status = "Available", assigned_date = NULL WHERE id = ?';
-  db.run(query, [req.params.id], function(err) {
+  db.run(query, [req.params.id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Resource unassigned successfully' });
   });
 });
- 
+
 app.delete('/api/bucket/:id', (req, res) => {
-  db.run('DELETE FROM resource_bucket WHERE id = ?', [req.params.id], function(err) {
+  db.run('DELETE FROM resource_bucket WHERE id = ?', [req.params.id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Resource deleted successfully' });
   });
@@ -492,18 +497,103 @@ app.delete('/api/bucket/:id', (req, res) => {
 app.post('/api/invitations', (req, res) => {
   const { shared_name } = req.body;
   const token = crypto.randomBytes(32).toString('hex');
-  
-  db.run('INSERT INTO invitations (token, shared_name) VALUES (?, ?)', [token, shared_name], function(err) {
+
+  db.run('INSERT INTO invitations (token, shared_name, type) VALUES (?, ?, "onboarding")', [token, shared_name], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ token, shared_name });
   });
 });
 
+app.post('/api/employees/:id/edit-invitations', (req, res) => {
+  db.get('SELECT id, full_name FROM employees WHERE id = ?', [req.params.id], (err, employee) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!employee) return res.status(404).json({ error: 'Employee not found' });
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const sharedName = req.body.shared_name || employee.full_name;
+
+    db.run(
+      'INSERT INTO invitations (token, shared_name, type, employee_id) VALUES (?, ?, "employee_edit", ?)',
+      [token, sharedName, employee.id],
+      function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ token, shared_name: sharedName, employee_id: employee.id });
+      }
+    );
+  });
+});
+
 app.get('/api/invitations/verify/:token', (req, res) => {
-  db.get('SELECT * FROM invitations WHERE token = ? AND status = "pending"', [req.params.token], (err, row) => {
+  db.get('SELECT * FROM invitations WHERE token = ? AND status = "pending" AND (type IS NULL OR type = "onboarding")', [req.params.token], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!row) return res.status(404).json({ error: 'Invalid or already used invitation' });
     res.json(row);
+  });
+});
+
+app.get('/api/employee-edit-invitations/verify/:token', (req, res) => {
+  const query = `
+    SELECT invitations.id AS invitation_id, invitations.shared_name, invitations.status AS invitation_status,
+           invitations.created_at AS invitation_created_at, employees.*
+    FROM invitations
+    JOIN employees ON employees.id = invitations.employee_id
+    WHERE invitations.token = ?
+      AND invitations.status = "pending"
+      AND invitations.type = "employee_edit"
+  `;
+
+  db.get(query, [req.params.token], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!row) return res.status(404).json({ error: 'Invalid or already used employee edit link' });
+    res.json({ employee: row });
+  });
+});
+
+app.put('/api/employee-edit-invitations/:token', upload, (req, res) => {
+  const data = req.body;
+  const files = req.files || {};
+
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+
+    db.get(
+      'SELECT id, employee_id FROM invitations WHERE token = ? AND status = "pending" AND type = "employee_edit"',
+      [req.params.token],
+      (err, invitation) => {
+        if (err || !invitation) {
+          db.run('ROLLBACK');
+          return res.status(403).json({ error: 'Invalid or already used employee edit link.' });
+        }
+
+        const { query, params } = buildEmployeeUpdate(data, files, invitation.employee_id);
+
+        db.run(query, params, function (err) {
+          if (err) {
+            db.run('ROLLBACK');
+            return res.status(500).json({ error: err.message });
+          }
+
+          db.run('UPDATE invitations SET status = "used", used_at = CURRENT_TIMESTAMP WHERE id = ?', [invitation.id], (err) => {
+            if (err) {
+              db.run('ROLLBACK');
+              return res.status(500).json({ error: 'Failed to consume employee edit link.' });
+            }
+
+            db.get('SELECT * FROM employees WHERE id = ?', [invitation.employee_id], (err, employee) => {
+              if (err) {
+                db.run('ROLLBACK');
+                return res.status(500).json({ error: err.message });
+              }
+
+              db.run('COMMIT', (err) => {
+                if (err) return res.status(500).json({ error: 'Finalizing employee update failed.' });
+                res.json({ message: 'Employee details updated successfully', employee });
+              });
+            });
+          });
+        });
+      }
+    );
   });
 });
 
