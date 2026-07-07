@@ -9,7 +9,7 @@ import EditEmployee from './pages/EditEmployee';
 import Bucket from './pages/Bucket';
 import WishesBucket from './pages/WishesBucket';
 import Login from './pages/Login';
-
+import './App.css';
 const Layout = ({ children, isPublic, user, onLogout }) => {
   if (isPublic) return <div className="public-form-container">{children}</div>;
   if (!user) return null; // Should be handled by router
