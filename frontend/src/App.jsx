@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
-import { LayoutDashboard, UserPlus, Users, ExternalLink, Briefcase, FileText, FileUp, Database, Gift } from 'lucide-react';
+import { LayoutDashboard, UserPlus, ExternalLink, FileUp, Database, Gift, Archive } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import Onboarding from './pages/Onboarding';
 import EmployeeDetails from './pages/EmployeeDetails';
@@ -8,6 +8,7 @@ import BulkImport from './pages/BulkImport';
 import EditEmployee from './pages/EditEmployee';
 import Bucket from './pages/Bucket';
 import WishesBucket from './pages/WishesBucket';
+import Backups from './pages/Backups';
 import Login from './pages/Login';
 import './App.css';
 const Layout = ({ children, isPublic, user, onLogout }) => {
@@ -38,6 +39,11 @@ const Layout = ({ children, isPublic, user, onLogout }) => {
           <NavLink to="/wishes" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
             <Gift size={20} /> <span>Wishes Bucket</span>
           </NavLink>
+          {/* {user.role !== 'viewer' && (
+            <NavLink to="/backups" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+              <Archive size={20} /> <span>Backups</span>
+            </NavLink>
+          )} */}
         </div>
         
         <div className="external-links nav-links" style={{ marginTop: 'auto', borderTop: '1px solid var(--glass-border)', paddingTop: '2rem' }}>
@@ -76,6 +82,7 @@ function App() {
         <Route path="/edit-employee/:id" element={user ? (user.role === 'viewer' ? <NavLink to="/" /> : <Layout user={user} onLogout={handleLogout}><EditEmployee /></Layout>) : <Login onLogin={setUser} />} />
         <Route path="/bucket" element={user ? <Layout user={user} onLogout={handleLogout}><Bucket user={user} /></Layout> : <Login onLogin={setUser} />} />
         <Route path="/wishes" element={user ? <Layout user={user} onLogout={handleLogout}><WishesBucket /></Layout> : <Login onLogin={setUser} />} />
+        <Route path="/backups" element={user ? (user.role === 'viewer' ? <NavLink to="/" /> : <Layout user={user} onLogout={handleLogout}><Backups /></Layout>) : <Login onLogin={setUser} />} />
         <Route path="/fill-form" element={<Layout isPublic={true}><Onboarding isPublic={true} /></Layout>} />
         <Route path="/edit-form" element={<Layout isPublic={true}><EditEmployee isPublicEdit={true} /></Layout>} />
       </Routes>

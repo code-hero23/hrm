@@ -3,6 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const db = require('./db');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
@@ -10,6 +11,17 @@ const crypto = require('crypto');
 
 const app = express();
 const port = process.env.PORT || 5018;
+const backupsDir = path.join(__dirname, 'backups');
+const envFilePath = path.join(__dirname, '.env');
+const envExamplePath = path.join(__dirname, '.env.example');
+
+if (!fs.existsSync(backupsDir)) {
+  fs.mkdirSync(backupsDir, { recursive: true });
+}
+
+app.use(cors());
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 // Email Transporter (Mock)
 const transporter = nodemailer.createTransport({
@@ -42,9 +54,359 @@ const sendOnboardingEmail = (employee) => {
   });
 };
 
-app.use(cors());
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+const sendBackupEmail = async (backupRecord) => {
+  const attachments = [];
+
+  if (backupRecord.jsonPath && fs.existsSync(backupRecord.jsonPath)) {
+    attachments.push({
+      filename: path.basename(backupRecord.jsonPath),
+      path: backupRecord.jsonPath
+    });
+  }
+
+  if (backupRecord.envPath && fs.existsSync(backupRecord.envPath)) {
+    attachments.push({
+      filename: path.basename(backupRecord.envPath),
+      path: backupRecord.envPath
+    });
+  }
+
+  const mailOptions = {
+    from: '"HR Systems" <hr@orbixdesigns.com>',
+    to: process.env.BACKUP_EMAIL_TO || process.env.BACKUP_EMAIL || 'hr-notifs@orbixdesigns.com',
+    subject: `Nightly HRM Backup - ${backupRecord.createdAt}`,
+    html: `
+      <h2>Nightly backup completed</h2>
+      <p>Backup time: <strong>${backupRecord.createdAt}</strong></p>
+      <p>Employees exported: <strong>${backupRecord.employeeCount}</strong></p>
+      <p>Backup file: <strong>${backupRecord.jsonFileName}</strong></p>
+      <p>Environment file: <strong>${backupRecord.envFileName}</strong></p>
+    `,
+    attachments
+  };
+
+  return new Promise((resolve) => {
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log('Backup mail error:', error.message);
+        return resolve({ ok: false, error: error.message });
+      }
+
+      console.log('Backup email sent: %s', info.messageId);
+      resolve({ ok: true, messageId: info.messageId });
+    });
+  });
+};
+
+const getSafeEnvSnapshot = () => {
+  const keys = [
+    'PORT',
+    'NODE_ENV',
+    'BACKUP_EMAIL_TO',
+    'BACKUP_EMAIL',
+    'SMTP_HOST',
+    'SMTP_PORT',
+    'SMTP_USER',
+    'SMTP_PASS',
+    'WHATSAPP_ACCESS_TOKEN',
+    'WHATSAPP_PHONE_NUMBER_ID'
+  ];
+
+  const lines = [];
+  keys.forEach((key) => {
+    if (process.env[key]) {
+      lines.push(`${key}=${process.env[key]}`);
+    }
+  });
+
+  if (lines.length === 0 && fs.existsSync(envFilePath)) {
+    return fs.readFileSync(envFilePath, 'utf8');
+  }
+
+  if (lines.length === 0 && fs.existsSync(envExamplePath)) {
+    return fs.readFileSync(envExamplePath, 'utf8');
+  }
+
+  return lines.join('\n') + '\n';
+};
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isSqliteBusy = (error) => {
+  return error && (error.code === 'SQLITE_BUSY' || error.message?.includes('SQLITE_BUSY'));
+};
+
+const withSqliteBusyRetry = async (operation, retries = 5) => {
+  let lastError;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      if (!isSqliteBusy(error) || attempt === retries) break;
+      await wait(250 * (attempt + 1));
+    }
+  }
+
+  throw lastError;
+};
+
+const createBackupSnapshot = () => {
+  const createdAt = new Date();
+  const stamp = createdAt.toISOString().replace(/[:.]/g, '-');
+  const jsonFileName = `employees-backup-${stamp}.json`;
+  const envFileName = `env-backup-${stamp}.env`;
+  const sqliteFileName = `database-backup-${stamp}.sqlite`;
+  const jsonPath = path.join(backupsDir, jsonFileName);
+  const envPath = path.join(backupsDir, envFileName);
+  const sqlitePath = path.join(backupsDir, sqliteFileName);
+
+  return new Promise((resolve, reject) => {
+    db.all('SELECT * FROM employees ORDER BY id ASC', [], async (err, employees) => {
+      if (err) return reject(err);
+
+      const payload = {
+        createdAt: createdAt.toISOString(),
+        employeeCount: employees.length,
+        source: 'sqlite-employees-table',
+        sqliteFileName,
+        employees
+      };
+
+      try {
+        await withSqliteBusyRetry(() => new Promise((backupResolve, backupReject) => {
+          db.backup(sqlitePath, (backupErr) => {
+            if (backupErr) return backupReject(backupErr);
+            backupResolve();
+          });
+        }));
+
+        fs.writeFileSync(jsonPath, JSON.stringify(payload, null, 2), 'utf8');
+        fs.writeFileSync(envPath, getSafeEnvSnapshot(), 'utf8');
+      } catch (backupError) {
+        return reject(backupError);
+      }
+
+      resolve({
+        createdAt: createdAt.toISOString(),
+        employeeCount: employees.length,
+        jsonFileName,
+        jsonPath,
+        envFileName,
+        envPath,
+        sqliteFileName,
+        sqlitePath
+      });
+    });
+  });
+};
+
+const listBackupFiles = () => {
+  if (!fs.existsSync(backupsDir)) return [];
+
+  return fs.readdirSync(backupsDir)
+    .filter((file) => file.endsWith('.json'))
+    .map((file) => {
+      const jsonPath = path.join(backupsDir, file);
+      const stat = fs.statSync(jsonPath);
+      const envPath = path.join(backupsDir, file.replace(/^employees-backup-/, 'env-backup-').replace(/\.json$/, '.env'));
+      const sqlitePath = path.join(backupsDir, file.replace(/^employees-backup-/, 'database-backup-').replace(/\.json$/, '.sqlite'));
+      return {
+        fileName: file,
+        envFileName: path.basename(envPath),
+        sqliteFileName: path.basename(sqlitePath),
+        jsonPath,
+        envPath,
+        sqlitePath,
+        size: stat.size,
+        createdAt: stat.mtime.toISOString()
+      };
+    })
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+};
+
+const scheduleNightlyBackup = () => {
+  const now = new Date();
+  const nextRun = new Date(now);
+  nextRun.setHours(2, 0, 0, 0);
+  if (nextRun <= now) {
+    nextRun.setDate(nextRun.getDate() + 1);
+  }
+
+  const delay = nextRun.getTime() - now.getTime();
+
+  setTimeout(async () => {
+    try {
+      const backupRecord = await createBackupSnapshot();
+      await sendBackupEmail(backupRecord);
+    } catch (error) {
+      console.error('Scheduled backup failed:', error.message);
+    } finally {
+      scheduleNightlyBackup();
+    }
+  }, delay);
+
+  console.log(`Nightly backup scheduled for ${nextRun.toISOString()}`);
+};
+
+const restoreEmployeesFromBackup = (backupEmployees) => {
+  return withSqliteBusyRetry(() => new Promise((resolve, reject) => {
+    db.serialize(() => {
+      db.run('BEGIN IMMEDIATE TRANSACTION', (beginErr) => {
+        if (beginErr) return reject(beginErr);
+
+        db.run('DELETE FROM employees', (err) => {
+          if (err) {
+            db.run('ROLLBACK');
+            return reject(err);
+          }
+
+          db.run("DELETE FROM sqlite_sequence WHERE name = 'employees'", (sequenceErr) => {
+            if (sequenceErr) {
+              db.run('ROLLBACK');
+              return reject(sequenceErr);
+            }
+
+            if (!Array.isArray(backupEmployees) || backupEmployees.length === 0) {
+              db.run('COMMIT', (commitErr) => {
+                if (commitErr) return reject(commitErr);
+                resolve(0);
+              });
+              return;
+            }
+
+            const columns = Object.keys(backupEmployees[0]).filter((key) => key !== 'created_at');
+            const placeholders = columns.map(() => '?').join(',');
+            const insertQuery = `INSERT INTO employees (${columns.join(',')}) VALUES (${placeholders})`;
+
+            let index = 0;
+            const insertNext = () => {
+              if (index >= backupEmployees.length) {
+                db.run('COMMIT', (commitErr) => {
+                  if (commitErr) return reject(commitErr);
+                  resolve(backupEmployees.length);
+                });
+                return;
+              }
+
+              const employee = backupEmployees[index++];
+              const values = columns.map((column) => {
+                const value = employee[column];
+                return typeof value === 'object' && value !== null ? JSON.stringify(value) : value;
+              });
+
+              db.run(insertQuery, values, (insertErr) => {
+                if (insertErr) {
+                  db.run('ROLLBACK');
+                  return reject(insertErr);
+                }
+                insertNext();
+              });
+            };
+
+            insertNext();
+          });
+        });
+      });
+    });
+  }));
+};
+
+app.get('/api/backups', (req, res) => {
+  res.json(listBackupFiles().map((backup) => ({
+    fileName: backup.fileName,
+    envFileName: backup.envFileName,
+    sqliteFileName: backup.sqliteFileName,
+    size: backup.size,
+    createdAt: backup.createdAt,
+    downloadJsonUrl: `/api/backups/${encodeURIComponent(backup.fileName)}/download`,
+    downloadEnvUrl: `/api/backups/${encodeURIComponent(backup.envFileName)}/download`,
+    downloadSqliteUrl: `/api/backups/${encodeURIComponent(backup.sqliteFileName)}/download`,
+    restoreUrl: `/api/backups/${encodeURIComponent(backup.fileName)}/restore`
+  })));
+});
+
+app.post('/api/backups/create', async (req, res) => {
+  try {
+    const backupRecord = await createBackupSnapshot();
+    sendBackupEmail(backupRecord).catch((error) => {
+      console.error('Backup email failed:', error.message);
+    });
+
+    res.json({
+      message: 'Backup created successfully',
+      backup: {
+        fileName: backupRecord.jsonFileName,
+        envFileName: backupRecord.envFileName,
+        createdAt: backupRecord.createdAt,
+        employeeCount: backupRecord.employeeCount
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/backups/:fileName/download', (req, res) => {
+  const filePath = path.join(backupsDir, req.params.fileName);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'Backup file not found' });
+  }
+
+  res.download(filePath);
+});
+
+app.get('/api/backups/:fileName/json', (req, res) => {
+  const filePath = path.join(backupsDir, req.params.fileName);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'Backup file not found' });
+  }
+
+  try {
+    const backupData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    res.json(backupData);
+  } catch (error) {
+    res.status(500).json({ error: 'Unable to parse backup JSON file' });
+  }
+});
+
+app.post('/api/backups/:fileName/restore', async (req, res) => {
+  try {
+    const filePath = path.join(backupsDir, req.params.fileName);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Backup file not found' });
+    }
+
+    const backupData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const restoredCount = await restoreEmployeesFromBackup(backupData.employees || []);
+
+    res.json({
+      message: 'Backup restored successfully',
+      restoredCount
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/backups/restore-from-json', async (req, res) => {
+  try {
+    const { backup } = req.body;
+    if (!backup || !Array.isArray(backup.employees)) {
+      return res.status(400).json({ error: 'Valid backup JSON payload is required' });
+    }
+
+    const restoredCount = await restoreEmployeesFromBackup(backup.employees);
+    res.json({
+      message: 'Backup restored successfully',
+      restoredCount
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   setHeaders: (res) => {
     res.set('Access-Control-Allow-Origin', '*');
@@ -59,6 +421,7 @@ app.post('/api/login', (req, res) => {
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
     const match = await bcrypt.compare(password, user.password);
+    console.log(match)
     if (match) {
       res.json({ id: user.id, username: user.username, role: user.role });
     } else {
@@ -599,4 +962,5 @@ app.put('/api/employee-edit-invitations/:token', upload, (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
+  scheduleNightlyBackup();
 });

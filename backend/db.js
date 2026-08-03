@@ -48,8 +48,12 @@ if (rootDbExists) {
 }
 
 const db = new sqlite3.Database(dbPath);
+db.configure('busyTimeout', 10000);
 
 db.serialize(() => {
+  db.run('PRAGMA journal_mode = WAL');
+  db.run('PRAGMA busy_timeout = 10000');
+
   db.run(`
     CREATE TABLE IF NOT EXISTS employees (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
