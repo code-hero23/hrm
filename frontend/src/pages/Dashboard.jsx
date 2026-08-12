@@ -7,7 +7,12 @@ import {
   Filter,
   Share2,
   Check,
-  Download
+  Download,
+  X,
+  CheckSquare,
+  Square,
+  SlidersHorizontal,
+  Layers
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import API_BASE_URL from '../config';
@@ -30,6 +35,90 @@ const formatDate = (dateString) => {
   return `${day}/${month}/${year}`;
 };
 
+const ALL_EXPORT_FIELDS = [
+  {
+    category: 'Personal Information',
+    fields: [
+      { key: 'full_name', label: 'Full Name' },
+      { key: 'employee_id', label: 'Employee ID' },
+      { key: 'file_no', label: 'File No' },
+      { key: 'dob', label: 'Date of Birth (DOB)', isDate: true },
+      { key: 'gender', label: 'Gender' },
+      { key: 'blood_group', label: 'Blood Group' },
+      { key: 'marital_status', label: 'Marital Status' },
+      { key: 'father_mother_name', label: 'Father / Mother Name' },
+    ]
+  },
+  {
+    category: 'Contact & Location',
+    fields: [
+      { key: 'contact_number', label: 'Contact Number' },
+      { key: 'personal_email', label: 'Personal Email' },
+      { key: 'present_address', label: 'Present Address' },
+      { key: 'permanent_address', label: 'Permanent Address' },
+      { key: 'work_location', label: 'Work Location' },
+      { key: 'emergency_contact_name', label: 'Emergency Contact Name' },
+      { key: 'emergency_contact_relationship', label: 'Emergency Relationship' },
+      { key: 'emergency_contact_number', label: 'Emergency Contact Number' },
+    ]
+  },
+  {
+    category: 'Employment Details',
+    fields: [
+      { key: 'designation', label: 'Designation' },
+      { key: 'department', label: 'Department' },
+      { key: 'reporting_manager', label: 'Reporting Manager' },
+      { key: 'date_of_joining', label: 'Date of Joining', isDate: true },
+      { key: 'official_joining_date', label: 'Official Joining Date', isDate: true },
+      { key: 'status', label: 'Status' },
+    ]
+  },
+  {
+    category: 'Identification & Banking',
+    fields: [
+      { key: 'pan_number', label: 'PAN Number' },
+      { key: 'aadhaar_number', label: 'Aadhaar Number' },
+      { key: 'other_id', label: 'Other ID' },
+      { key: 'account_holder_name', label: 'Account Holder Name' },
+      { key: 'account_number', label: 'Account Number' },
+      { key: 'bank_name', label: 'Bank Name' },
+      { key: 'ifsc_code', label: 'IFSC Code' },
+      { key: 'branch', label: 'Bank Branch' },
+    ]
+  },
+  {
+    category: 'Office Assets & System',
+    fields: [
+      { key: 'office_sim', label: 'Office SIM' },
+      { key: 'office_sim_date', label: 'SIM Date', isDate: true },
+      { key: 'laptop_system', label: 'Laptop / System' },
+      { key: 'laptop_system_date', label: 'Laptop Date', isDate: true },
+      { key: 'official_email_crm', label: 'Official Email CRM' },
+      { key: 'official_email_crm_date', label: 'Email CRM Date', isDate: true },
+    ]
+  }
+];
+
+const DEFAULT_SELECTED_KEYS = [
+  'employee_id',
+  'full_name',
+  'dob',
+  'gender',
+  'contact_number',
+  'designation',
+  'department',
+  'date_of_joining',
+  'official_joining_date',
+  'status'
+];
+
+const ALL_FIELD_MAP = {};
+ALL_EXPORT_FIELDS.forEach(cat => {
+  cat.fields.forEach(f => {
+    ALL_FIELD_MAP[f.key] = f;
+  });
+});
+
 const Dashboard = ({ user }) => {
   const [employees, setEmployees] = useState([]);
   const [status, setStatus] = useState('');
@@ -37,6 +126,62 @@ const Dashboard = ({ user }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [copied, setCopied] = useState(false);
   const [shareName, setShareName] = useState('');
+  
+  // Export Modal State
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [selectedExportFields, setSelectedExportFields] = useState(DEFAULT_SELECTED_KEYS);
+
+  // Helper actions for modal
+  const toggleExportField = (key) => {
+    if (selectedExportFields.includes(key)) {
+      setSelectedExportFields(selectedExportFields.filter(k => k !== key));
+    } else {
+      setSelectedExportFields([...selectedExportFields, key]);
+    }
+  };
+
+  const selectAllExportFields = () => {
+    setSelectedExportFields(Object.keys(ALL_FIELD_MAP));
+  };
+
+  const deselectAllExportFields = () => {
+    setSelectedExportFields([]);
+  };
+
+  const resetDefaultExportFields = () => {
+    setSelectedExportFields(DEFAULT_SELECTED_KEYS);
+  };
+
+  const handleCustomExport = () => {
+    if (selectedExportFields.length === 0) {
+      alert('Please select at least one field to export.');
+      return;
+    }
+
+    const dataToExport = filteredEmployees.map(emp => {
+      const row = {};
+      selectedExportFields.forEach(key => {
+        const fieldMeta = ALL_FIELD_MAP[key];
+        const headerLabel = fieldMeta ? fieldMeta.label : key;
+        const val = emp[key];
+        
+        if (fieldMeta?.isDate) {
+          row[headerLabel] = formatDate(val);
+        } else {
+          row[headerLabel] = (val !== null && val !== undefined && val !== '') ? val : 'N/A';
+        }
+      });
+      return row;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Employees');
+    
+    const date = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `Employee_List_${date}.xlsx`);
+    setShowExportModal(false);
+  };
 
   useEffect(() => {
     fetchEmployees();
@@ -140,6 +285,7 @@ const Dashboard = ({ user }) => {
       Department: employee.department || 'N/A',
       Designation: employee.designation || 'N/A',
       Status: employee.status || 'N/A',
+      'Date of Birth (DOB)': formatDate(employee.dob),
       'Date of Joining': formatDate(employee.date_of_joining),
       'Official Joining Date': formatDate(
         employee.official_joining_date
@@ -536,6 +682,19 @@ const Dashboard = ({ user }) => {
               {copied
                 ? 'Link Copied!'
                 : 'One-Time Link'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowExportModal(true)}
+              className="btn btn-secondary"
+              style={{
+                height: '48px',
+                border: '1px solid rgba(255,255,255,0.1)'
+              }}
+            >
+              <Download size={20} className="text-accent" />
+              Export Data
             </button>
 
             <Link
@@ -1044,6 +1203,244 @@ const Dashboard = ({ user }) => {
               </p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Export Field Selection Modal */}
+      {showExportModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(5, 9, 20, 0.82)',
+          backdropFilter: 'blur(12px)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            background: 'linear-gradient(145deg, #0f172a 0%, #1e293b 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            borderRadius: '24px',
+            maxWidth: '780px',
+            width: '100%',
+            maxHeight: '88vh',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 30px rgba(59, 130, 246, 0.15)',
+            overflow: 'hidden'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              padding: '1.75rem 2rem 1.25rem',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start'
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: 'rgba(59, 130, 246, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px solid rgba(59, 130, 246, 0.3)'
+                  }}>
+                    <SlidersHorizontal size={20} color="#60a5fa" />
+                  </div>
+                  <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>
+                    Customize Export Fields
+                  </h3>
+                </div>
+                <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', margin: '0.35rem 0 0' }}>
+                  Select the employee data columns you want to include in the exported Excel spreadsheet.
+                </p>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setShowExportModal(false)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '12px',
+                  color: 'var(--text-dim)',
+                  padding: '0.5rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Quick Action Toolbar */}
+            <div style={{
+              padding: '0.85rem 2rem',
+              background: 'rgba(0, 0, 0, 0.2)',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '0.75rem'
+            }}>
+              <div style={{ display: 'flex', gap: '0.6rem' }}>
+                <button
+                  type="button"
+                  onClick={selectAllExportFields}
+                  className="btn btn-secondary"
+                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', borderRadius: '8px' }}
+                >
+                  <CheckSquare size={14} style={{ marginRight: '4px' }} /> Select All
+                </button>
+                <button
+                  type="button"
+                  onClick={deselectAllExportFields}
+                  className="btn btn-secondary"
+                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', borderRadius: '8px' }}
+                >
+                  <Square size={14} style={{ marginRight: '4px' }} /> Deselect All
+                </button>
+                <button
+                  type="button"
+                  onClick={resetDefaultExportFields}
+                  className="btn btn-secondary"
+                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', borderRadius: '8px' }}
+                >
+                  <Layers size={14} style={{ marginRight: '4px' }} /> Default Set
+                </button>
+              </div>
+
+              <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: selectedExportFields.length > 0 ? '#60a5fa' : '#ef4444' }}>
+                {selectedExportFields.length} of {Object.keys(ALL_FIELD_MAP).length} Fields Selected
+              </span>
+            </div>
+
+            {/* Category Grid Section */}
+            <div style={{
+              padding: '1.5rem 2rem',
+              overflowY: 'auto',
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.5rem'
+            }}>
+              {ALL_EXPORT_FIELDS.map((cat, idx) => (
+                <div key={idx} style={{
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  borderRadius: '16px',
+                  padding: '1.25rem'
+                }}>
+                  <h4 style={{
+                    fontSize: '0.8125rem',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    color: '#94a3b8',
+                    marginBottom: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#38bdf8' }}></span>
+                    {cat.category}
+                  </h4>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
+                    gap: '0.75rem'
+                  }}>
+                    {cat.fields.map(f => {
+                      const isSelected = selectedExportFields.includes(f.key);
+                      return (
+                        <label
+                          key={f.key}
+                          onClick={() => toggleExportField(f.key)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            padding: '0.65rem 0.85rem',
+                            borderRadius: '10px',
+                            background: isSelected ? 'rgba(59, 130, 246, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                            border: `1px solid ${isSelected ? 'rgba(59, 130, 246, 0.4)' : 'rgba(255, 255, 255, 0.06)'}`,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            userSelect: 'none'
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {}}
+                            style={{
+                              accentColor: '#3b82f6',
+                              width: '16px',
+                              height: '16px',
+                              cursor: 'pointer'
+                            }}
+                          />
+                          <span style={{
+                            fontSize: '0.84rem',
+                            fontWeight: isSelected ? 700 : 500,
+                            color: isSelected ? '#fff' : '#cbd5e1'
+                          }}>
+                            {f.label}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: '1.25rem 2rem',
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              background: 'rgba(0, 0, 0, 0.3)',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '1rem',
+              alignItems: 'center'
+            }}>
+              <button
+                type="button"
+                onClick={() => setShowExportModal(false)}
+                className="btn btn-secondary"
+                style={{ padding: '0.65rem 1.5rem', borderRadius: '12px' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCustomExport}
+                disabled={selectedExportFields.length === 0}
+                className="btn btn-primary"
+                style={{
+                  padding: '0.65rem 1.75rem',
+                  borderRadius: '12px',
+                  opacity: selectedExportFields.length === 0 ? 0.5 : 1,
+                  cursor: selectedExportFields.length === 0 ? 'not-allowed' : 'pointer'
+                }}
+              >
+                <Download size={18} style={{ marginRight: '6px' }} />
+                Export Excel ({selectedExportFields.length})
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
