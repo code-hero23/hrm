@@ -100,9 +100,7 @@ const EditEmployee = ({ isPublicEdit = false }) => {
     
     // Numeric only validation
     const numericFields = [
-      'contact_number', 'emergency_contact_number', 'father_husband_number', 
-      'mother_wife_number', 'alternate_number', 'account_number', 'aadhaar_number',
-      'father_mobile', 'mother_mobile'
+      'account_number', 'aadhaar_number'
     ];
     if (numericFields.includes(name)) {
       if (value !== '' && !/^\d+$/.test(value)) return;
@@ -204,11 +202,6 @@ const EditEmployee = ({ isPublicEdit = false }) => {
   };
 
   const updateBGC = (path, value) => {
-    // Numeric validation for contact fields in BGC
-    if (path.endsWith('mobile') || path.endsWith('contact')) {
-        if (value !== '' && !/^\d+$/.test(value)) return;
-    }
-
     const bgc = JSON.parse(formData.background_verification || '{}');
     const parts = path.split('.');
     let current = bgc;
@@ -593,25 +586,25 @@ const EditEmployee = ({ isPublicEdit = false }) => {
         <div>
           <h3 className="section-title">1. PERSONAL INFORMATION</h3>
           <div className="form-grid">
-            <div className="form-group"><label>FILE NO.</label><input name="file_no" value={formData.file_no} onChange={handleChange} /></div>
-            <div className="form-group"><label>FULL NAME <span style={{color:'#ef4444'}}>*</span></label><input name="full_name" value={formData.full_name} onChange={handleChange} required /></div>
-            <div className="form-group"><label>FATHER'S NAME <span style={{color:'#ef4444'}}>*</span></label><input name="father_name" value={formData.father_name} onChange={handleChange} required /></div>
-            <div className="form-group"><label>MOTHER'S NAME <span style={{color:'#ef4444'}}>*</span></label><input name="mother_name" value={formData.mother_name} onChange={handleChange} required /></div>
-            <div className="form-group"><label>DATE OF BIRTH <span style={{color:'#ef4444'}}>*</span></label><input type="date" name="dob" value={formData.dob} onChange={handleChange} required /></div>
-            <div className="form-group"><label>WEDDING DATE (OPTIONAL)</label><input type="date" name="wedding_date" value={formData.wedding_date} onChange={handleChange} /></div>
+            <div className="form-group"><label>FILE NO.</label><input name="file_no" value={formData.file_no || ''} onChange={handleChange} /></div>
+            <div className="form-group"><label>FULL NAME <span style={{color:'#ef4444'}}>*</span></label><input name="full_name" value={formData.full_name || ''} onChange={handleChange} required /></div>
+            <div className="form-group"><label>FATHER'S NAME <span style={{color:'#ef4444'}}>*</span></label><input name="father_name" value={formData.father_name || ''} onChange={handleChange} required /></div>
+            <div className="form-group"><label>MOTHER'S NAME <span style={{color:'#ef4444'}}>*</span></label><input name="mother_name" value={formData.mother_name || ''} onChange={handleChange} required /></div>
+            <div className="form-group"><label>DATE OF BIRTH <span style={{color:'#ef4444'}}>*</span></label><input type="date" name="dob" value={formData.dob || ''} onChange={handleChange} required /></div>
+            <div className="form-group"><label>WEDDING DATE (OPTIONAL)</label><input type="date" name="wedding_date" value={formData.wedding_date || ''} onChange={handleChange} /></div>
             <div className="form-group"><label>GENDER <span style={{color:'#ef4444'}}>*</span></label>
-              <select name="gender" value={formData.gender} onChange={handleChange} required>
+              <select name="gender" value={formData.gender || ''} onChange={handleChange} required>
                 <option value="">Select</option>
                 <option value="MALE">MALE</option>
                 <option value="FEMALE">FEMALE</option>
                 <option value="OTHER">OTHER</option>
               </select>
             </div>
-            <div className="form-group"><label>CONTACT NUMBER (+91) <span style={{color:'#ef4444'}}>*</span></label><input name="contact_number" value={formData.contact_number} onChange={handleChange} required /></div>
-            <div className="form-group"><label>BLOOD GROUP <span style={{color:'#ef4444'}}>*</span></label><input name="blood_group" value={formData.blood_group} onChange={handleChange} required /></div>
-            <div className="form-group"><label>PERSONAL EMAIL ID <span style={{color:'#ef4444'}}>*</span></label><input type="email" name="personal_email" value={formData.personal_email} onChange={handleChange} style={{textTransform:'none'}} required /></div>
+            <div className="form-group"><label>CONTACT NUMBER (+91) <span style={{color:'#ef4444'}}>*</span></label><input name="contact_number" value={formData.contact_number || ''} onChange={handleChange} required /></div>
+            <div className="form-group"><label>BLOOD GROUP <span style={{color:'#ef4444'}}>*</span></label><input name="blood_group" value={formData.blood_group || ''} onChange={handleChange} required /></div>
+            <div className="form-group"><label>PERSONAL EMAIL ID <span style={{color:'#ef4444'}}>*</span></label><input type="email" name="personal_email" value={formData.personal_email || ''} onChange={handleChange} style={{textTransform:'none'}} required /></div>
             <div className="form-group"><label>MARITAL STATUS <span style={{color:'#ef4444'}}>*</span></label>
-               <select name="marital_status" value={formData.marital_status} onChange={handleChange} required>
+               <select name="marital_status" value={formData.marital_status || ''} onChange={handleChange} required>
                 <option value="">Select</option>
                 <option value="SINGLE">SINGLE</option>
                 <option value="MARRIED">MARRIED</option>
@@ -619,8 +612,8 @@ const EditEmployee = ({ isPublicEdit = false }) => {
               </select>
             </div>
           </div>
-          <div className="form-group" style={{marginTop:'1.5rem'}}><label>PRESENT ADDRESS <span style={{color:'#ef4444'}}>*</span></label><textarea name="present_address" value={formData.present_address} onChange={handleChange} required></textarea></div>
-          <div className="form-group" style={{marginTop:'1.5rem'}}><label>PERMANENT ADDRESS <span style={{color:'#ef4444'}}>*</span></label><textarea name="permanent_address" value={formData.permanent_address} onChange={handleChange} required></textarea></div>
+          <div className="form-group" style={{marginTop:'1.5rem'}}><label>PRESENT ADDRESS <span style={{color:'#ef4444'}}>*</span></label><textarea name="present_address" value={formData.present_address || ''} onChange={handleChange} required></textarea></div>
+          <div className="form-group" style={{marginTop:'1.5rem'}}><label>PERMANENT ADDRESS <span style={{color:'#ef4444'}}>*</span></label><textarea name="permanent_address" value={formData.permanent_address || ''} onChange={handleChange} required></textarea></div>
           <div className="form-group" style={{marginTop:'1.5rem'}}>
             <label>PHOTO (PASSPORT SIZE) <span style={{color:'#ef4444'}}>*</span></label>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -694,18 +687,18 @@ const EditEmployee = ({ isPublicEdit = false }) => {
         <div>
           <h3 className="section-title">3. IDENTIFICATION & EMERGENCY</h3>
           <div className="form-grid">
-            <div className="form-group"><label>PAN NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="pan_number" value={formData.pan_number} onChange={handleChange} required /></div>
-            <div className="form-group"><label>AADHAAR NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="aadhaar_number" value={formData.aadhaar_number} onChange={handleChange} required /></div>
-            <div className="form-group"><label>OTHER ID (OPTIONAL)</label><input name="other_id" value={formData.other_id} onChange={handleChange} /></div>
+            <div className="form-group"><label>PAN NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="pan_number" value={formData.pan_number || ''} onChange={handleChange} required /></div>
+            <div className="form-group"><label>AADHAAR NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="aadhaar_number" value={formData.aadhaar_number || ''} onChange={handleChange} required /></div>
+            <div className="form-group"><label>OTHER ID (OPTIONAL)</label><input name="other_id" value={formData.other_id || ''} onChange={handleChange} /></div>
           </div>
           <h4 style={{margin:'2rem 0 1rem', fontSize:'0.9rem'}}>EMERGENCY CONTACT</h4>
           <div className="form-grid">
-            <div className="form-group"><label>NAME <span style={{color:'#ef4444'}}>*</span></label><input name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleChange} required /></div>
-            <div className="form-group"><label>RELATIONSHIP <span style={{color:'#ef4444'}}>*</span></label><input name="emergency_contact_relationship" value={formData.emergency_contact_relationship} onChange={handleChange} required /></div>
-            <div className="form-group"><label>CONTACT NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleChange} required /></div>
-            <div className="form-group"><label>FATHER MOBILE NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="father_mobile" value={formData.father_mobile} onChange={handleChange} required /></div>
-            <div className="form-group"><label>MOTHER MOBILE NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="mother_mobile" value={formData.mother_mobile} onChange={handleChange} required /></div>
-            <div className="form-group"><label>ALTERNATE NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="alternate_number" value={formData.alternate_number} onChange={handleChange} required /></div>
+            <div className="form-group"><label>NAME <span style={{color:'#ef4444'}}>*</span></label><input name="emergency_contact_name" value={formData.emergency_contact_name || ''} onChange={handleChange} required /></div>
+            <div className="form-group"><label>RELATIONSHIP <span style={{color:'#ef4444'}}>*</span></label><input name="emergency_contact_relationship" value={formData.emergency_contact_relationship || ''} onChange={handleChange} required /></div>
+            <div className="form-group"><label>CONTACT NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="emergency_contact_number" value={formData.emergency_contact_number || ''} onChange={handleChange} required /></div>
+            <div className="form-group"><label>FATHER MOBILE NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="father_mobile" value={formData.father_mobile || ''} onChange={handleChange} required /></div>
+            <div className="form-group"><label>MOTHER MOBILE NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="mother_mobile" value={formData.mother_mobile || ''} onChange={handleChange} required /></div>
+            <div className="form-group"><label>ALTERNATE NUMBER <span style={{color:'#ef4444'}}>*</span></label><input name="alternate_number" value={formData.alternate_number || ''} onChange={handleChange} required /></div>
           </div>
         </div>
       );

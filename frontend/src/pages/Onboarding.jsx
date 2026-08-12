@@ -116,6 +116,12 @@ const Onboarding = ({ isPublic }) => {
     }
   };
 
+  const isRequiredInputFilled = (input) => {
+    if (input.type === 'file') return true;
+    if (input.type === 'checkbox' || input.type === 'radio') return input.checked;
+    return Boolean(input.value && input.value.trim() !== '');
+  };
+
   const validateStep = () => {
     const stepRef = document.querySelector('form');
     if (!stepRef) return true;
@@ -124,7 +130,7 @@ const Onboarding = ({ isPublic }) => {
     let isValid = true;
     
     requiredInputs.forEach(input => {
-      if (!input.value || input.value.trim() === '') {
+      if (!isRequiredInputFilled(input)) {
         input.classList.add('invalid-field');
         isValid = false;
       } else {
@@ -411,7 +417,7 @@ const Onboarding = ({ isPublic }) => {
             {/* Bank Passbook */}
             <div className="form-group">
               <label>BANK PASSBOOK (FRONT) <span style={{color:'#ef4444'}}>*</span></label>
-              <input type="file" onChange={(e) => handleFileChange(e, 'bank_passbook')} accept="image/*,.pdf" required />
+              <input type="file" onChange={(e) => handleFileChange(e, 'bank_passbook')} accept="image/*,.pdf" />
               {docs.bank_passbook && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.bank_passbook.name}</p>}
             </div>
             <div className="form-group">
@@ -423,7 +429,7 @@ const Onboarding = ({ isPublic }) => {
             {/* PAN Card */}
             <div className="form-group">
               <label>PAN CARD (FRONT) <span style={{color:'#ef4444'}}>*</span></label>
-              <input type="file" onChange={(e) => handleFileChange(e, 'pan_card')} accept="image/*,.pdf" required />
+              <input type="file" onChange={(e) => handleFileChange(e, 'pan_card')} accept="image/*,.pdf" />
               {docs.pan_card && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.pan_card.name}</p>}
             </div>
             <div className="form-group">
@@ -435,7 +441,7 @@ const Onboarding = ({ isPublic }) => {
             {/* Aadhaar Card */}
             <div className="form-group">
               <label>AADHAAR CARD (FRONT) <span style={{color:'#ef4444'}}>*</span></label>
-              <input type="file" onChange={(e) => handleFileChange(e, 'aadhaar_card')} accept="image/*,.pdf" required />
+              <input type="file" onChange={(e) => handleFileChange(e, 'aadhaar_card')} accept="image/*,.pdf" />
               {docs.aadhaar_card && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.aadhaar_card.name}</p>}
             </div>
             <div className="form-group">
@@ -447,7 +453,7 @@ const Onboarding = ({ isPublic }) => {
             {/* Educational Certificate */}
             <div className="form-group">
               <label>EDUCATIONAL CERTIFICATE (FRONT) <span style={{color:'#ef4444'}}>*</span></label>
-              <input type="file" onChange={(e) => handleFileChange(e, 'educational_certificate')} accept="image/*,.pdf" required />
+              <input type="file" onChange={(e) => handleFileChange(e, 'educational_certificate')} accept="image/*,.pdf" />
               {docs.educational_certificate && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.educational_certificate.name}</p>}
             </div>
             <div className="form-group">
@@ -459,7 +465,7 @@ const Onboarding = ({ isPublic }) => {
             {/* Resume / CV */}
             <div className="form-group">
               <label>RESUME / CV <span style={{color:'#ef4444'}}>*</span></label>
-              <input type="file" onChange={(e) => handleFileChange(e, 'resume')} accept="image/*,.pdf" required />
+              <input type="file" onChange={(e) => handleFileChange(e, 'resume')} accept="image/*,.pdf" />
               {docs.resume && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs.resume.name}</p>}
             </div>
           </div>
@@ -738,7 +744,7 @@ const Onboarding = ({ isPublic }) => {
       </div>
 
       <div className="card slide-in">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           {renderStep()}
           
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid var(--glass-border)' }}>
