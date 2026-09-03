@@ -1,5 +1,10 @@
 node_modules
 npm-debug.log
 .env
-backend/data/
-uploads
+data/
+uploads/
+backups/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.bak*

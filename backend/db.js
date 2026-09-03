@@ -9,42 +9,69 @@ if (!fs.existsSync(dataDir)) {
 }
 
 let dbPath = path.join(dataDir, 'hrms.sqlite');
+
+// Legacy and fallback candidate paths
+const legacyDataDbPath = path.join(dataDir, 'database.sqlite');
 const rootDbPath = path.join(__dirname, 'hrms.sqlite');
+const legacyRootDbPath = path.join(__dirname, 'database.sqlite');
 
-// Diagnostics and Aggressive Recovery Logic
-const rootDbExists = fs.existsSync(rootDbPath);
-const dataDbExists = fs.existsSync(dbPath);
+const getFileSize = (file) => {
+  try {
+    return fs.existsSync(file) ? fs.statSync(file).size : 0;
+  } catch (e) {
+    return 0;
+  }
+};
 
-console.log('--- DATABASE DIAGNOSTICS ---');
-console.log('Root DB Path:', rootDbPath, '| Exists:', rootDbExists);
-console.log('Data DB Path:', dbPath, '| Exists:', dataDbExists);
+const currentDbSize = getFileSize(dbPath);
+const legacyDataDbSize = getFileSize(legacyDataDbPath);
+const rootDbSize = getFileSize(rootDbPath);
+const legacyRootDbSize = getFileSize(legacyRootDbPath);
 
-// We use a separate connection for diagnostics to avoid locking the main one
-if (rootDbExists) {
-    try {
-        const rootSize = fs.statSync(rootDbPath).size;
-        console.log(`Root DB File Size: ${rootSize} bytes`);
+console.log('--- DATABASE DIAGNOSTICS & RECOVERY ---');
+console.log(`Active DB Path (${dbPath}): ${currentDbSize} bytes`);
+console.log(`Legacy Data DB (${legacyDataDbPath}): ${legacyDataDbSize} bytes`);
+console.log(`Root DB (${rootDbPath}): ${rootDbSize} bytes`);
+console.log(`Legacy Root DB (${legacyRootDbPath}): ${legacyRootDbSize} bytes`);
 
-        // Aggressive Migration: If root database is found, we assume it's the one with data
-        // especially if it's typical SQLite size (usually >= 20480 for a few records)
-        if (rootSize > 0) {
-            const dataSize = dataDbExists ? fs.statSync(dbPath).size : 0;
-            
-            // If Data DB is significantly smaller (like empty) or missing, MOVE ROOT TO DATA
-            if (!dataDbExists || rootSize > dataSize) {
-                console.log('!!! RECOVERY: DATA MISMATCH DETECTED !!!');
-                console.log(`Root DB (${rootSize}) is likely the correct one. Data DB is ${dataSize}.`);
-                console.log('Migrating root data to persistent volume...');
-                
-                if (dataDbExists) fs.copyFileSync(dbPath, dbPath + '.bak_' + Date.now());
-                fs.copyFileSync(rootDbPath, dbPath);
-                
-                console.log('RECOVERY: Migration successful. Connecting to restored data.');
-            }
-        }
-    } catch (e) {
-        console.error('RECOVERY LOGIC ERROR:', e.message);
+// Auto-Recovery 1: If active hrms.sqlite has no data / smaller than legacy database.sqlite in data folder
+if (legacyDataDbSize > currentDbSize && legacyDataDbSize > 8192) {
+  console.log('>>> RECOVERY: Found legacy database.sqlite with existing data! Migrating to hrms.sqlite...');
+  try {
+    if (currentDbSize > 0) {
+      fs.copyFileSync(dbPath, dbPath + '.bak_' + Date.now());
     }
+    fs.copyFileSync(legacyDataDbPath, dbPath);
+    console.log('>>> RECOVERY: Migration from legacy database.sqlite successful!');
+  } catch (e) {
+    console.error('>>> RECOVERY ERROR:', e.message);
+  }
+}
+// Auto-Recovery 2: Root database.sqlite fallback
+else if (legacyRootDbSize > currentDbSize && legacyRootDbSize > 8192) {
+  console.log('>>> RECOVERY: Found root database.sqlite with existing data! Migrating to data/hrms.sqlite...');
+  try {
+    if (currentDbSize > 0) {
+      fs.copyFileSync(dbPath, dbPath + '.bak_' + Date.now());
+    }
+    fs.copyFileSync(legacyRootDbPath, dbPath);
+    console.log('>>> RECOVERY: Migration from root database.sqlite successful!');
+  } catch (e) {
+    console.error('>>> RECOVERY ERROR:', e.message);
+  }
+}
+// Auto-Recovery 3: Root hrms.sqlite fallback
+else if (rootDbSize > currentDbSize && rootDbSize > 8192) {
+  console.log('>>> RECOVERY: Found root hrms.sqlite with existing data! Migrating to data/hrms.sqlite...');
+  try {
+    if (currentDbSize > 0) {
+      fs.copyFileSync(dbPath, dbPath + '.bak_' + Date.now());
+    }
+    fs.copyFileSync(rootDbPath, dbPath);
+    console.log('>>> RECOVERY: Migration from root hrms.sqlite successful!');
+  } catch (e) {
+    console.error('>>> RECOVERY ERROR:', e.message);
+  }
 }
 
 const db = new sqlite3.Database(dbPath);
