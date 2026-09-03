@@ -41,35 +41,48 @@ fi
 # Fix permissions first to ensure cp succeeds even if files were created by root Docker
 sudo chown -R $(id -u):$(id -g) backend/data 2>/dev/null || true
 
+copy_sqlite_with_wal() {
+  SRC="$1"
+  DST="$2"
+  if [ -f "$SRC" ]; then
+    sudo cp "$SRC" "$DST"
+    [ -f "${SRC}-wal" ] && sudo cp "${SRC}-wal" "${DST}-wal" || true
+    [ -f "${SRC}-shm" ] && sudo cp "${SRC}-shm" "${DST}-shm" || true
+  fi
+}
+
 if [ ! -f "backend/data/hrms.sqlite" ] || [ ! -s "backend/data/hrms.sqlite" ]; then
   if [ -f "backend/data/database.sqlite" ]; then
     echo ">>> MIGRATION: Found backend/data/database.sqlite. Syncing to backend/data/hrms.sqlite..."
-    sudo cp backend/data/database.sqlite backend/data/hrms.sqlite
+    copy_sqlite_with_wal "backend/data/database.sqlite" "backend/data/hrms.sqlite"
   elif [ -f "backend/database.sqlite" ]; then
     echo ">>> MIGRATION: Found legacy root backend/database.sqlite. Syncing to backend/data/hrms.sqlite..."
-    sudo cp backend/database.sqlite backend/data/hrms.sqlite
+    copy_sqlite_with_wal "backend/database.sqlite" "backend/data/hrms.sqlite"
   elif [ -f "backend/hrms.sqlite" ]; then
     echo ">>> MIGRATION: Found legacy root backend/hrms.sqlite. Syncing to backend/data/hrms.sqlite..."
-    sudo cp backend/hrms.sqlite backend/data/hrms.sqlite
+    copy_sqlite_with_wal "backend/hrms.sqlite" "backend/data/hrms.sqlite"
   else
     # Look for any recent database in backups if none found in active folders
     LATEST_BACKUP_DB=$(find backend/backups/ -name "*.sqlite" -type f 2>/dev/null | sort -r | head -n 1)
     if [ -n "$LATEST_BACKUP_DB" ]; then
       echo ">>> RECOVERY: Restoring database from backup: $LATEST_BACKUP_DB..."
-      sudo cp "$LATEST_BACKUP_DB" backend/data/hrms.sqlite
+      copy_sqlite_with_wal "$LATEST_BACKUP_DB" "backend/data/hrms.sqlite"
     fi
   fi
 else
-  # If backend/data/hrms.sqlite exists, check if database.sqlite in backend/data or root is larger
+  # If backend/data/hrms.sqlite exists, check if database.sqlite in backend/data or root is larger or has WAL data
   if [ -f "backend/data/database.sqlite" ]; then
     SIZE_HRMS=$(stat -c%s "backend/data/hrms.sqlite" 2>/dev/null || stat -f%z "backend/data/hrms.sqlite" 2>/dev/null || echo 0)
+    [ -f "backend/data/hrms.sqlite-wal" ] && SIZE_HRMS=$((SIZE_HRMS + $(stat -c%s "backend/data/hrms.sqlite-wal" 2>/dev/null || echo 0)))
     SIZE_DATA_DB=$(stat -c%s "backend/data/database.sqlite" 2>/dev/null || stat -f%z "backend/data/database.sqlite" 2>/dev/null || echo 0)
+    [ -f "backend/data/database.sqlite-wal" ] && SIZE_DATA_DB=$((SIZE_DATA_DB + $(stat -c%s "backend/data/database.sqlite-wal" 2>/dev/null || echo 0)))
     if [ "$SIZE_DATA_DB" -ge "$SIZE_HRMS" ] && [ "$SIZE_DATA_DB" -gt 8192 ]; then
       echo ">>> SYNC: backend/data/database.sqlite ($SIZE_DATA_DB bytes) contains active/larger data. Syncing to hrms.sqlite..."
-      sudo cp backend/data/database.sqlite backend/data/hrms.sqlite
+      copy_sqlite_with_wal "backend/data/database.sqlite" "backend/data/hrms.sqlite"
     fi
   fi
 fi
+
 
 # Ensure permissions so Docker container can write to mounted volumes
 sudo chown -R $(id -u):$(id -g) backend/data backend/uploads 2>/dev/null || true
