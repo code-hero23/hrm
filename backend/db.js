@@ -34,24 +34,33 @@ console.log(`Legacy Data DB (${legacyDataDbPath}): ${legacyDataDbSize} bytes`);
 console.log(`Root DB (${rootDbPath}): ${rootDbSize} bytes`);
 console.log(`Legacy Root DB (${legacyRootDbPath}): ${legacyRootDbSize} bytes`);
 
-// Auto-Recovery 1: If active hrms.sqlite has no data / smaller than legacy database.sqlite in data folder
-if (legacyDataDbSize > currentDbSize && legacyDataDbSize > 8192) {
-  console.log('>>> RECOVERY: Found legacy database.sqlite with existing data! Migrating to hrms.sqlite...');
+// Auto-Recovery 1: If active hrms.sqlite has no data or legacy database.sqlite exists in data folder
+if (legacyDataDbSize > 8192 && fs.existsSync(legacyDataDbPath)) {
+  console.log('>>> RECOVERY: Found legacy database.sqlite with existing data! Checking migration...');
   try {
-    if (currentDbSize > 0) {
-      fs.copyFileSync(dbPath, dbPath + '.bak_' + Date.now());
+    // Check if current hrms.sqlite is missing or same size/smaller
+    if (!fs.existsSync(dbPath) || legacyDataDbSize >= currentDbSize) {
+      if (currentDbSize > 0 && fs.existsSync(dbPath)) {
+        fs.copyFileSync(dbPath, dbPath + '.bak_' + Date.now());
+      }
+      fs.copyFileSync(legacyDataDbPath, dbPath);
+      if (fs.existsSync(legacyDataDbPath + '-wal')) {
+        fs.copyFileSync(legacyDataDbPath + '-wal', dbPath + '-wal');
+      }
+      if (fs.existsSync(legacyDataDbPath + '-shm')) {
+        fs.copyFileSync(legacyDataDbPath + '-shm', dbPath + '-shm');
+      }
+      console.log('>>> RECOVERY: Migration from legacy database.sqlite & WAL files successful!');
     }
-    fs.copyFileSync(legacyDataDbPath, dbPath);
-    console.log('>>> RECOVERY: Migration from legacy database.sqlite successful!');
   } catch (e) {
     console.error('>>> RECOVERY ERROR:', e.message);
   }
 }
 // Auto-Recovery 2: Root database.sqlite fallback
-else if (legacyRootDbSize > currentDbSize && legacyRootDbSize > 8192) {
+else if (legacyRootDbSize > 8192 && fs.existsSync(legacyRootDbPath)) {
   console.log('>>> RECOVERY: Found root database.sqlite with existing data! Migrating to data/hrms.sqlite...');
   try {
-    if (currentDbSize > 0) {
+    if (currentDbSize > 0 && fs.existsSync(dbPath)) {
       fs.copyFileSync(dbPath, dbPath + '.bak_' + Date.now());
     }
     fs.copyFileSync(legacyRootDbPath, dbPath);
@@ -61,10 +70,10 @@ else if (legacyRootDbSize > currentDbSize && legacyRootDbSize > 8192) {
   }
 }
 // Auto-Recovery 3: Root hrms.sqlite fallback
-else if (rootDbSize > currentDbSize && rootDbSize > 8192) {
+else if (rootDbSize > 8192 && fs.existsSync(rootDbPath)) {
   console.log('>>> RECOVERY: Found root hrms.sqlite with existing data! Migrating to data/hrms.sqlite...');
   try {
-    if (currentDbSize > 0) {
+    if (currentDbSize > 0 && fs.existsSync(dbPath)) {
       fs.copyFileSync(dbPath, dbPath + '.bak_' + Date.now());
     }
     fs.copyFileSync(rootDbPath, dbPath);

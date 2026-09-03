@@ -13,6 +13,14 @@ mkdir -p "$BACKUP_DIR"
 if [ -d "backend/data" ]; then
   echo "Backing up persistent database files to $BACKUP_DIR..."
   cp -r backend/data/* "$BACKUP_DIR/" 2>/dev/null || true
+
+  # Ensure legacy database.sqlite and its WAL files are synced to hrms.sqlite so no data is lost
+  if [ -f "backend/data/database.sqlite" ]; then
+    echo "Syncing legacy database.sqlite and WAL files to hrms.sqlite..."
+    cp "backend/data/database.sqlite" "backend/data/hrms.sqlite"
+    [ -f "backend/data/database.sqlite-wal" ] && cp "backend/data/database.sqlite-wal" "backend/data/hrms.sqlite-wal" || true
+    [ -f "backend/data/database.sqlite-shm" ] && cp "backend/data/database.sqlite-shm" "backend/data/hrms.sqlite-shm" || true
+  fi
 fi
 
 if [ -d "backend/uploads" ]; then
