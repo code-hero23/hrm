@@ -83,6 +83,7 @@ else if (rootDbSize > 8192 && fs.existsSync(rootDbPath)) {
   }
 }
 
+
 const db = new sqlite3.Database(dbPath);
 db.configure('busyTimeout', 10000);
 
