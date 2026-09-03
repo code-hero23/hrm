@@ -8,8 +8,8 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-let dbPath = path.join(dataDir, 'database.sqlite');
-const rootDbPath = path.join(__dirname, 'database.sqlite');
+let dbPath = path.join(dataDir, 'hrms.sqlite');
+const rootDbPath = path.join(__dirname, 'hrms.sqlite');
 
 // Diagnostics and Aggressive Recovery Logic
 const rootDbExists = fs.existsSync(rootDbPath);
@@ -212,6 +212,10 @@ db.serialize(() => {
   // Insert default viewer if not exists (username: View@cookscape.com, password: View@2026)
   const hashedViewerPassword = bcrypt.hashSync('View@2026', 10);
   db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('View@cookscape.com', '${hashedViewerPassword}', 'viewer')`);
+
+  // Insert admin@cookscape.com if not exists or replace to update password
+  const hashedUserAdminPassword = bcrypt.hashSync('admin123', 10);
+  db.run(`INSERT OR REPLACE INTO users (username, password, role) VALUES ('admin@cookscape.com', '${hashedUserAdminPassword}', 'admin')`);
 
   console.log('Database initialized');
 

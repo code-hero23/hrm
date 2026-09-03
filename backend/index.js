@@ -815,6 +815,48 @@ app.get('/api/bucket', (req, res) => {
   });
 });
 
+app.post('/api/bucket', (req, res) => {
+  const { type, value } = req.body;
+  if (!type || !value) {
+    return res.status(400).json({ error: 'Type and Value are required' });
+  }
+
+  const cleanType = String(type).trim();
+  const cleanValue = String(value).trim();
+
+  if (!['Email', 'Phone'].includes(cleanType)) {
+    return res.status(400).json({ error: 'Type must be Email or Phone' });
+  }
+
+  if (cleanValue.length === 0) {
+    return res.status(400).json({ error: 'Value cannot be empty' });
+  }
+
+  db.get('SELECT id, type, value, status FROM resource_bucket WHERE LOWER(value) = LOWER(?)', [cleanValue], (err, existing) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (existing) {
+      return res.status(400).json({ error: `This ${cleanType.toLowerCase()} (${cleanValue}) already exists in the Resource Bucket.` });
+    }
+
+    const stmt = db.prepare('INSERT INTO resource_bucket (type, value, status) VALUES (?, ?, "Available")');
+    stmt.run(cleanType, cleanValue, function (insertErr) {
+      if (insertErr) return res.status(500).json({ error: insertErr.message });
+      res.status(201).json({
+        message: `${cleanType} added successfully`,
+        resource: {
+          id: this.lastID,
+          type: cleanType,
+          value: cleanValue,
+          status: 'Available',
+          assigned_to: null,
+          assigned_date: null
+        }
+      });
+    });
+    stmt.finalize();
+  });
+});
+
 app.post('/api/bucket/bulk', (req, res) => {
   const services = req.body; // Array of { type, value }
   if (!Array.isArray(services)) return res.status(400).json({ error: 'Data must be an array' });

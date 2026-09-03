@@ -65,8 +65,12 @@ Bulk inserts multiple employee records.
 ### GET `/api/bucket`
 Lists all resources and their assignment status.
 
+### POST `/api/bucket`
+Adds a single resource (Email or Phone).
+- **Request Body**: `{ "type": "Email" | "Phone", "value": "user@example.com" }`
+
 ### POST `/api/bucket/bulk`
-Bulk imports resources (SIMs, Laptops).
+Bulk imports resources (Email, Phone, SIMs, Laptops).
 
 ### PATCH `/api/bucket/:id/assign`
 Assigns a resource to an employee.
