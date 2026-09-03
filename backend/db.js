@@ -34,24 +34,26 @@ console.log(`Legacy Data DB (${legacyDataDbPath}): ${legacyDataDbSize} bytes`);
 console.log(`Root DB (${rootDbPath}): ${rootDbSize} bytes`);
 console.log(`Legacy Root DB (${legacyRootDbPath}): ${legacyRootDbSize} bytes`);
 
-// Auto-Recovery 1: If active hrms.sqlite has no data / smaller than legacy database.sqlite in data folder
-if (legacyDataDbSize > currentDbSize && legacyDataDbSize > 8192) {
+// Auto-Recovery 1: If active hrms.sqlite has no data or legacy database.sqlite has data and is >= active DB
+if (legacyDataDbSize > 8192 && (currentDbSize === 0 || legacyDataDbSize >= currentDbSize)) {
   console.log('>>> RECOVERY: Found legacy database.sqlite with existing data! Migrating to hrms.sqlite...');
   try {
-    if (currentDbSize > 0) {
+    if (currentDbSize > 0 && legacyDataDbSize !== currentDbSize) {
       fs.copyFileSync(dbPath, dbPath + '.bak_' + Date.now());
     }
-    fs.copyFileSync(legacyDataDbPath, dbPath);
-    console.log('>>> RECOVERY: Migration from legacy database.sqlite successful!');
+    if (currentDbSize === 0 || legacyDataDbSize >= currentDbSize) {
+      fs.copyFileSync(legacyDataDbPath, dbPath);
+      console.log('>>> RECOVERY: Migration from legacy database.sqlite successful!');
+    }
   } catch (e) {
     console.error('>>> RECOVERY ERROR:', e.message);
   }
 }
 // Auto-Recovery 2: Root database.sqlite fallback
-else if (legacyRootDbSize > currentDbSize && legacyRootDbSize > 8192) {
+else if (legacyRootDbSize > 8192 && (currentDbSize === 0 || legacyRootDbSize >= currentDbSize)) {
   console.log('>>> RECOVERY: Found root database.sqlite with existing data! Migrating to data/hrms.sqlite...');
   try {
-    if (currentDbSize > 0) {
+    if (currentDbSize > 0 && legacyRootDbSize !== currentDbSize) {
       fs.copyFileSync(dbPath, dbPath + '.bak_' + Date.now());
     }
     fs.copyFileSync(legacyRootDbPath, dbPath);
@@ -61,10 +63,10 @@ else if (legacyRootDbSize > currentDbSize && legacyRootDbSize > 8192) {
   }
 }
 // Auto-Recovery 3: Root hrms.sqlite fallback
-else if (rootDbSize > currentDbSize && rootDbSize > 8192) {
+else if (rootDbSize > 8192 && (currentDbSize === 0 || rootDbSize >= currentDbSize)) {
   console.log('>>> RECOVERY: Found root hrms.sqlite with existing data! Migrating to data/hrms.sqlite...');
   try {
-    if (currentDbSize > 0) {
+    if (currentDbSize > 0 && rootDbSize !== currentDbSize) {
       fs.copyFileSync(dbPath, dbPath + '.bak_' + Date.now());
     }
     fs.copyFileSync(rootDbPath, dbPath);
@@ -73,6 +75,7 @@ else if (rootDbSize > currentDbSize && rootDbSize > 8192) {
     console.error('>>> RECOVERY ERROR:', e.message);
   }
 }
+
 
 const db = new sqlite3.Database(dbPath);
 db.configure('busyTimeout', 10000);
