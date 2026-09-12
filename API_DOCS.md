@@ -86,6 +86,11 @@ Removes assignment from a resource.
 Generates a unique onboarding invitation token.
 - **Request Body**: `{ "shared_name": "..." }`
 
+### POST `/api/employees/batch-edit-tokens`
+Generates or retrieves active pending one-time edit tokens for a batch of employees.
+- **Request Body**: `{ "employee_ids": [1, 2, 3] }`
+- **Response**: `{ "tokens": { "1": "...", "2": "..." }, "statuses": { "1": "pending", "2": "pending" } }`
+
 ### GET `/api/invitations/verify/:token`
 Verifies if a token is valid and still "pending".
 

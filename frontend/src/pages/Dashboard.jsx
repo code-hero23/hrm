@@ -14,7 +14,7 @@ import {
   SlidersHorizontal,
   Layers
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx-js-style';
 import API_BASE_URL from '../config';
 
 const formatDate = (dateString) => {
@@ -96,6 +96,13 @@ const ALL_EXPORT_FIELDS = [
       { key: 'official_email_crm', label: 'Official Email CRM' },
       { key: 'official_email_crm_date', label: 'Email CRM Date', isDate: true },
     ]
+  },
+  {
+    category: 'Access & Edit Links',
+    fields: [
+      { key: 'editable_link', label: 'Data Editable Link (One-Time Link)' },
+      { key: 'link_status', label: 'One-Time Link Status' }
+    ]
   }
 ];
 
@@ -130,6 +137,7 @@ const Dashboard = ({ user }) => {
   // Export Modal State
   const [showExportModal, setShowExportModal] = useState(false);
   const [selectedExportFields, setSelectedExportFields] = useState(DEFAULT_SELECTED_KEYS);
+  const [exportingCustom, setExportingCustom] = useState(false);
 
   // Helper actions for modal
   const toggleExportField = (key) => {
@@ -152,35 +160,204 @@ const Dashboard = ({ user }) => {
     setSelectedExportFields(DEFAULT_SELECTED_KEYS);
   };
 
-  const handleCustomExport = () => {
+  const handleCustomExport = async () => {
     if (selectedExportFields.length === 0) {
       alert('Please select at least one field to export.');
       return;
     }
 
-    const dataToExport = filteredEmployees.map(emp => {
-      const row = {};
-      selectedExportFields.forEach(key => {
-        const fieldMeta = ALL_FIELD_MAP[key];
-        const headerLabel = fieldMeta ? fieldMeta.label : key;
-        const val = emp[key];
-        
-        if (fieldMeta?.isDate) {
-          row[headerLabel] = formatDate(val);
-        } else {
-          row[headerLabel] = (val !== null && val !== undefined && val !== '') ? val : 'N/A';
+    if (!filteredEmployees || filteredEmployees.length === 0) {
+      alert('No employees found for export.');
+      return;
+    }
+
+    setExportingCustom(true);
+
+    try {
+      let tokenMap = {};
+      let statusMap = {};
+
+      const needsTokens =
+        selectedExportFields.includes('editable_link') ||
+        selectedExportFields.includes('link_status');
+
+      if (needsTokens) {
+        const empIds = filteredEmployees.map((emp) => emp.id).filter(Boolean);
+        try {
+          const res = await axios.post(
+            `${API_BASE_URL}/api/employees/batch-edit-tokens`,
+            { employee_ids: empIds }
+          );
+          tokenMap = res.data?.tokens || {};
+          statusMap = res.data?.statuses || {};
+        } catch (err) {
+          console.error('Failed to fetch batch edit tokens:', err);
+          alert('Note: Could not generate some one-time edit links.');
+        }
+      }
+
+      const linkColumnHeader =
+        ALL_FIELD_MAP['editable_link']?.label ||
+        'Data Editable Link (One-Time Link)';
+
+      const dataToExport = filteredEmployees.map((emp) => {
+        const row = {};
+        selectedExportFields.forEach((key) => {
+          const fieldMeta = ALL_FIELD_MAP[key];
+          const headerLabel = fieldMeta ? fieldMeta.label : key;
+
+          if (key === 'editable_link') {
+            const token = tokenMap[emp.id];
+            row[headerLabel] = token
+              ? `${window.location.origin}/edit-form?token=${token}`
+              : 'N/A';
+          } else if (key === 'link_status') {
+            row[headerLabel] = statusMap[emp.id] || 'pending';
+          } else if (fieldMeta?.isDate) {
+            row[headerLabel] = formatDate(emp[key]);
+          } else {
+            const val = emp[key];
+            row[headerLabel] =
+              val !== null && val !== undefined && val !== '' ? val : 'N/A';
+          }
+        });
+        return row;
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+
+      // Resigned row styling: Soft light-red fill (#FFC7CE) with bold dark-red text (#9C0006)
+      const resignedRowStyle = {
+        fill: {
+          patternType: 'solid',
+          fgColor: { rgb: 'FFFFC7CE' }
+        },
+        font: {
+          name: 'Calibri',
+          sz: 11,
+          color: { rgb: 'FF9C0006' },
+          bold: true
+        },
+        border: {
+          top: { style: 'thin', color: { rgb: 'FFE0B4B4' } },
+          bottom: { style: 'thin', color: { rgb: 'FFE0B4B4' } },
+          left: { style: 'thin', color: { rgb: 'FFE0B4B4' } },
+          right: { style: 'thin', color: { rgb: 'FFE0B4B4' } }
+        }
+      };
+
+      const resignedLinkStyle = {
+        fill: {
+          patternType: 'solid',
+          fgColor: { rgb: 'FFFFC7CE' }
+        },
+        font: {
+          name: 'Calibri',
+          sz: 11,
+          color: { rgb: 'FF0563C1' },
+          underline: true,
+          bold: true
+        },
+        border: {
+          top: { style: 'thin', color: { rgb: 'FFE0B4B4' } },
+          bottom: { style: 'thin', color: { rgb: 'FFE0B4B4' } },
+          left: { style: 'thin', color: { rgb: 'FFE0B4B4' } },
+          right: { style: 'thin', color: { rgb: 'FFE0B4B4' } }
+        }
+      };
+
+      const standardLinkStyle = {
+        font: {
+          name: 'Calibri',
+          sz: 11,
+          color: { rgb: 'FF0563C1' },
+          underline: true
+        }
+      };
+
+      const headerStyle = {
+        fill: {
+          patternType: 'solid',
+          fgColor: { rgb: 'FF1E293B' }
+        },
+        font: {
+          name: 'Calibri',
+          sz: 11,
+          color: { rgb: 'FFFFFFFF' },
+          bold: true
+        },
+        alignment: {
+          vertical: 'center',
+          horizontal: 'center'
+        }
+      };
+
+      const headers = Object.keys(dataToExport[0] || {});
+      const linkColumnIndex = headers.indexOf(linkColumnHeader);
+
+      // Style Header Row
+      headers.forEach((_, colIndex) => {
+        const headerRef = XLSX.utils.encode_cell({ r: 0, c: colIndex });
+        if (worksheet[headerRef]) {
+          worksheet[headerRef].s = headerStyle;
         }
       });
-      return row;
-    });
 
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Employees');
-    
-    const date = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(workbook, `Employee_List_${date}.xlsx`);
-    setShowExportModal(false);
+      // Style Data Rows & Hyperlinks
+      dataToExport.forEach((row, rowIndex) => {
+        const emp = filteredEmployees[rowIndex];
+        const isResigned =
+          emp && String(emp.status || '').trim().toLowerCase() === 'resigned';
+
+        headers.forEach((header, colIndex) => {
+          const cellRef = XLSX.utils.encode_cell({
+            r: rowIndex + 1,
+            c: colIndex
+          });
+          if (!worksheet[cellRef]) return;
+
+          if (colIndex === linkColumnIndex) {
+            const linkUrl = row[header];
+            if (linkUrl && linkUrl !== 'N/A') {
+              worksheet[cellRef].l = {
+                Target: linkUrl,
+                Tooltip: `Click to edit ${emp?.full_name || 'Employee'}'s data`
+              };
+            }
+            worksheet[cellRef].s = isResigned
+              ? resignedLinkStyle
+              : standardLinkStyle;
+          } else if (isResigned) {
+            worksheet[cellRef].s = resignedRowStyle;
+          }
+        });
+      });
+
+      // Auto-fit column widths
+      const colWidths = headers.map((header) => {
+        let maxLen = header.length;
+        dataToExport.forEach((row) => {
+          const val = String(row[header] || '');
+          if (val.length > maxLen) {
+            maxLen = Math.min(val.length, 50);
+          }
+        });
+        return { wch: Math.max(maxLen + 4, 12) };
+      });
+      worksheet['!cols'] = colWidths;
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Employees');
+
+      const date = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(workbook, `Employee_List_${date}.xlsx`);
+      setShowExportModal(false);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to generate export file. Please try again.');
+    } finally {
+      setExportingCustom(false);
+    }
   };
 
   useEffect(() => {
@@ -486,6 +663,62 @@ const Dashboard = ({ user }) => {
             underline: true
           }
         };
+      });
+    });
+
+    // Resigned row highlighting and header styling
+    const resignedRowStyle = {
+      fill: { patternType: 'solid', fgColor: { rgb: 'FFFFC7CE' } },
+      font: { name: 'Calibri', sz: 11, color: { rgb: 'FF9C0006' }, bold: true },
+      border: {
+        top: { style: 'thin', color: { rgb: 'FFE0B4B4' } },
+        bottom: { style: 'thin', color: { rgb: 'FFE0B4B4' } },
+        left: { style: 'thin', color: { rgb: 'FFE0B4B4' } },
+        right: { style: 'thin', color: { rgb: 'FFE0B4B4' } }
+      }
+    };
+
+    const resignedFileLinkStyle = {
+      fill: { patternType: 'solid', fgColor: { rgb: 'FFFFC7CE' } },
+      font: { name: 'Calibri', sz: 11, color: { rgb: 'FF0563C1' }, underline: true, bold: true },
+      border: {
+        top: { style: 'thin', color: { rgb: 'FFE0B4B4' } },
+        bottom: { style: 'thin', color: { rgb: 'FFE0B4B4' } },
+        left: { style: 'thin', color: { rgb: 'FFE0B4B4' } },
+        right: { style: 'thin', color: { rgb: 'FFE0B4B4' } }
+      }
+    };
+
+    const quickHeaders = Object.keys(dataToExport[0] || {});
+    const headerStyle = {
+      fill: { patternType: 'solid', fgColor: { rgb: 'FF1E293B' } },
+      font: { name: 'Calibri', sz: 11, color: { rgb: 'FFFFFFFF' }, bold: true },
+      alignment: { vertical: 'center', horizontal: 'center' }
+    };
+
+    quickHeaders.forEach((_, colIndex) => {
+      const headerRef = XLSX.utils.encode_cell({ r: 0, c: colIndex });
+      if (worksheet[headerRef]) {
+        worksheet[headerRef].s = headerStyle;
+      }
+    });
+
+    dataToExport.forEach((row, rowIndex) => {
+      const employee = employeesToExport[rowIndex];
+      const isResigned =
+        employee && String(employee.status || '').trim().toLowerCase() === 'resigned';
+
+      if (!isResigned) return;
+
+      quickHeaders.forEach((_, columnIndex) => {
+        const cellRef = XLSX.utils.encode_cell({ r: rowIndex + 1, c: columnIndex });
+        if (!worksheet[cellRef]) return;
+
+        if (worksheet[cellRef].l) {
+          worksheet[cellRef].s = resignedFileLinkStyle;
+        } else {
+          worksheet[cellRef].s = resignedRowStyle;
+        }
       });
     });
 
@@ -1427,17 +1660,17 @@ const Dashboard = ({ user }) => {
               <button
                 type="button"
                 onClick={handleCustomExport}
-                disabled={selectedExportFields.length === 0}
+                disabled={selectedExportFields.length === 0 || exportingCustom}
                 className="btn btn-primary"
                 style={{
                   padding: '0.65rem 1.75rem',
                   borderRadius: '12px',
-                  opacity: selectedExportFields.length === 0 ? 0.5 : 1,
-                  cursor: selectedExportFields.length === 0 ? 'not-allowed' : 'pointer'
+                  opacity: (selectedExportFields.length === 0 || exportingCustom) ? 0.5 : 1,
+                  cursor: (selectedExportFields.length === 0 || exportingCustom) ? 'not-allowed' : 'pointer'
                 }}
               >
                 <Download size={18} style={{ marginRight: '6px' }} />
-                Export Excel ({selectedExportFields.length})
+                {exportingCustom ? 'Generating Excel...' : `Export Excel (${selectedExportFields.length})`}
               </button>
             </div>
           </div>

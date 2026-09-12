@@ -928,6 +928,81 @@ app.post('/api/employees/:id/edit-invitations', (req, res) => {
   });
 });
 
+app.post('/api/employees/batch-edit-tokens', (req, res) => {
+  const { employee_ids } = req.body;
+  if (!Array.isArray(employee_ids) || employee_ids.length === 0) {
+    return res.json({ tokens: {}, statuses: {} });
+  }
+
+  const ids = Array.from(new Set(employee_ids.map(Number).filter(Boolean)));
+  if (ids.length === 0) {
+    return res.json({ tokens: {}, statuses: {} });
+  }
+
+  const placeholders = ids.map(() => '?').join(',');
+
+  // 1. Fetch any existing pending invitations for these employees
+  db.all(
+    `SELECT id, employee_id, token, status FROM invitations 
+     WHERE employee_id IN (${placeholders}) AND type = "employee_edit" AND status = "pending"
+     ORDER BY id ASC`,
+    ids,
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+
+      const tokenMap = {};
+      const statusMap = {};
+      const existingEmployeeIds = new Set();
+
+      (rows || []).forEach((row) => {
+        tokenMap[row.employee_id] = row.token;
+        statusMap[row.employee_id] = row.status || 'pending';
+        existingEmployeeIds.add(Number(row.employee_id));
+      });
+
+      const missingIds = ids.filter((id) => !existingEmployeeIds.has(id));
+
+      if (missingIds.length === 0) {
+        return res.json({ tokens: tokenMap, statuses: statusMap });
+      }
+
+      // 2. Fetch employee names for missingIds to populate shared_name
+      const missingPlaceholders = missingIds.map(() => '?').join(',');
+      db.all(
+        `SELECT id, full_name FROM employees WHERE id IN (${missingPlaceholders})`,
+        missingIds,
+        (err, empRows) => {
+          if (err) return res.status(500).json({ error: err.message });
+
+          const empNameMap = {};
+          (empRows || []).forEach((emp) => {
+            empNameMap[emp.id] = emp.full_name;
+          });
+
+          db.serialize(() => {
+            const stmt = db.prepare(
+              'INSERT INTO invitations (token, shared_name, type, employee_id, status) VALUES (?, ?, "employee_edit", ?, "pending")'
+            );
+
+            missingIds.forEach((empId) => {
+              const token = crypto.randomBytes(32).toString('hex');
+              const sharedName = empNameMap[empId] || `Employee #${empId}`;
+              stmt.run(token, sharedName, empId);
+              tokenMap[empId] = token;
+              statusMap[empId] = 'pending';
+            });
+
+            stmt.finalize((err) => {
+              if (err) return res.status(500).json({ error: err.message });
+              res.json({ tokens: tokenMap, statuses: statusMap });
+            });
+          });
+        }
+      );
+    }
+  );
+});
+
 app.get('/api/invitations/verify/:token', (req, res) => {
   db.get('SELECT * FROM invitations WHERE token = ? AND status = "pending" AND (type IS NULL OR type = "onboarding")', [req.params.token], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
