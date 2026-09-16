@@ -10,6 +10,8 @@ import Bucket from './pages/Bucket';
 import WishesBucket from './pages/WishesBucket';
 import Backups from './pages/Backups';
 import Login from './pages/Login';
+import axios from 'axios';
+import API_BASE_URL from './config';
 import './App.css';
 const Layout = ({ children, isPublic, user, onLogout }) => {
   if (isPublic) return <div className="public-form-container">{children}</div>;
@@ -64,25 +66,68 @@ const Layout = ({ children, isPublic, user, onLogout }) => {
 };
 
 function App() {
-  const [user, setUser] = React.useState(JSON.parse(localStorage.getItem('adminUser')));
+  const [user, setUser] = React.useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('adminUser'));
+    } catch (e) {
+      return null;
+    }
+  });
+  const [authNotice, setAuthNotice] = React.useState('');
 
-  const handleLogout = () => {
+  const handleLogout = React.useCallback((notice = '') => {
     localStorage.removeItem('adminUser');
     setUser(null);
-  };
+    if (notice) setAuthNotice(notice);
+  }, []);
+
+  React.useEffect(() => {
+    const verifyCurrentSession = async () => {
+      const stored = localStorage.getItem('adminUser');
+      if (!stored) return;
+
+      try {
+        const parsed = JSON.parse(stored);
+        if (!parsed || !parsed.token) {
+          handleLogout('Please log in with your credentials.');
+          return;
+        }
+
+        const res = await axios.get(`${API_BASE_URL}/api/verify-session`, {
+          headers: { Authorization: `Bearer ${parsed.token}` },
+          timeout: 6000
+        });
+
+        if (res.data && res.data.valid) {
+          setUser(prev => prev ? { ...prev, ...res.data.user } : { ...res.data.user, token: parsed.token });
+        } else {
+          handleLogout('Session expired. Please log in again.');
+        }
+      } catch (err) {
+        if (err.response && err.response.status === 401) {
+          const errMsg = err.response.data?.error || 'Password was changed or session expired. Please log in again.';
+          handleLogout(errMsg);
+        } else {
+          console.warn('Session verification notice:', err.message);
+        }
+      }
+    };
+
+    verifyCurrentSession();
+  }, [handleLogout]);
 
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={user ? <NavLink to="/" /> : <Login onLogin={setUser} />} />
-        <Route path="/" element={user ? <Layout user={user} onLogout={handleLogout}><Dashboard user={user} /></Layout> : <Login onLogin={setUser} />} />
-        <Route path="/onboard" element={user ? (user.role === 'viewer' ? <NavLink to="/" /> : <Layout user={user} onLogout={handleLogout}><Onboarding /></Layout>) : <Login onLogin={setUser} />} />
-        <Route path="/bulk-import" element={user ? (user.role === 'viewer' ? <NavLink to="/" /> : <Layout user={user} onLogout={handleLogout}><BulkImport /></Layout>) : <Login onLogin={setUser} />} />
-        <Route path="/employee/:id" element={user ? <Layout user={user} onLogout={handleLogout}><EmployeeDetails user={user} /></Layout> : <Login onLogin={setUser} />} />
-        <Route path="/edit-employee/:id" element={user ? (user.role === 'viewer' ? <NavLink to="/" /> : <Layout user={user} onLogout={handleLogout}><EditEmployee /></Layout>) : <Login onLogin={setUser} />} />
-        <Route path="/bucket" element={user ? <Layout user={user} onLogout={handleLogout}><Bucket user={user} /></Layout> : <Login onLogin={setUser} />} />
-        <Route path="/wishes" element={user ? <Layout user={user} onLogout={handleLogout}><WishesBucket /></Layout> : <Login onLogin={setUser} />} />
-        <Route path="/backups" element={user ? (user.role === 'viewer' ? <NavLink to="/" /> : <Layout user={user} onLogout={handleLogout}><Backups /></Layout>) : <Login onLogin={setUser} />} />
+        <Route path="/login" element={user ? <NavLink to="/" /> : <Login onLogin={setUser} notice={authNotice} />} />
+        <Route path="/" element={user ? <Layout user={user} onLogout={() => handleLogout()}><Dashboard user={user} /></Layout> : <Login onLogin={setUser} notice={authNotice} />} />
+        <Route path="/onboard" element={user ? (user.role === 'viewer' ? <NavLink to="/" /> : <Layout user={user} onLogout={() => handleLogout()}><Onboarding /></Layout>) : <Login onLogin={setUser} notice={authNotice} />} />
+        <Route path="/bulk-import" element={user ? (user.role === 'viewer' ? <NavLink to="/" /> : <Layout user={user} onLogout={() => handleLogout()}><BulkImport /></Layout>) : <Login onLogin={setUser} notice={authNotice} />} />
+        <Route path="/employee/:id" element={user ? <Layout user={user} onLogout={() => handleLogout()}><EmployeeDetails user={user} /></Layout> : <Login onLogin={setUser} notice={authNotice} />} />
+        <Route path="/edit-employee/:id" element={user ? (user.role === 'viewer' ? <NavLink to="/" /> : <Layout user={user} onLogout={() => handleLogout()}><EditEmployee /></Layout>) : <Login onLogin={setUser} notice={authNotice} />} />
+        <Route path="/bucket" element={user ? <Layout user={user} onLogout={() => handleLogout()}><Bucket user={user} /></Layout> : <Login onLogin={setUser} notice={authNotice} />} />
+        <Route path="/wishes" element={user ? <Layout user={user} onLogout={() => handleLogout()}><WishesBucket /></Layout> : <Login onLogin={setUser} notice={authNotice} />} />
+        <Route path="/backups" element={user ? (user.role === 'viewer' ? <NavLink to="/" /> : <Layout user={user} onLogout={() => handleLogout()}><Backups /></Layout>) : <Login onLogin={setUser} notice={authNotice} />} />
         <Route path="/fill-form" element={<Layout isPublic={true}><Onboarding isPublic={true} /></Layout>} />
         <Route path="/edit-form" element={<Layout isPublic={true}><EditEmployee isPublicEdit={true} /></Layout>} />
       </Routes>

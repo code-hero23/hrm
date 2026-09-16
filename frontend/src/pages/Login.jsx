@@ -3,20 +3,23 @@ import axios from 'axios';
 import { Lock, User, Eye, EyeOff } from 'lucide-react';
 import API_BASE_URL from '../config';
 
-const Login = ({ onLogin }) => {
+const Login = ({ onLogin, notice }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [infoNotice, setInfoNotice] = useState(notice || '');
     const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
         try {
-            const res = await axios.post(`${API_BASE_URL}/api/login`, { username, password });
+            const cleanUsername = username.trim().toLowerCase();
+            const res = await axios.post(`${API_BASE_URL}/api/login`, { username: cleanUsername, password });
             localStorage.setItem('adminUser', JSON.stringify(res.data));
             onLogin(res.data);
         } catch (err) {
-            setError('Invalid username or password');
+            setError(err.response?.data?.error || 'Invalid username or password');
         }
     };
 
@@ -46,6 +49,22 @@ const Login = ({ onLogin }) => {
                     <h2 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Admin Login</h2>
                     <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem' }}>Master Employee Database Access</p>
                 </div>
+
+                {infoNotice && (
+                    <div style={{
+                        background: 'rgba(234, 179, 8, 0.12)',
+                        border: '1px solid rgba(234, 179, 8, 0.3)',
+                        color: '#fde047',
+                        borderRadius: '8px',
+                        padding: '0.75rem 1rem',
+                        fontSize: '0.8125rem',
+                        marginBottom: '1.5rem',
+                        textAlign: 'center',
+                        lineHeight: '1.4'
+                    }}>
+                        {infoNotice}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group" style={{ marginBottom: '1.5rem' }}>

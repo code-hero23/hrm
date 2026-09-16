@@ -93,22 +93,28 @@ async function ensureTable() {
   await runSql(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE,
+      username TEXT UNIQUE COLLATE NOCASE,
       password TEXT,
-      role TEXT DEFAULT 'admin'
+      role TEXT DEFAULT 'admin',
+      password_version INTEGER DEFAULT 1
     )
   `);
+  try {
+    await runSql("ALTER TABLE users ADD COLUMN password_version INTEGER DEFAULT 1");
+  } catch (e) {
+    // Column may already exist
+  }
 }
 
 async function listUsers() {
   await ensureTable();
-  const users = await queryAll('SELECT id, username, role FROM users');
+  const users = await queryAll('SELECT id, username, role, password_version FROM users');
   return users;
 }
 
 async function resetOrAddUser(username, plainPassword, role) {
   await ensureTable();
-  const cleanUsername = username.trim();
+  const cleanUsername = username.trim().toLowerCase();
   const cleanPassword = plainPassword.trim();
   const cleanRole = role ? role.trim() : null;
 
@@ -119,18 +125,26 @@ async function resetOrAddUser(username, plainPassword, role) {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(cleanPassword, salt);
 
-  const existing = await queryAll('SELECT * FROM users WHERE username = ?', [cleanUsername]);
+  // Case-insensitive lookup
+  const existing = await queryAll('SELECT * FROM users WHERE LOWER(username) = LOWER(?)', [cleanUsername]);
 
   if (existing.length > 0) {
+    const targetId = existing[0].id;
     if (cleanRole) {
-      await runSql('UPDATE users SET password = ?, role = ? WHERE username = ?', [hashedPassword, cleanRole, cleanUsername]);
+      await runSql('UPDATE users SET username = ?, password = ?, role = ?, password_version = COALESCE(password_version, 0) + 1 WHERE id = ?', [cleanUsername, hashedPassword, cleanRole, targetId]);
     } else {
-      await runSql('UPDATE users SET password = ? WHERE username = ?', [hashedPassword, cleanUsername]);
+      await runSql('UPDATE users SET username = ?, password = ?, password_version = COALESCE(password_version, 0) + 1 WHERE id = ?', [cleanUsername, hashedPassword, targetId]);
+    }
+    // Clean up any other duplicates differing only in casing
+    if (existing.length > 1) {
+      for (let i = 1; i < existing.length; i++) {
+        await runSql('DELETE FROM users WHERE id = ?', [existing[i].id]);
+      }
     }
     return { status: 'updated', username: cleanUsername, role: cleanRole || existing[0].role };
   } else {
     const finalRole = cleanRole || 'admin';
-    await runSql('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [cleanUsername, hashedPassword, finalRole]);
+    await runSql('INSERT INTO users (username, password, role, password_version) VALUES (?, ?, ?, 1)', [cleanUsername, hashedPassword, finalRole]);
     return { status: 'created', username: cleanUsername, role: finalRole };
   }
 }

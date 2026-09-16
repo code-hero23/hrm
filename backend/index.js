@@ -413,20 +413,103 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   }
 }));
 
+const JWT_SECRET = process.env.JWT_SECRET || 'cookscape_hrm_jwt_secret_token_2026';
+
+function generateSessionToken(user) {
+  const payload = {
+    id: user.id,
+    username: user.username,
+    role: user.role,
+    pv: user.password_version || 1,
+    iat: Date.now()
+  };
+  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const sig = crypto.createHmac('sha256', JWT_SECRET).update(body).digest('base64url');
+  return `${body}.${sig}`;
+}
+
+function verifySessionToken(token) {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
+  const [body, sig] = parts;
+  const expectedSig = crypto.createHmac('sha256', JWT_SECRET).update(body).digest('base64url');
+  if (sig !== expectedSig) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
+    return payload;
+  } catch (e) {
+    return null;
+  }
+}
+
 // Auth API
 app.post('/api/login', (req, res) => {
-  const { username, password } = req.body;
-  db.get('SELECT * FROM users WHERE username = ?', [username], async (err, user) => {
+  const cleanUsername = (req.body.username || '').trim().toLowerCase();
+  const password = req.body.password || '';
+
+  if (!cleanUsername || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+
+  db.get('SELECT * FROM users WHERE LOWER(username) = LOWER(?)', [cleanUsername], async (err, user) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
     const match = await bcrypt.compare(password, user.password);
-    console.log(match)
     if (match) {
-      res.json({ id: user.id, username: user.username, role: user.role });
+      const token = generateSessionToken(user);
+      res.json({
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        token: token
+      });
     } else {
       res.status(401).json({ error: 'Invalid credentials' });
     }
+  });
+});
+
+// Session Verification API
+app.get('/api/verify-session', (req, res) => {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ')
+    ? authHeader.slice(7).trim()
+    : (req.query.token || req.headers['x-access-token'] || '');
+
+  if (!token) {
+    return res.status(401).json({ valid: false, error: 'No session token provided' });
+  }
+
+  const payload = verifySessionToken(token);
+  if (!payload || !payload.id) {
+    return res.status(401).json({ valid: false, error: 'Invalid session signature' });
+  }
+
+  db.get('SELECT id, username, role, password_version FROM users WHERE id = ?', [payload.id], (err, user) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!user) return res.status(401).json({ valid: false, error: 'User not found' });
+
+    const currentPv = user.password_version || 1;
+    const tokenPv = payload.pv || 1;
+
+    if (currentPv !== tokenPv) {
+      return res.status(401).json({
+        valid: false,
+        passwordChanged: true,
+        error: 'Password has been changed. Please log in again.'
+      });
+    }
+
+    res.json({
+      valid: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role
+      }
+    });
   });
 });
 

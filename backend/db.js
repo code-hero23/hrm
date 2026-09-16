@@ -188,16 +188,26 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE,
+      username TEXT UNIQUE COLLATE NOCASE,
       password TEXT,
-      role TEXT DEFAULT 'admin'
+      role TEXT DEFAULT 'admin',
+      password_version INTEGER DEFAULT 1
     )
   `);
 
   // Migration for existing users table
-  db.run("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'admin'", (err) => {
-    // Ignore error if column already exists
-  });
+  db.run("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'admin'", () => {});
+  db.run("ALTER TABLE users ADD COLUMN password_version INTEGER DEFAULT 1", () => {});
+
+  // Deduplicate and normalize existing usernames to lowercase
+  db.run(`
+    DELETE FROM users 
+    WHERE id NOT IN (
+      SELECT MIN(id) FROM users GROUP BY LOWER(username)
+    )
+  `);
+  db.run("UPDATE users SET username = LOWER(username)");
+  db.run("UPDATE users SET password_version = 1 WHERE password_version IS NULL");
  
   db.run(`
     CREATE TABLE IF NOT EXISTS resource_bucket (
@@ -242,17 +252,13 @@ db.serialize(() => {
     }
   });
 
-  // Insert default admin if not exists (username: Admin@cookscape.com, password: Hrmaster@2026)
+  // Insert default admin if not exists (username: admin@cookscape.com, password: Hrmaster@2026)
   const hashedAdminPassword = bcrypt.hashSync('Hrmaster@2026', 10);
-  db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('Admin@cookscape.com', '${hashedAdminPassword}', 'admin')`);
+  db.run(`INSERT OR IGNORE INTO users (username, password, role, password_version) VALUES ('admin@cookscape.com', '${hashedAdminPassword}', 'admin', 1)`);
 
-  // Insert default viewer if not exists (username: View@cookscape.com, password: View@2026)
+  // Insert default viewer if not exists (username: view@cookscape.com, password: View@2026)
   const hashedViewerPassword = bcrypt.hashSync('View@2026', 10);
-  db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('View@cookscape.com', '${hashedViewerPassword}', 'viewer')`);
-
-  // Insert admin@cookscape.com if not exists
-  const hashedUserAdminPassword = bcrypt.hashSync('admin123', 10);
-  db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin@cookscape.com', '${hashedUserAdminPassword}', 'admin')`);
+  db.run(`INSERT OR IGNORE INTO users (username, password, role, password_version) VALUES ('view@cookscape.com', '${hashedViewerPassword}', 'viewer', 1)`);
 
   console.log('Database initialized');
 
