@@ -250,9 +250,9 @@ db.serialize(() => {
   const hashedViewerPassword = bcrypt.hashSync('View@2026', 10);
   db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('View@cookscape.com', '${hashedViewerPassword}', 'viewer')`);
 
-  // Insert admin@cookscape.com if not exists or replace to update password
+  // Insert admin@cookscape.com if not exists
   const hashedUserAdminPassword = bcrypt.hashSync('admin123', 10);
-  db.run(`INSERT OR REPLACE INTO users (username, password, role) VALUES ('admin@cookscape.com', '${hashedUserAdminPassword}', 'admin')`);
+  db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin@cookscape.com', '${hashedUserAdminPassword}', 'admin')`);
 
   console.log('Database initialized');
 
