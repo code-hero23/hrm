@@ -44,7 +44,7 @@ function queryAll(sql, params = []) {
         let formattedSql = sql;
         params.forEach(p => {
           const val = typeof p === 'string' ? `'${p.replace(/'/g, "''")}'` : (p === null ? 'NULL' : p);
-          formattedSql = formattedSql.replace('?', val);
+          formattedSql = formattedSql.replace('?', () => val);
         });
         const output = execSync(`sqlite3 "${dbPath}" -header -csv`, { input: formattedSql, encoding: 'utf8' }).trim();
         if (!output) return resolve([]);
@@ -78,7 +78,7 @@ function runSql(sql, params = []) {
         let formattedSql = sql;
         params.forEach(p => {
           const val = typeof p === 'string' ? `'${p.replace(/'/g, "''")}'` : (p === null ? 'NULL' : p);
-          formattedSql = formattedSql.replace('?', val);
+          formattedSql = formattedSql.replace('?', () => val);
         });
         execSync(`sqlite3 "${dbPath}"`, { input: formattedSql, encoding: 'utf8' });
         resolve({ changes: 1 });
