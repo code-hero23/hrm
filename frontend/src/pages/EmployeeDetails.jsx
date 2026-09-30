@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Printer, Download, ArrowLeft, Trash2, CheckCircle, UserCircle, Edit3, ChevronRight, FileText, LayoutDashboard, Database, ExternalLink, FileUp, Share2, Check } from 'lucide-react';
+import { Printer, Download, ArrowLeft, Trash2, CheckCircle, UserCircle, Edit3, ChevronRight, FileText, LayoutDashboard, Database, ExternalLink, FileUp, Share2, Check, AlertTriangle, X } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import API_BASE_URL from '../config';
@@ -185,12 +185,26 @@ const EmployeeDetails = ({ user }) => {
     setLoading(false);
   };
 
-  const updateStatus = async (newStatus) => {
+  const [pendingStatus, setPendingStatus] = useState(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  const handleStatusSelect = (newStatus) => {
+    if (!employee || newStatus === employee.status) return;
+    setPendingStatus(newStatus);
+  };
+
+  const confirmStatusUpdate = async () => {
+    if (!pendingStatus) return;
+    setIsUpdatingStatus(true);
     try {
-      await axios.patch(`${API_BASE_URL}/api/employees/${id}`, { status: newStatus });
-      fetchEmployee();
+      await axios.patch(`${API_BASE_URL}/api/employees/${id}`, { status: pendingStatus });
+      await fetchEmployee();
+      setPendingStatus(null);
     } catch (err) {
       console.error(err);
+      alert('Failed to update status. Please try again.');
+    } finally {
+      setIsUpdatingStatus(false);
     }
   };
 
@@ -375,7 +389,7 @@ const EmployeeDetails = ({ user }) => {
           {user?.role !== 'viewer' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>UPDATE STATUS:</span>
-               <StatusDropdown currentStatus={employee.status} onUpdate={updateStatus} />
+               <StatusDropdown currentStatus={employee.status} onUpdate={handleStatusSelect} />
             </div>
           )}
         </div>
@@ -879,6 +893,108 @@ const EmployeeDetails = ({ user }) => {
           </div>
         </div>
       </div>
+
+      {pendingStatus && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1.5rem'
+        }}>
+          <div className="card slide-in" style={{
+            maxWidth: '480px',
+            width: '100%',
+            background: '#1e293b',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '20px',
+            padding: '2rem',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
+                  background: 'rgba(234, 179, 8, 0.15)',
+                  border: '1px solid rgba(234, 179, 8, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#eab308'
+                }}>
+                  <AlertTriangle size={24} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>Confirm Status Change</h3>
+                  <p style={{ fontSize: '0.8125rem', color: '#94a3b8', margin: '0.25rem 0 0 0' }}>Secondary Confirmation Required</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setPendingStatus(null)}
+                disabled={isUpdatingStatus}
+                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.25rem' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+              borderRadius: '12px',
+              padding: '1.25rem',
+              marginBottom: '1.5rem'
+            }}>
+              <p style={{ fontSize: '0.9375rem', color: '#cbd5e1', lineHeight: '1.6', margin: 0 }}>
+                Are you sure you want to change status for <strong style={{ color: '#fff' }}>{employee.full_name}</strong>?
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+                <span className={`badge badge-${employee.status?.toLowerCase().replace(/ /g, '-')}`} style={{ fontSize: '0.8125rem' }}>
+                  {employee.status}
+                </span>
+                <span style={{ color: '#64748b', fontWeight: 700 }}>→</span>
+                <span className={`badge badge-${pendingStatus?.toLowerCase().replace(/ /g, '-')}`} style={{ fontSize: '0.8125rem', border: '2px solid #60a5fa' }}>
+                  {pendingStatus}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setPendingStatus(null)}
+                disabled={isUpdatingStatus}
+                className="btn btn-secondary"
+                style={{ padding: '0.75rem 1.25rem' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmStatusUpdate}
+                disabled={isUpdatingStatus}
+                className="btn btn-primary"
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                {isUpdatingStatus ? 'Updating...' : 'Confirm Status Change'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
