@@ -19,14 +19,6 @@ echo "Creating safety backup of all database and upload files to $BACKUP_DIR..."
 # Backup any database file found anywhere in backend (root, data, etc.)
 if [ -d "backend/data" ]; then
   cp -r backend/data/* "$BACKUP_DIR/" 2>/dev/null || true
-
-  # Ensure legacy database.sqlite and its WAL files are synced to hrms.sqlite so no data is lost
-  if [ -f "backend/data/database.sqlite" ]; then
-    echo "Syncing legacy database.sqlite and WAL files to hrms.sqlite..."
-    cp "backend/data/database.sqlite" "backend/data/hrms.sqlite"
-    [ -f "backend/data/database.sqlite-wal" ] && cp "backend/data/database.sqlite-wal" "backend/data/hrms.sqlite-wal" || true
-    [ -f "backend/data/database.sqlite-shm" ] && cp "backend/data/database.sqlite-shm" "backend/data/hrms.sqlite-shm" || true
-  fi
 fi
 cp backend/*.sqlite "$BACKUP_DIR/" 2>/dev/null || true
 
@@ -34,11 +26,8 @@ if [ -d "backend/uploads" ]; then
   cp -r backend/uploads "$BACKUP_DIR/" 2>/dev/null || true
 fi
 
-# 2. Pre-Deployment Data Recovery & Migration Check (BEFORE DOCKER STARTS)
-# If a database file exists on host root (backend/database.sqlite or backend/hrms.sqlite) or in backups
-# but backend/data/hrms.sqlite is missing/empty, sync it into backend/data/hrms.sqlite so Docker can see it!
-
-# Fix permissions first to ensure cp succeeds even if files were created by root Docker
+# 2. Pre-Deployment Data Safety & Migration Check (BEFORE DOCKER STARTS)
+# Fix permissions first to ensure operations succeed
 sudo chown -R $(id -u):$(id -g) backend/data 2>/dev/null || true
 
 copy_sqlite_with_wal() {
@@ -51,36 +40,39 @@ copy_sqlite_with_wal() {
   fi
 }
 
+# Safeguard: Archive any legacy database.sqlite so it NEVER overwrites active hrms.sqlite
+if [ -f "backend/data/database.sqlite" ]; then
+  if [ -s "backend/data/hrms.sqlite" ]; then
+    echo "Archiving legacy database.sqlite to backend/data/database.sqlite.archived..."
+    sudo mv backend/data/database.sqlite backend/data/database.sqlite.archived 2>/dev/null || true
+    [ -f "backend/data/database.sqlite-wal" ] && sudo mv backend/data/database.sqlite-wal backend/data/database.sqlite-wal.archived 2>/dev/null || true
+    [ -f "backend/data/database.sqlite-shm" ] && sudo mv backend/data/database.sqlite-shm backend/data/database.sqlite-shm.archived 2>/dev/null || true
+  fi
+fi
+
+# Only if active hrms.sqlite does NOT exist or is 0 bytes, check for fallback/initial migration
 if [ ! -f "backend/data/hrms.sqlite" ] || [ ! -s "backend/data/hrms.sqlite" ]; then
   if [ -f "backend/data/database.sqlite" ]; then
-    echo ">>> MIGRATION: Found backend/data/database.sqlite. Syncing to backend/data/hrms.sqlite..."
+    echo ">>> INITIAL MIGRATION: Migrating legacy backend/data/database.sqlite to hrms.sqlite..."
     copy_sqlite_with_wal "backend/data/database.sqlite" "backend/data/hrms.sqlite"
+    sudo mv backend/data/database.sqlite backend/data/database.sqlite.archived 2>/dev/null || true
   elif [ -f "backend/database.sqlite" ]; then
-    echo ">>> MIGRATION: Found legacy root backend/database.sqlite. Syncing to backend/data/hrms.sqlite..."
+    echo ">>> INITIAL MIGRATION: Migrating legacy root backend/database.sqlite to hrms.sqlite..."
     copy_sqlite_with_wal "backend/database.sqlite" "backend/data/hrms.sqlite"
+    sudo mv backend/database.sqlite backend/database.sqlite.archived 2>/dev/null || true
   elif [ -f "backend/hrms.sqlite" ]; then
-    echo ">>> MIGRATION: Found legacy root backend/hrms.sqlite. Syncing to backend/data/hrms.sqlite..."
+    echo ">>> INITIAL MIGRATION: Moving root backend/hrms.sqlite to backend/data/hrms.sqlite..."
     copy_sqlite_with_wal "backend/hrms.sqlite" "backend/data/hrms.sqlite"
   else
-    # Look for any recent database in backups if none found in active folders
-    LATEST_BACKUP_DB=$(find backend/backups/ -name "*.sqlite" -type f 2>/dev/null | sort -r | head -n 1)
+    # Look for most recent backup if completely missing
+    LATEST_BACKUP_DB=$(find backend/backups/ -name "hrms.sqlite" -type f 2>/dev/null | sort -r | head -n 1)
     if [ -n "$LATEST_BACKUP_DB" ]; then
       echo ">>> RECOVERY: Restoring database from backup: $LATEST_BACKUP_DB..."
       copy_sqlite_with_wal "$LATEST_BACKUP_DB" "backend/data/hrms.sqlite"
     fi
   fi
 else
-  # If backend/data/hrms.sqlite exists, check if database.sqlite in backend/data or root is larger or has WAL data
-  if [ -f "backend/data/database.sqlite" ]; then
-    SIZE_HRMS=$(stat -c%s "backend/data/hrms.sqlite" 2>/dev/null || stat -f%z "backend/data/hrms.sqlite" 2>/dev/null || echo 0)
-    [ -f "backend/data/hrms.sqlite-wal" ] && SIZE_HRMS=$((SIZE_HRMS + $(stat -c%s "backend/data/hrms.sqlite-wal" 2>/dev/null || echo 0)))
-    SIZE_DATA_DB=$(stat -c%s "backend/data/database.sqlite" 2>/dev/null || stat -f%z "backend/data/database.sqlite" 2>/dev/null || echo 0)
-    [ -f "backend/data/database.sqlite-wal" ] && SIZE_DATA_DB=$((SIZE_DATA_DB + $(stat -c%s "backend/data/database.sqlite-wal" 2>/dev/null || echo 0)))
-    if [ "$SIZE_DATA_DB" -ge "$SIZE_HRMS" ] && [ "$SIZE_DATA_DB" -gt 8192 ]; then
-      echo ">>> SYNC: backend/data/database.sqlite ($SIZE_DATA_DB bytes) contains active/larger data. Syncing to hrms.sqlite..."
-      copy_sqlite_with_wal "backend/data/database.sqlite" "backend/data/hrms.sqlite"
-    fi
-  fi
+  echo ">>> Active database backend/data/hrms.sqlite is present and verified."
 fi
 
 
@@ -96,10 +88,11 @@ git stash pop || true
 
 # Re-verify database file is present in backend/data/hrms.sqlite after git pull
 if [ ! -f "backend/data/hrms.sqlite" ] || [ ! -s "backend/data/hrms.sqlite" ]; then
-  RESTORE_DB=$(find "$BACKUP_DIR" -name "*.sqlite" -type f 2>/dev/null | head -n 1)
+  RESTORE_DB=$(find "$BACKUP_DIR" -name "hrms.sqlite" -type f 2>/dev/null | head -n 1)
+  [ -z "$RESTORE_DB" ] && RESTORE_DB=$(find "$BACKUP_DIR" -name "*.sqlite" -type f 2>/dev/null | head -n 1)
   if [ -n "$RESTORE_DB" ]; then
     echo ">>> RECOVERY: Restoring database from deployment backup $RESTORE_DB..."
-    sudo cp "$RESTORE_DB" backend/data/hrms.sqlite
+    copy_sqlite_with_wal "$RESTORE_DB" "backend/data/hrms.sqlite"
   fi
 fi
 
