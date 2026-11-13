@@ -238,12 +238,20 @@ const EmployeeDetails = ({ user }) => {
         shared_name: employee?.full_name
       });
       const link = `${window.location.origin}/edit-form?token=${res.data.token}`;
+      const shareText = `*Employee Details Update Link - ${employee?.full_name || 'CookScape HRM'}*
+
+Link: ${link}
+
+*📌 Important Instructions:*
+1. If this link is not working, please try it with another browser or another device.
+2. If passbook is not available, please write Account Number, Name, IFSC Code, etc. on paper, scan and upload.
+3. Please fill all the mandatory fields without fail.`;
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(link);
+        await navigator.clipboard.writeText(shareText);
       } else {
         const textarea = document.createElement('textarea');
-        textarea.value = link;
+        textarea.value = shareText;
         textarea.style.position = 'fixed';
         textarea.style.left = '-9999px';
         textarea.style.top = '0';

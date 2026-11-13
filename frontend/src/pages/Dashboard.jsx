@@ -554,15 +554,24 @@ const Dashboard = ({ user }) => {
       const invitationLink =
         `${window.location.origin}/fill-form?token=${token}`;
 
+      const shareText = `*Employee Onboarding Form Link - CookScape HRM*
+
+Link: ${invitationLink}
+
+*📌 Important Instructions:*
+1. If this link is not working, please try it with another browser or another device.
+2. If passbook is not available, please write Account Number, Name, IFSC Code, etc. on paper, scan and upload.
+3. Please fill all the mandatory fields without fail.`;
+
       if (
         navigator.clipboard &&
         navigator.clipboard.writeText
       ) {
-        await navigator.clipboard.writeText(invitationLink);
+        await navigator.clipboard.writeText(shareText);
       } else {
         const textarea = document.createElement('textarea');
 
-        textarea.value = invitationLink;
+        textarea.value = shareText;
         textarea.style.position = 'fixed';
         textarea.style.left = '-9999px';
         textarea.style.top = '0';
