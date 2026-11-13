@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, Save, Upload } from 'lucide-react';
 import API_BASE_URL from '../config';
 import logo from '../assets/logo.jpg';
-import teamBanner from '../assets/team_banner.jpg';
 
 const Onboarding = ({ isPublic }) => {
   const navigate = useNavigate();
@@ -412,7 +411,7 @@ const Onboarding = ({ isPublic }) => {
           
           <h3 className="section-title" style={{marginTop:'3rem'}}>7. SUPPORTING DOCUMENTS (UPLOAD)</h3>
           <p style={{background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '1rem', borderRadius: '12px', fontSize: '0.85rem', marginBottom: '1.5rem', border: '1px solid rgba(59, 130, 246, 0.2)'}}>
-            <strong>NOTE:</strong> Please ensure all uploaded documents are <strong>neat and clear</strong> (PDFs or Images). If a bank passbook is not available, you can write your account number, account holder name, IFSC code, and branch details clearly on paper, scan/photograph it, and upload it under Bank Passbook.
+            <strong>NOTE:</strong> Please ensure all uploaded documents are <strong>neat and clear</strong> (PDFs or Images).
           </p>
           <div className="form-grid">
             {/* Bank Passbook */}
@@ -745,74 +744,6 @@ const Onboarding = ({ isPublic }) => {
       </div>
 
       <div className="card slide-in">
-        {/* Banner and Instructions for Public Form */}
-        {isPublic && (
-          <div style={{
-            marginBottom: '2rem',
-            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8))',
-            borderRadius: '16px',
-            border: '1px solid rgba(59, 130, 246, 0.25)',
-            overflow: 'hidden',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25)'
-          }}>
-            <div style={{ position: 'relative', width: '100%', height: '180px', overflow: 'hidden' }}>
-              <img
-                src={teamBanner}
-                alt="Welcome Team"
-                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
-              />
-              <div style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'linear-gradient(to bottom, rgba(15, 23, 42, 0.2) 0%, rgba(15, 23, 42, 0.85) 100%)',
-                display: 'flex',
-                alignItems: 'flex-end',
-                padding: '1.25rem 1.5rem'
-              }}>
-                <h3 style={{ margin: 0, color: '#ffffff', fontSize: '1.25rem', fontWeight: 800, textShadow: '0 2px 4px rgba(0,0,0,0.6)' }}>
-                  Welcome to the Team! Please Complete Your Onboarding
-                </h3>
-              </div>
-            </div>
-
-            <div style={{ padding: '1.25rem 1.5rem' }}>
-              <h4 style={{
-                fontSize: '0.85rem',
-                fontWeight: 700,
-                color: '#60a5fa',
-                letterSpacing: '0.05em',
-                textTransform: 'uppercase',
-                marginBottom: '0.75rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                📌 Important Instructions:
-              </h4>
-              <ul style={{
-                margin: 0,
-                paddingLeft: '1.25rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem',
-                fontSize: '0.875rem',
-                color: '#e2e8f0',
-                lineHeight: '1.5'
-              }}>
-                <li>
-                  <strong>1.</strong> If this link is not working, please try opening it in <strong>another browser</strong> (e.g. Chrome, Edge) or on <strong>another device / mobile phone</strong>.
-                </li>
-                <li>
-                  <strong>2.</strong> If bank passbook is not available, please clearly write your <strong>Account Number, Name, IFSC Code, etc.</strong> on a blank paper, scan / photograph it, and upload.
-                </li>
-                <li>
-                  <strong>3.</strong> Please fill <strong>all the mandatory fields (<span style={{color: '#ef4444'}}>*</span>)</strong> without fail.
-                </li>
-              </ul>
-            </div>
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} noValidate>
           {renderStep()}
           
