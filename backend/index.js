@@ -313,7 +313,7 @@ const restoreEmployeesFromBackup = (backupEmployees) => {
   }));
 };
 
-app.get('/api/backups', (req, res) => {
+app.get('/api/backups', requireAuth, (req, res) => {
   res.json(listBackupFiles().map((backup) => ({
     fileName: backup.fileName,
     envFileName: backup.envFileName,
@@ -327,7 +327,7 @@ app.get('/api/backups', (req, res) => {
   })));
 });
 
-app.post('/api/backups/create', async (req, res) => {
+app.post('/api/backups/create', requireAuth, async (req, res) => {
   try {
     const backupRecord = await createBackupSnapshot();
     sendBackupEmail(backupRecord).catch((error) => {
@@ -348,7 +348,7 @@ app.post('/api/backups/create', async (req, res) => {
   }
 });
 
-app.get('/api/backups/:fileName/download', (req, res) => {
+app.get('/api/backups/:fileName/download', requireAuth, (req, res) => {
   const filePath = path.join(backupsDir, req.params.fileName);
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: 'Backup file not found' });
@@ -357,7 +357,7 @@ app.get('/api/backups/:fileName/download', (req, res) => {
   res.download(filePath);
 });
 
-app.get('/api/backups/:fileName/json', (req, res) => {
+app.get('/api/backups/:fileName/json', requireAuth, (req, res) => {
   const filePath = path.join(backupsDir, req.params.fileName);
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: 'Backup file not found' });
@@ -371,7 +371,7 @@ app.get('/api/backups/:fileName/json', (req, res) => {
   }
 });
 
-app.post('/api/backups/:fileName/restore', async (req, res) => {
+app.post('/api/backups/:fileName/restore', requireAuth, async (req, res) => {
   try {
     const filePath = path.join(backupsDir, req.params.fileName);
     if (!fs.existsSync(filePath)) {
@@ -390,7 +390,7 @@ app.post('/api/backups/:fileName/restore', async (req, res) => {
   }
 });
 
-app.post('/api/backups/restore-from-json', async (req, res) => {
+app.post('/api/backups/restore-from-json', requireAuth, async (req, res) => {
   try {
     const { backup } = req.body;
     if (!backup || !Array.isArray(backup.employees)) {
@@ -407,11 +407,62 @@ app.post('/api/backups/restore-from-json', async (req, res) => {
   }
 });
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
-  setHeaders: (res) => {
-    res.set('Access-Control-Allow-Origin', '*');
+app.get('/uploads/:filename', (req, res) => {
+  const filename = path.basename(req.params.filename);
+  const filePath = path.join(__dirname, 'uploads', filename);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'File not found' });
   }
-}));
+
+  // Check authentication
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ')
+    ? authHeader.slice(7).trim()
+    : (req.query.token || req.headers['x-access-token'] || '');
+
+  // 1. Session token authentication (HR / Admin users)
+  if (token) {
+    const sessionPayload = verifySessionToken(token);
+    if (sessionPayload && sessionPayload.id) {
+      res.set('Access-Control-Allow-Origin', '*');
+      return res.sendFile(filePath);
+    }
+  }
+
+  // 2. Candidate invitation token authentication
+  const candidateToken = req.query.invitation_token || token;
+  if (candidateToken) {
+    const query = `
+      SELECT e.id FROM invitations i
+      JOIN employees e ON e.id = i.employee_id
+      WHERE i.token = ? AND i.status = 'pending' AND i.type = 'employee_edit'
+        AND (
+          e.photo_path LIKE '%' || ?
+          OR e.bank_passbook_path LIKE '%' || ?
+          OR e.bank_passbook_back_path LIKE '%' || ?
+          OR e.pan_card_path LIKE '%' || ?
+          OR e.pan_card_back_path LIKE '%' || ?
+          OR e.aadhaar_card_path LIKE '%' || ?
+          OR e.aadhaar_card_back_path LIKE '%' || ?
+          OR e.educational_certificate_path LIKE '%' || ?
+          OR e.educational_certificate_back_path LIKE '%' || ?
+          OR e.resume_path LIKE '%' || ?
+        )
+      LIMIT 1
+    `;
+    const params = [candidateToken, ...Array(10).fill(filename)];
+    return db.get(query, params, (err, row) => {
+      if (!err && row) {
+        res.set('Access-Control-Allow-Origin', '*');
+        return res.sendFile(filePath);
+      }
+      return res.status(401).json({ error: 'Authentication required to view document.' });
+    });
+  }
+
+  return res.status(401).json({ error: 'Authentication required to access documents.' });
+});
 
 const JWT_SECRET = process.env.JWT_SECRET || 'cookscape_hrm_jwt_secret_token_2026';
 
@@ -513,6 +564,37 @@ app.get('/api/verify-session', (req, res) => {
   });
 });
 
+// Authentication Middleware to protect internal APIs
+function requireAuth(req, res, next) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ')
+    ? authHeader.slice(7).trim()
+    : (req.query.token || req.headers['x-access-token'] || '');
+
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required. Please log in.' });
+  }
+
+  const payload = verifySessionToken(token);
+  if (!payload || !payload.id) {
+    return res.status(401).json({ error: 'Invalid or expired session token.' });
+  }
+
+  db.get('SELECT id, username, role, password_version FROM users WHERE id = ?', [payload.id], (err, user) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!user) return res.status(401).json({ error: 'User not found.' });
+
+    const currentPv = user.password_version || 1;
+    const tokenPv = payload.pv || 1;
+    if (currentPv !== tokenPv) {
+      return res.status(401).json({ error: 'Session invalidated due to password change. Please log in again.' });
+    }
+
+    req.user = user;
+    next();
+  });
+}
+
 // Multer Storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -594,7 +676,7 @@ const buildEmployeeUpdate = (data, files, employeeId) => {
 };
 
 // Routes
-app.get('/api/employees', (req, res) => {
+app.get('/api/employees', requireAuth, (req, res) => {
   const { status } = req.query;
   let query = 'SELECT * FROM employees';
   const params = [];
@@ -610,7 +692,7 @@ app.get('/api/employees', (req, res) => {
   });
 });
 
-app.get('/api/employees/:id', (req, res) => {
+app.get('/api/employees/:id', requireAuth, (req, res) => {
   db.get('SELECT * FROM employees WHERE id = ?', [req.params.id], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!row) return res.status(404).json({ error: 'Employee not found' });
@@ -726,15 +808,17 @@ app.post('/api/employees', upload, async (req, res) => {
     });
   } else {
     // Normal Admin direct creation
-    db.run(query, params, function (err) {
-      if (err) return res.status(500).json({ error: err.message });
-      sendOnboardingEmail({ ...data, id: this.lastID });
-      res.json({ id: this.lastID, ...data, photo_path });
+    requireAuth(req, res, () => {
+      db.run(query, params, function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        sendOnboardingEmail({ ...data, id: this.lastID });
+        res.json({ id: this.lastID, ...data, photo_path });
+      });
     });
   }
 });
 
-app.post('/api/employees/bulk', async (req, res) => {
+app.post('/api/employees/bulk', requireAuth, async (req, res) => {
   const { employees } = req.body;
   if (!employees || !Array.isArray(employees)) {
     return res.status(400).json({ error: 'Invalid data format.' });
@@ -846,7 +930,7 @@ app.post('/api/employees/bulk', async (req, res) => {
   });
 });
 
-app.put('/api/employees/:id', upload, (req, res) => {
+app.put('/api/employees/:id', requireAuth, upload, (req, res) => {
   const data = req.body;
   const files = req.files || {};
   const { query, params } = buildEmployeeUpdate(data, files, req.params.id);
@@ -857,7 +941,7 @@ app.put('/api/employees/:id', upload, (req, res) => {
   });
 });
 
-app.patch('/api/employees/:id', (req, res) => {
+app.patch('/api/employees/:id', requireAuth, (req, res) => {
   const data = req.body;
   const fields = Object.keys(data);
   if (fields.length === 0) return res.status(400).json({ error: 'No fields to update' });
@@ -877,7 +961,7 @@ app.patch('/api/employees/:id', (req, res) => {
   });
 });
 
-app.delete('/api/employees/:id', (req, res) => {
+app.delete('/api/employees/:id', requireAuth, (req, res) => {
   db.run('DELETE FROM employees WHERE id = ?', [req.params.id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Employee deleted successfully' });
@@ -885,7 +969,7 @@ app.delete('/api/employees/:id', (req, res) => {
 });
 
 // Resource Bucket API
-app.get('/api/bucket', (req, res) => {
+app.get('/api/bucket', requireAuth, (req, res) => {
   const query = `
     SELECT b.*, e.full_name as assigned_to_name 
     FROM resource_bucket b 
@@ -898,7 +982,7 @@ app.get('/api/bucket', (req, res) => {
   });
 });
 
-app.post('/api/bucket', (req, res) => {
+app.post('/api/bucket', requireAuth, (req, res) => {
   const { type, value } = req.body;
   if (!type || !value) {
     return res.status(400).json({ error: 'Type and Value are required' });
@@ -940,7 +1024,7 @@ app.post('/api/bucket', (req, res) => {
   });
 });
 
-app.post('/api/bucket/bulk', (req, res) => {
+app.post('/api/bucket/bulk', requireAuth, (req, res) => {
   const services = req.body; // Array of { type, value }
   if (!Array.isArray(services)) return res.status(400).json({ error: 'Data must be an array' });
 
@@ -954,7 +1038,7 @@ app.post('/api/bucket/bulk', (req, res) => {
   });
 });
 
-app.patch('/api/bucket/:id/assign', (req, res) => {
+app.patch('/api/bucket/:id/assign', requireAuth, (req, res) => {
   const { assigned_to } = req.body;
   if (!assigned_to) return res.status(400).json({ error: 'assigned_to is required' });
 
@@ -966,7 +1050,7 @@ app.patch('/api/bucket/:id/assign', (req, res) => {
   });
 });
 
-app.patch('/api/bucket/:id/unassign', (req, res) => {
+app.patch('/api/bucket/:id/unassign', requireAuth, (req, res) => {
   const query = 'UPDATE resource_bucket SET assigned_to = NULL, status = "Available", assigned_date = NULL WHERE id = ?';
   db.run(query, [req.params.id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
@@ -974,7 +1058,7 @@ app.patch('/api/bucket/:id/unassign', (req, res) => {
   });
 });
 
-app.delete('/api/bucket/:id', (req, res) => {
+app.delete('/api/bucket/:id', requireAuth, (req, res) => {
   db.run('DELETE FROM resource_bucket WHERE id = ?', [req.params.id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Resource deleted successfully' });
@@ -982,7 +1066,7 @@ app.delete('/api/bucket/:id', (req, res) => {
 });
 
 // Invitation APIs
-app.post('/api/invitations', (req, res) => {
+app.post('/api/invitations', requireAuth, (req, res) => {
   const { shared_name } = req.body;
   const token = crypto.randomBytes(32).toString('hex');
 
@@ -992,7 +1076,7 @@ app.post('/api/invitations', (req, res) => {
   });
 });
 
-app.post('/api/employees/:id/edit-invitations', (req, res) => {
+app.post('/api/employees/:id/edit-invitations', requireAuth, (req, res) => {
   db.get('SELECT id, full_name FROM employees WHERE id = ?', [req.params.id], (err, employee) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!employee) return res.status(404).json({ error: 'Employee not found' });
@@ -1011,7 +1095,7 @@ app.post('/api/employees/:id/edit-invitations', (req, res) => {
   });
 });
 
-app.post('/api/employees/batch-edit-tokens', (req, res) => {
+app.post('/api/employees/batch-edit-tokens', requireAuth, (req, res) => {
   const { employee_ids } = req.body;
   if (!Array.isArray(employee_ids) || employee_ids.length === 0) {
     return res.json({ tokens: {}, statuses: {} });
