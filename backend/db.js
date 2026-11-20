@@ -253,13 +253,32 @@ db.serialize(() => {
     }
   });
 
-  // Insert default admin if not exists (username: admin@cookscape.com, password: Hrmaster@2026)
-  const hashedAdminPassword = bcrypt.hashSync('Hrmaster@2026', 10);
-  db.run(`INSERT OR IGNORE INTO users (username, password, role, password_version) VALUES ('admin@cookscape.com', '${hashedAdminPassword}', 'admin', 1)`);
+  db.run("ALTER TABLE invitations ADD COLUMN expires_at DATETIME", (err) => {
+    if (err && !err.message.includes('duplicate column name')) {
+      console.error('Error adding invitation column expires_at:', err.message);
+    }
+  });
 
-  // Insert default viewer if not exists (username: view@cookscape.com, password: View@2026)
-  const hashedViewerPassword = bcrypt.hashSync('View@2026', 10);
-  db.run(`INSERT OR IGNORE INTO users (username, password, role, password_version) VALUES ('view@cookscape.com', '${hashedViewerPassword}', 'viewer', 1)`);
+  // Initialize default admin and viewer from environment variables if provided
+  const initialAdminUser = process.env.INITIAL_ADMIN_USERNAME || process.env.ADMIN_USERNAME;
+  const initialAdminPass = process.env.INITIAL_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD;
+  if (initialAdminUser && initialAdminPass) {
+    const hashedAdminPassword = bcrypt.hashSync(initialAdminPass, 10);
+    db.run(
+      'INSERT OR IGNORE INTO users (username, password, role, password_version) VALUES (?, ?, "admin", 1)',
+      [initialAdminUser.trim().toLowerCase(), hashedAdminPassword]
+    );
+  }
+
+  const initialViewerUser = process.env.INITIAL_VIEWER_USERNAME;
+  const initialViewerPass = process.env.INITIAL_VIEWER_PASSWORD;
+  if (initialViewerUser && initialViewerPass) {
+    const hashedViewerPassword = bcrypt.hashSync(initialViewerPass, 10);
+    db.run(
+      'INSERT OR IGNORE INTO users (username, password, role, password_version) VALUES (?, ?, "viewer", 1)',
+      [initialViewerUser.trim().toLowerCase(), hashedViewerPassword]
+    );
+  }
 
   console.log('Database initialized');
 

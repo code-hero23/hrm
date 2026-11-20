@@ -313,7 +313,24 @@ const restoreEmployeesFromBackup = (backupEmployees) => {
   }));
 };
 
-app.get('/api/backups', requireAuth, (req, res) => {
+const requireAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Access denied. Administrator privileges required.' });
+  }
+  next();
+};
+
+const getSafeBackupPath = (fileName) => {
+  if (!fileName || typeof fileName !== 'string') return null;
+  const safeName = path.basename(fileName);
+  const resolvedPath = path.resolve(backupsDir, safeName);
+  if (!resolvedPath.startsWith(path.resolve(backupsDir))) {
+    return null;
+  }
+  return resolvedPath;
+};
+
+app.get('/api/backups', requireAuth, requireAdmin, (req, res) => {
   res.json(listBackupFiles().map((backup) => ({
     fileName: backup.fileName,
     envFileName: backup.envFileName,
@@ -327,7 +344,7 @@ app.get('/api/backups', requireAuth, (req, res) => {
   })));
 });
 
-app.post('/api/backups/create', requireAuth, async (req, res) => {
+app.post('/api/backups/create', requireAuth, requireAdmin, async (req, res) => {
   try {
     const backupRecord = await createBackupSnapshot();
     sendBackupEmail(backupRecord).catch((error) => {
@@ -390,7 +407,7 @@ app.post('/api/backups/:fileName/restore', requireAuth, async (req, res) => {
   }
 });
 
-app.post('/api/backups/restore-from-json', requireAuth, async (req, res) => {
+app.post('/api/backups/restore-from-json', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { backup } = req.body;
     if (!backup || !Array.isArray(backup.employees)) {
@@ -617,7 +634,17 @@ const upload = multer({ storage }).fields([
   { name: 'resume', maxCount: 1 }
 ]);
 
-const buildEmployeeUpdate = (data, files, employeeId) => {
+const buildEmployeeUpdate = (data, files, employeeId, isPublicEdit = false, existingEmployee = {}) => {
+  // If editing via public link, do not allow modifying sensitive organizational fields
+  const safeStatus = isPublicEdit ? (existingEmployee.status || 'Onboard') : (data.status || existingEmployee.status || 'Onboard');
+  const safeFileNo = isPublicEdit ? existingEmployee.file_no : (data.file_no || existingEmployee.file_no);
+  const safeEmpId = isPublicEdit ? existingEmployee.employee_id : (data.employee_id !== undefined ? data.employee_id : existingEmployee.employee_id);
+  const safeDept = isPublicEdit ? existingEmployee.department : (data.department !== undefined ? data.department : existingEmployee.department);
+  const safeDesig = isPublicEdit ? existingEmployee.designation : (data.designation !== undefined ? data.designation : existingEmployee.designation);
+  const safeDoj = isPublicEdit ? existingEmployee.date_of_joining : (data.date_of_joining !== undefined ? data.date_of_joining : existingEmployee.date_of_joining);
+  const safeOffDoj = isPublicEdit ? existingEmployee.official_joining_date : (data.official_joining_date !== undefined ? data.official_joining_date : existingEmployee.official_joining_date);
+  const safeLoc = isPublicEdit ? existingEmployee.work_location : (data.work_location !== undefined ? data.work_location : existingEmployee.work_location);
+  const safeRep = isPublicEdit ? existingEmployee.reporting_manager : (data.reporting_manager !== undefined ? data.reporting_manager : existingEmployee.reporting_manager);
   const photo_path = files.photo ? `/uploads/${files.photo[0].filename}` : data.photo_path;
   const bank_passbook_path = files.bank_passbook ? `/uploads/${files.bank_passbook[0].filename}` : data.bank_passbook_path;
   const bank_passbook_back_path = files.bank_passbook_back ? `/uploads/${files.bank_passbook_back[0].filename}` : data.bank_passbook_back_path;
@@ -650,9 +677,9 @@ const buildEmployeeUpdate = (data, files, employeeId) => {
   `;
 
   const params = [
-    data.status, data.file_no, data.full_name, data.father_mother_name, data.dob, data.gender, data.contact_number, data.blood_group,
+    safeStatus, safeFileNo, data.full_name, data.father_mother_name, data.dob, data.gender, data.contact_number, data.blood_group,
     data.personal_email, data.marital_status, data.present_address, data.permanent_address, photo_path,
-    data.employee_id, data.department, data.designation, data.date_of_joining, data.work_location, data.reporting_manager,
+    safeEmpId, safeDept, safeDesig, safeDoj, safeLoc, safeRep,
     data.pan_number, data.aadhaar_number, data.other_id,
     data.emergency_contact_name, data.emergency_contact_relationship, data.emergency_contact_number,
     data.father_husband_number, data.mother_wife_number, data.alternate_number,
@@ -778,7 +805,7 @@ app.post('/api/employees', upload, async (req, res) => {
     db.serialize(() => {
       db.run('BEGIN TRANSACTION');
 
-      db.get('SELECT id FROM invitations WHERE token = ? AND status = "pending" AND (type IS NULL OR type = "onboarding")', [data.onboarding_token], (err, row) => {
+      db.get('SELECT id FROM invitations WHERE token = ? AND status = "pending" AND (type IS NULL OR type = "onboarding") AND (expires_at IS NULL OR expires_at > datetime("now"))', [data.onboarding_token], (err, row) => {
         if (err || !row) {
           db.run('ROLLBACK');
           return res.status(403).json({ error: 'Invalid or already used invitation token.' });
@@ -1070,7 +1097,7 @@ app.post('/api/invitations', requireAuth, (req, res) => {
   const { shared_name } = req.body;
   const token = crypto.randomBytes(32).toString('hex');
 
-  db.run('INSERT INTO invitations (token, shared_name, type) VALUES (?, ?, "onboarding")', [token, shared_name], function (err) {
+  db.run('INSERT INTO invitations (token, shared_name, type, expires_at) VALUES (?, ?, "onboarding", datetime("now", "+7 days"))', [token, shared_name], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ token, shared_name });
   });
@@ -1085,7 +1112,7 @@ app.post('/api/employees/:id/edit-invitations', requireAuth, (req, res) => {
     const sharedName = req.body.shared_name || employee.full_name;
 
     db.run(
-      'INSERT INTO invitations (token, shared_name, type, employee_id) VALUES (?, ?, "employee_edit", ?)',
+      'INSERT INTO invitations (token, shared_name, type, employee_id, expires_at) VALUES (?, ?, "employee_edit", ?, datetime("now", "+7 days"))',
       [token, sharedName, employee.id],
       function (err) {
         if (err) return res.status(500).json({ error: err.message });
@@ -1148,7 +1175,7 @@ app.post('/api/employees/batch-edit-tokens', requireAuth, (req, res) => {
 
           db.serialize(() => {
             const stmt = db.prepare(
-              'INSERT INTO invitations (token, shared_name, type, employee_id, status) VALUES (?, ?, "employee_edit", ?, "pending")'
+              'INSERT INTO invitations (token, shared_name, type, employee_id, status, expires_at) VALUES (?, ?, "employee_edit", ?, "pending", datetime("now", "+7 days"))'
             );
 
             missingIds.forEach((empId) => {
@@ -1171,7 +1198,7 @@ app.post('/api/employees/batch-edit-tokens', requireAuth, (req, res) => {
 });
 
 app.get('/api/invitations/verify/:token', (req, res) => {
-  db.get('SELECT * FROM invitations WHERE token = ? AND status = "pending" AND (type IS NULL OR type = "onboarding")', [req.params.token], (err, row) => {
+  db.get('SELECT * FROM invitations WHERE token = ? AND status = "pending" AND (type IS NULL OR type = "onboarding") AND (expires_at IS NULL OR expires_at > datetime("now"))', [req.params.token], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!row) return res.status(404).json({ error: 'Invalid or already used invitation' });
     res.json(row);
@@ -1187,6 +1214,7 @@ app.get('/api/employee-edit-invitations/verify/:token', (req, res) => {
     WHERE invitations.token = ?
       AND invitations.status = "pending"
       AND invitations.type = "employee_edit"
+      AND (invitations.expires_at IS NULL OR invitations.expires_at > datetime("now"))
   `;
 
   db.get(query, [req.params.token], (err, row) => {
@@ -1204,7 +1232,7 @@ app.put('/api/employee-edit-invitations/:token', upload, (req, res) => {
     db.run('BEGIN TRANSACTION');
 
     db.get(
-      'SELECT id, employee_id FROM invitations WHERE token = ? AND status = "pending" AND type = "employee_edit"',
+      'SELECT i.id, i.employee_id, e.* FROM invitations i JOIN employees e ON e.id = i.employee_id WHERE i.token = ? AND i.status = "pending" AND i.type = "employee_edit" AND (i.expires_at IS NULL OR i.expires_at > datetime("now"))',
       [req.params.token],
       (err, invitation) => {
         if (err || !invitation) {
@@ -1212,7 +1240,7 @@ app.put('/api/employee-edit-invitations/:token', upload, (req, res) => {
           return res.status(403).json({ error: 'Invalid or already used employee edit link.' });
         }
 
-        const { query, params } = buildEmployeeUpdate(data, files, invitation.employee_id);
+        const { query, params } = buildEmployeeUpdate(data, files, invitation.employee_id, true, invitation);
 
         db.run(query, params, function (err) {
           if (err) {
