@@ -9,7 +9,7 @@ import {
   Calendar,
   User
 } from 'lucide-react';
-import API_BASE_URL from '../config';
+import API_BASE_URL, { getMediaUrl } from '../config';
 
 const WishesBucket = () => {
   const [employees, setEmployees] = useState([]);
@@ -162,7 +162,7 @@ const WishesBucket = () => {
                     
                     <div style={{ width: '60px', height: '60px', borderRadius: '15px', background: 'rgba(255,255,255,0.03)', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
                       {emp.photo_path ? (
-                        <img src={`${API_BASE_URL}${emp.photo_path}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                        <img src={getMediaUrl(emp.photo_path)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                       ) : (
                         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dim)' }}>
                           <User size={24} />

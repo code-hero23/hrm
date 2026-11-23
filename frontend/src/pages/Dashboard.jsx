@@ -14,8 +14,8 @@ import {
   SlidersHorizontal,
   Layers
 } from 'lucide-react';
-import * as XLSX from 'xlsx-js-style';
-import API_BASE_URL from '../config';
+import * as XLSX from 'xlsx';
+import API_BASE_URL, { getMediaUrl } from '../config';
 
 const formatDate = (dateString) => {
   if (!dateString || dateString === 'N/A') {
@@ -451,7 +451,7 @@ const Dashboard = ({ user }) => {
       return path;
     }
 
-    return `${API_BASE_URL}${path}`;
+    return getMediaUrl(path);
   };
 
   const buildEmployeeExportRows = (employeesToExport) => {
@@ -1133,7 +1133,7 @@ Link: ${invitationLink}
                   >
                     {employee.photo_path ? (
                       <img
-                        src={`${API_BASE_URL}${employee.photo_path}`}
+                        src={getMediaUrl(employee.photo_path)}
                         alt={employee.full_name || 'Employee'}
                         style={{
                           width: '100%',

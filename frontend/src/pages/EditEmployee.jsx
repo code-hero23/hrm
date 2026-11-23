@@ -1,10 +1,10 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, Save, Upload, ArrowLeft, UserCircle, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import API_BASE_URL from '../config';
+import API_BASE_URL, { getMediaUrl } from '../config';
 import logo from '../assets/logo.jpg';
 
 const EditEmployee = ({ isPublicEdit = false }) => {
@@ -73,13 +73,13 @@ const EditEmployee = ({ isPublicEdit = false }) => {
           const res = await axios.get(`${API_BASE_URL}/api/employee-edit-invitations/verify/${token}`);
           setFormData(res.data.employee);
           if (res.data.employee.photo_path) {
-            setPhotoPreview(`${API_BASE_URL}${res.data.employee.photo_path}`);
+            setPhotoPreview(getMediaUrl(res.data.employee.photo_path, token));
           }
         } else {
           const res = await axios.get(`${API_BASE_URL}/api/employees/${id}`);
           setFormData(res.data);
           if (res.data.photo_path) {
-            setPhotoPreview(`${API_BASE_URL}${res.data.photo_path}`);
+            setPhotoPreview(getMediaUrl(res.data.photo_path));
           }
         }
       } catch (err) {
@@ -270,7 +270,7 @@ const EditEmployee = ({ isPublicEdit = false }) => {
   const isNA = (val) => !val || val === 'N/A' || val === 'undefined';
 
   const processDocToImage = async (path) => {
-    const fullUrl = `${API_BASE_URL || window.location.origin}${path}`;
+    const fullUrl = getMediaUrl(path, editToken);
     const isPdf = path.toLowerCase().endsWith('.pdf');
 
     try {
@@ -479,7 +479,7 @@ const EditEmployee = ({ isPublicEdit = false }) => {
                 </div>
                   <div style={{ width: '40mm', textAlign: 'right' }}>
                    {updatedEmployee.photo_path ? (
-                     <img src={`${API_BASE_URL || window.location.origin}${updatedEmployee.photo_path}`} crossOrigin="anonymous" style={{ width: '35mm', height: '45mm', border: '1px solid black', objectFit: 'cover' }} />
+                     <img src={getMediaUrl(updatedEmployee.photo_path, editToken)} crossOrigin="anonymous" style={{ width: '35mm', height: '45mm', border: '1px solid black', objectFit: 'cover' }} />
                    ) : (
                      <div style={{ width: '35mm', height: '45mm', border: '1px solid black', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8pt' }}>NO PHOTO</div>
                    )}
@@ -618,7 +618,7 @@ const EditEmployee = ({ isPublicEdit = false }) => {
             <label>PHOTO (PASSPORT SIZE) <span style={{color:'#ef4444'}}>*</span></label>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <div style={{ width: '120px', height: '140px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
-                  {photoPreview ? <img src={photoPreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : (formData.photo_path ? <img src={`${API_BASE_URL}${formData.photo_path}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : <div style={{width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', color:'#444'}}><UserCircle size={48} /></div>)}
+                  {photoPreview ? <img src={photoPreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : (formData.photo_path ? <img src={getMediaUrl(formData.photo_path, editToken)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : <div style={{width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', color:'#444'}}><UserCircle size={48} /></div>)}
                 </div>
                 <div style={{flex:1}}>
                   <p style={{background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '0.75rem', borderRadius: '8px', fontSize: '0.75rem', marginBottom: '1rem', border: '1px solid rgba(59, 130, 246, 0.2)'}}>
@@ -877,7 +877,7 @@ const EditEmployee = ({ isPublicEdit = false }) => {
                 <label>{doc.label} {doc.required ? <span style={{color:'#ef4444'}}>*</span> : <span style={{color:'var(--text-dim)', fontSize:'0.7rem'}}>(OPTIONAL)</span>}</label>
                 <div style={{display:'flex', gap:'1rem', alignItems:'center'}}>
                   <input type="file" onChange={(e) => handleFileChange(e, doc.name)} accept="image/*,.pdf" style={{fontSize:'0.7rem'}} required={doc.required && !doc.path} />
-                  {doc.path && !docs[doc.name] && <a href={`${API_BASE_URL}${doc.path}`} target="_blank" rel="noreferrer" style={{fontSize:'0.7rem', color:'#60a5fa'}}>View Existing</a>}
+                  {doc.path && !docs[doc.name] && <a href={getMediaUrl(doc.path, editToken)} target="_blank" rel="noreferrer" style={{fontSize:'0.7rem', color:'#60a5fa'}}>View Existing</a>}
                 </div>
                 {docs[doc.name] && <p style={{fontSize:'0.7rem', color:'#22c55e'}}>Selected: {docs[doc.name].name}</p>}
               </div>

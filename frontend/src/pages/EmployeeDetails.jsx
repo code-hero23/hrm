@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Printer, Download, ArrowLeft, Trash2, CheckCircle, UserCircle, Edit3, ChevronRight, FileText, LayoutDashboard, Database, ExternalLink, FileUp, Share2, Check, AlertTriangle, X } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import API_BASE_URL from '../config';
+import API_BASE_URL, { getMediaUrl } from '../config';
 import LifecycleTracker from '../components/LifecycleTracker';
 
 const formatDate = (dateString) => {
@@ -105,7 +105,7 @@ const StatusDropdown = ({ currentStatus, onUpdate }) => {
 
 // 1. Reusable helper to process Image OR PDF to a high-quality Canvas/Image
 const processDocToImage = async (path) => {
-  const fullUrl = `${API_BASE_URL || window.location.origin}${path}`;
+  const fullUrl = getMediaUrl(path);
   const isPdf = path.toLowerCase().endsWith('.pdf');
 
   try {
@@ -407,7 +407,7 @@ Link: ${link}
         <div style={{ display: 'flex', gap: '3rem', alignItems: 'flex-start' }}>
           <div style={{ width: '180px', height: '220px', borderRadius: '20px', background: 'rgba(255,255,255,0.02)', overflow: 'hidden', border: '1px solid var(--glass-border)', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
             {employee.photo_path ? (
-              <img src={`${API_BASE_URL}${employee.photo_path}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+              <img src={getMediaUrl(employee.photo_path)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
             ) : (
               <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' }}>
                 <UserCircle size={64} />
@@ -582,7 +582,7 @@ Link: ${link}
                   <div key={doc.label} className="form-group" style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
                     <label style={{ marginBottom: '1rem', display: 'block' }}>{doc.label}</label>
                     {doc.path ? (
-                      <a href={`${API_BASE_URL}${doc.path}`} target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ width: '100%' }}>
+                      <a href={getMediaUrl(doc.path)} target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ width: '100%' }}>
                         <ExternalLink size={16} /> View Document
                       </a>
                     ) : (
@@ -594,7 +594,7 @@ Link: ${link}
               <div className="form-group" style={{ marginTop: '2.5rem', padding: '1.5rem', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '16px', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
                 <label>Resume / Professional CV</label>
                 {employee.resume_path ? (
-                  <a href={`${API_BASE_URL}${employee.resume_path}`} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ marginTop: '1rem', background: 'var(--accent)' }}>
+                  <a href={getMediaUrl(employee.resume_path)} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ marginTop: '1rem', background: 'var(--accent)' }}>
                     <FileUp size={18} /> Open Resume
                   </a>
                 ) : <p style={{ color: 'var(--text-dim)', marginTop: '0.5rem' }}>No resume found in system.</p>}
@@ -726,7 +726,7 @@ Link: ${link}
             </div>
               <div style={{ width: '40mm', textAlign: 'right' }}>
                {employee.photo_path ? (
-                 <img src={`${API_BASE_URL || window.location.origin}${employee.photo_path}`} crossOrigin="anonymous" style={{ width: '35mm', height: '45mm', border: '1px solid black', objectFit: 'cover' }} />
+                 <img src={getMediaUrl(employee.photo_path)} crossOrigin="anonymous" style={{ width: '35mm', height: '45mm', border: '1px solid black', objectFit: 'cover' }} />
                ) : (
                  <div style={{ width: '35mm', height: '45mm', border: '1px solid black', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8pt' }}>NO PHOTO</div>
                )}
